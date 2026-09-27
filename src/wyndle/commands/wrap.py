@@ -34,6 +34,9 @@ from wyndle.lib.task_notes import (
 
 def run(cfg: WyndleConfig, state: State) -> None:
     """Execute the full shutdown ritual."""
+    if state.get("today_wrapped") == "true":
+        display.dim("This day is already wrapped.")
+        return
     display.header("Shutdown Ritual")
 
     paused = state.pause_active_subtask()
@@ -79,9 +82,10 @@ def _flush_focused_time(state: State) -> None:
     total = 0
     for path in state.state_dir.glob("st_*_elapsed"):
         try:
-            total += int(path.read_text().strip()) // 60
+            total += int(path.read_text().strip())
         except (ValueError, OSError):
             continue
+    total //= 60
     current = state.get_int("today_focused_min", 0)
     if total > current:
         state.set("today_focused_min", str(total))

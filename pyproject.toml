@@ -33,6 +33,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 wyndle = ["*.yaml"]
+"wyndle.web" = ["*.html", "*.css", "*.js", "components/*.js", "assets/*.jpg"]
 
 [tool.ruff]
 line-length = 100

@@ -4,15 +4,124 @@
 > a fussy, patient, endlessly loyal vine who follows an impulsive, easily distracted human around
 > and keeps nudging her back on track. That's the job this tool does.
 
-Terminal-based productivity system built for ADHD. File-based state that survives terminal crashes. Works with any markdown editor.
+Local productivity system built for ADHD, with a web dashboard, VS Code companion,
+and terminal CLI. File-based state survives restarts. Works with any Markdown editor.
 
 Wyndle manages a single daily loop: morning planning, timed focus blocks, break tracking, and a shutdown ritual that shows exactly how your planned time compared to actual time spent.
+
+## How to run
+
+### Web dashboard
+
+From this checkout (Python 3.10+):
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e '.[dev]'
+wyndle ui
+```
+
+On Windows, activate with `.venv\Scripts\Activate.ps1` in PowerShell.
+
+Your browser opens at **http://127.0.0.1:8765**. Click **Start my day**, type a
+task and press **Enter**, then click its **▶** button to focus. Complete tasks,
+add notes, take breaks, and wrap the day in the dashboard. No Obsidian app,
+frontend build, account, or cloud service is needed.
+
+The design draws on Dalinar’s next-step resolve and Kaladin’s care, with storm
+blue, warm gold, light/dark themes, and a responsive layout. The Stormlight
+inspiration is unofficial; Wyndle is not affiliated with Brandon Sanderson.
+
+```bash
+wyndle ui --no-browser        # serve without opening a tab
+wyndle ui --port 8766         # choose another port if 8765 is occupied
+```
+
+Keep the command running while using the dashboard. Ctrl+C stops the web server.
+Focus time continues until you pause or complete the task, including after a
+refresh, closing the tab, or restarting the server. At the end of a block, the
+page shows a check-in and overtime; breaks never add to focused time. Browser
+check-ins require an open page. Pause before stepping away for the night.
+
+Existing `~/.wyndle/config.yaml`, state, and Markdown notes are reused. New web
+users get `~/Documents/Wyndle` as their notes folder. The existing
+`obsidian_vault` config key now also serves as the dashboard’s notes-folder
+setting: it can point to any folder, and Obsidian does not need to be installed.
+Use distinct task names within a day; the existing CLI timer identifies tasks
+by their text. Advanced edits such as renaming tasks still use the Markdown file.
+
+### VS Code
+
+1. Install the Python package using the commands above.
+2. Open this repository in VS Code. Press **F5** and select **Run Wyndle Extension**.
+3. In the new Extension Development Host, open **Settings → Wyndle → Executable**
+   and set the full executable path, for example
+   `/path/to/wyndle/.venv/bin/wyndle` (Windows: `.venv\Scripts\wyndle.exe`).
+4. Click the **Wyndle** activity-bar icon. Use the reconnect button if needed.
+
+The sidebar loads the same responsive dashboard as the browser. It starts the
+local Python server when needed, or attaches to a Wyndle server already running
+on the configured port. **Wyndle: Open in Browser** opens the wider view; the
+status bar keeps your focus or break visible while coding. If VS Code started
+the server, it stops that server when the extension shuts down. A server started
+separately with `wyndle ui` keeps running. This first extension targets local
+desktop VS Code; remote workspaces and browser-hosted VS Code are not supported.
+
+To install it in your normal VS Code window (Node.js 20+ and npm required):
+
+```bash
+cd vscode
+npm run package
+code --install-extension wyndle-0.1.0.vsix
+```
+
+You can also use **Extensions → … → Install from VSIX**. The extension is local
+and has not been published to the Marketplace. It has no runtime npm dependencies.
+
+### UI development and checks
+
+See [DEVELOPING.md](DEVELOPING.md) for a component-by-component guide to modifying
+the whole project, adding features, and changing the visual design.
+
+The existing `src/wyndle/commands`, `src/wyndle/lib`, and `tests` layout remains.
+New parts are intentionally separate:
+
+| Location | Responsibility |
+|---|---|
+| `src/wyndle/web/theme.css` | Colors, typography, radius tokens, light/dark palette |
+| `src/wyndle/web/components.css` | Shared controls and surfaces |
+| `src/wyndle/web/style.css` | Page layout and responsive behavior |
+| `src/wyndle/web/components/` | Task list, focus controls, and dialogs |
+| `src/wyndle/web/app.js` | UI state and component composition |
+| `src/wyndle/web/api.js` | HTTP transport |
+| `src/wyndle/lib/dashboard.py` | Non-interactive workflow using existing notes and timers |
+| `src/wyndle/commands/ui.py` | Local server and static assets |
+| `vscode/` | Thin VS Code host for the same dashboard |
+
+Change aesthetics in the CSS files; add features through a workflow action and
+a component. There is no duplicate task store or separate VS Code frontend.
+
+```bash
+python -m pytest -q
+ruff check src tests
+cd vscode
+npm test
+```
+
+Optional real-browser check (uses an installed Google Chrome and temporary data):
+
+```bash
+python -m pip install playwright
+python tests/browser/smoke.py
+```
 
 ---
 
 ## Table of Contents
 
 - [Installation](#installation)
+- [How to run](#how-to-run)
 - [Post-Install Setup](#post-install-setup)
 - [Commands Reference](#commands-reference)
 - [Daily Workflow](#daily-workflow)

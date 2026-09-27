@@ -120,6 +120,10 @@ class State:
             The raw text of the paused subtask, or ``None`` if nothing
             was active.
         """
+        if self.exists("today_ui_kind"):
+            self.set_block_active(False)
+            for key in ("kind", "deadline", "duration", "started", "task"):
+                self.clear(f"today_ui_{key}")
         active_key = self.get("today_active_subtask", "")
         if not active_key:
             return None
@@ -191,4 +195,6 @@ class State:
 
     def is_block_active(self) -> bool:
         """Return ``True`` if a focus block timer is currently running."""
+        if self.exists("today_ui_deadline"):
+            return self.get_int("today_ui_deadline") > time_utils.epoch_now()
         return self.get("today_block_active", "") == "true"
