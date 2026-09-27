@@ -1,0 +1,36 @@
+{
+  "name": "wyndle",
+  "displayName": "Wyndle — The Next Step",
+  "description": "A calm focus dashboard, tasks, and breaks alongside your code.",
+  "version": "0.1.0",
+  "publisher": "anantsimran",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/anantsimran/wyndle.git" },
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other"],
+  "main": "./extension.js",
+  "extensionKind": ["ui"],
+  "activationEvents": ["onView:wyndle.dashboard"],
+  "capabilities": { "untrustedWorkspaces": { "supported": false }, "virtualWorkspaces": false },
+  "contributes": {
+    "commands": [
+      { "command": "wyndle.open", "title": "Open Dashboard", "category": "Wyndle", "icon": "$(home)" },
+      { "command": "wyndle.browser", "title": "Open in Browser", "category": "Wyndle", "icon": "$(link-external)" },
+      { "command": "wyndle.retry", "title": "Reconnect Dashboard", "category": "Wyndle", "icon": "$(refresh)" }
+    ],
+    "viewsContainers": { "activitybar": [{ "id": "wyndle", "title": "Wyndle", "icon": "media/wyndle.svg" }] },
+    "views": { "wyndle": [{ "type": "webview", "id": "wyndle.dashboard", "name": "The Next Step" }] },
+    "menus": { "view/title": [
+      { "command": "wyndle.browser", "when": "view == wyndle.dashboard", "group": "navigation" },
+      { "command": "wyndle.retry", "when": "view == wyndle.dashboard", "group": "navigation" }
+    ] },
+    "configuration": {
+      "title": "Wyndle",
+      "properties": {
+        "wyndle.executable": { "type": "string", "default": "wyndle", "scope": "machine", "description": "Path to the installed wyndle executable (for example /path/to/wyndle/.venv/bin/wyndle). No shell arguments." },
+        "wyndle.port": { "type": "number", "default": 8765, "minimum": 1024, "maximum": 65535, "scope": "machine", "description": "Local dashboard port. The sidebar reuses an existing Wyndle server on this port." }
+      }
+    }
+  },
+  "scripts": { "test": "node --test test/*.test.js", "package": "npx --yes @vscode/vsce package --no-dependencies --skip-license" }
+}

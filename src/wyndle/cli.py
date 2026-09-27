@@ -46,6 +46,20 @@ def main(ctx: click.Context) -> None:
 # ---------------------------------------------------------------------------
 
 @main.command()
+@click.option("--port", type=click.IntRange(1, 65535), default=8765, show_default=True)
+@click.option("--browser/--no-browser", default=True, help="Open the dashboard in your browser.")
+def ui(port: int, browser: bool) -> None:
+    """Open the local web dashboard (no Obsidian app required)."""
+    from wyndle.commands.ui import run
+    try:
+        run(port, browser)
+    except OSError as exc:
+        raise click.ClickException(
+            f"Could not start dashboard: {exc}. Try --port with another port."
+        ) from exc
+
+
+@main.command()
 def morning() -> None:
     """Start your day: yesterday recap -> add tasks -> open Obsidian."""
     cfg, state = _setup()
@@ -200,6 +214,10 @@ def _help_screen() -> None:
     from wyndle.lib.display import accent, bold_print, console, dim, header
 
     header("Wyndle -- ADHD-Aware Productivity System")
+    console.print()
+
+    accent("  [bold]Dashboard[/bold]")
+    bold_print("[bold]wyndle ui[/bold]         Open the web UI (also available in VS Code)")
     console.print()
 
     accent("  [bold]Day Flow[/bold]")

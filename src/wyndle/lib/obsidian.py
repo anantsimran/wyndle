@@ -331,7 +331,7 @@ def write_task_details(
     _save_doc(daily_dir, doc)
 
 
-def mark_subtask_done(daily_dir: Path, subtask_text: str) -> bool:
+def mark_subtask_done(daily_dir: Path, subtask_text: str, parent: str = "") -> bool:
     """Check off a subtask in today's daily note (``[ ]`` -> ``[x]``).
 
     Args:
@@ -341,17 +341,20 @@ def mark_subtask_done(daily_dir: Path, subtask_text: str) -> bool:
     Returns:
         ``True`` if the checkbox was found and updated.
     """
-    note_path = daily_note_path(daily_dir)
-    if not note_path.exists():
+    doc = _load_doc(daily_dir)
+    if doc is None:
         return False
-    lines = note_path.read_text().splitlines()
-    target = subtask_text.strip()
-    for i, line in enumerate(lines):
-        stripped = line.strip()
-        if stripped.startswith("- [ ] ") and stripped[6:].strip() == target:
-            lines[i] = line.replace("- [ ] ", "- [x] ", 1)
-            note_path.write_text("\n".join(lines) + "\n")
-            return True
+    details = doc.find_section("Task Details", level=2)
+    if details is None:
+        return False
+    for block in doc.get_subsections(details):
+        if parent and block.title.casefold() != parent.casefold():
+            continue
+        for idx, done, text in doc.get_checkboxes(block):
+            if not done and text == subtask_text.strip():
+                block.content[idx] = block.content[idx].replace("[ ]", "[x]", 1)
+                _save_doc(daily_dir, doc)
+                return True
     return False
 
 
@@ -371,9 +374,13 @@ def get_all_subtasks(daily_dir: Path) -> list[SubTask]:
     Used by ``wyndle switch`` for a flat list.
     """
     all_subs: list[SubTask] = []
-    for task in get_high_level_tasks(daily_dir):
-        for s in get_task_details(daily_dir, task.text):
-            s.parent = task.text
+    doc = _load_doc(daily_dir)
+    details = doc.find_section("Task Details", level=2) if doc else None
+    if details is None:
+        return []
+    for block in doc.get_subsections(details):
+        for s in get_task_details(daily_dir, block.title):
+            s.parent = block.title
             all_subs.append(s)
     return all_subs
 

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Wyndle · A little forward</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" type="module"></script>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Wyndle home"><span class="brand-mark">w</span> wyndle<span class="brand-dot">.</span></a>
+      <span class="local-badge"><span></span> YOUR SPACE, LOCALLY</span>
+    </header>
+    <div id="error" role="alert" hidden></div>
+    <main>
+      <section class="greeting">
+        <div class="greeting-copy">
+        <p id="date" class="eyebrow">YOUR DAILY COMPANION</p>
+        <p class="lore-question">“What is the most important step a man can take?”</p>
+        <h1>The next one<span class="accent">.</span></h1>
+        <p class="muted" id="subtitle">One thing at a time. Make room for a good day.</p>
+        </div>
+        <figure class="hero-art"><img src="/assets/dalinar.jpg" width="1200" height="800" alt="Dalinar overlooking the mountains in the light after a storm"><figcaption>DALINAR · THE NEXT STEP</figcaption></figure>
+      </section>
+      <section id="welcome" class="card welcome" hidden>
+        <span class="eyebrow">A FRESH PAGE</span><h2>Start where you are.</h2>
+        <p>Bring a few things into today. You don’t need to plan the whole day to begin.</p>
+        <label id="carry-label" class="check-label"><input id="carry" type="checkbox" checked> Bring unfinished work forward</label>
+        <button id="morning" class="primary">Start my day <span aria-hidden="true">↗</span></button>
+      </section>
+      <section id="finished" class="card welcome" hidden>
+        <span class="eyebrow">THAT’S ENOUGH FOR TODAY</span><h2>Close the tabs. Take a breath.</h2>
+        <p id="tomorrow-text"></p><p>Your progress is saved. A fresh day will be here tomorrow.</p>
+      </section>
+      <div id="workspace" class="workspace" hidden>
+        <section class="focus-column">
+          <div class="card focus-card">
+            <div class="section-top"><span class="eyebrow" id="focus-label">A MOMENT OF FOCUS</span><span class="live-dot" id="live-dot" hidden></span></div>
+            <h2 id="focus-title">What’s your next small step?</h2>
+            <p id="focus-parent" class="muted">Pick something from your list.</p>
+            <div class="timer-wrap"><div class="timer-ring"><span id="countdown">15:00</span><span id="timer-caption">MINUTES, JUST FOR THIS</span></div></div>
+            <div class="durations" role="group" aria-label="Focus duration">
+              <button data-minutes="5">5 min</button><button data-minutes="15" class="selected" aria-pressed="true">15 min</button><button data-minutes="30">30 min</button>
+            </div>
+            <button id="focus" class="primary wide">Let’s begin <span aria-hidden="true">▶</span></button>
+            <div class="focus-secondary"><button id="pause" class="quiet" disabled>Pause</button><button id="break" class="quiet">Take a 5 min break</button></div>
+            <p id="timer-hint" class="small muted">A small start counts. You can pause whenever you need.</p>
+          </div>
+          <aside class="companion-card"><img src="/assets/kaladin.jpg" width="1000" height="667" alt="Kaladin with his spear and a ribbon of blue spren light"><div><span class="eyebrow">KALADIN · ROOM TO BREATHE</span><p>You don’t have to carry everything.<br>There is strength in taking a breath.</p></div></aside>
+        </section>
+        <section class="tasks-column">
+          <div class="section-top"><div><p class="eyebrow">SMALL PROMISES, KEPT</p><h2>Today’s journey <span id="task-count"></span></h2></div><button id="add-toggle" class="round" aria-label="Add a task">+</button></div>
+          <form id="add-form" class="card quick-add">
+            <label for="task-title">What’s one small step?</label><input id="task-title" required maxlength="200" placeholder="e.g. Sketch the first screen" autocomplete="off">
+            <details><summary>Project & estimate <span class="small">optional · default 15 min</span></summary><div class="form-row"><div><label for="task-parent">Project</label><input id="task-parent" list="groups" value="Today" maxlength="100"><datalist id="groups"></datalist></div><div class="estimate-field"><label for="task-estimate">Minutes</label><input id="task-estimate" type="number" min="0" max="480" value="15" required></div></div></details>
+            <button class="primary" type="submit">Add to today <span class="small">↵</span></button>
+          </form>
+          <div id="tasks"></div>
+          <div id="empty" class="empty" hidden><span aria-hidden="true">↗</span><h3>A little space to begin.</h3><p>Add one small, specific task. That’s all you need.</p><button id="empty-add" class="quiet">+ Add your first task</button></div>
+          <details id="completed"><summary id="completed-label">Completed</summary><div id="completed-tasks"></div></details>
+          <button id="wrap-toggle" class="wrap-button">Ready to call it a day? <span>Wrap up ↗</span></button>
+        </section>
+      </div>
+      <section id="stats" class="stats" aria-label="Today’s progress" hidden>
+        <div><span id="stat-focus">0m</span><p>time given to focus</p></div><div><span id="stat-done">0</span><p>small steps finished</p></div><div><span id="stat-left">0m</span><p>estimated work left</p></div>
+      </section>
+      <footer><span>Dalinar’s resolve. Kaladin’s care. Your own journey.<br><span class="lore-credit">An unofficial Stormlight-inspired space · Words & worlds by Brandon Sanderson</span></span><details><summary>Your notes</summary><p>Saved as Markdown. Open with any editor.</p><code id="notes-path"></code></details></footer>
+    </main>
+  </div>
+  <dialog id="wrap-dialog"><form id="wrap-form"><span class="eyebrow">LEAVE WORK AT WORK</span><h2>Let today be enough.</h2><p class="muted">Your time and completed work will be saved.</p><label for="tomorrow">Tomorrow’s first small step</label><input id="tomorrow" maxlength="300" placeholder="Make it easy to begin again"><label for="reflection">Anything to remember?</label><input id="reflection" maxlength="1000" placeholder="A win, a thought, or a loose end"><div class="dialog-actions"><button class="primary" type="submit">Finish my day</button><button id="wrap-cancel" type="button" class="quiet">Keep going</button></div></form></dialog>
+  <dialog id="note-dialog"><form id="note-form"><h2>A thought to keep</h2><label for="note-input">Task note</label><input id="note-input" required maxlength="1000" placeholder="What will help future you?"><div class="dialog-actions"><button class="primary" type="submit">Save note</button><button id="note-cancel" class="quiet" type="button">Cancel</button></div></form></dialog>
+  <div id="toast" role="status" hidden></div>
+</body>
+</html>

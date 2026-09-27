@@ -1,0 +1,39 @@
+/* Visual tokens only. Change the palette, type, or geometry here. */
+:root {
+  color-scheme: light;
+  --page: #f3f5f6;
+  --surface: #ffffff;
+  --surface-soft: #eaf0f5;
+  --ink: #243b50;
+  --muted: #63788b;
+  --accent: #365f82;
+  --accent-hover: #274d6e;
+  --accent-ink: #ffffff;
+  --accent-soft: #dae8f3;
+  --line: #d9e2e9;
+  --warm: #a88043;
+  --error: #a63737;
+  --shadow: 0 14px 48px #35492e08;
+  --radius: 22px;
+  --radius-small: 12px;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: Georgia, 'Times New Roman', serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --page: #101d2b;
+    --surface: #182a3c;
+    --surface-soft: #20364c;
+    --ink: #e4edf5;
+    --muted: #a0b5c9;
+    --accent: #a4d3f4;
+    --accent-hover: #c8e9ff;
+    --accent-ink: #152b40;
+    --accent-soft: #28455e;
+    --line: #31495e;
+    --warm: #dbb67d;
+    --error: #ffb4a5;
+    --shadow: 0 14px 48px #00000012;
+  }
+}

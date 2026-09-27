@@ -48,3 +48,20 @@ def test_wrap_run_writes_shutdown_notes_and_syncs(cfg, state, clock, answers):
     daily = cfg.obsidian_daily_dir
     assert "Tomorrow: Build middleware" in obsidian.daily_note_path(daily).read_text()
     assert task_notes.read_task_note(cfg, "Auth").subtasks[0].time_min == 25
+
+
+def test_focused_minutes_round_after_adding_seconds(state, clock):
+    for name in ("First", "Second"):
+        state.start_subtask_timer(name)
+        clock.advance(seconds=40)
+        state.pause_active_subtask()
+    wrap._flush_focused_time(state)
+    assert state.get_int("today_focused_min") == 1
+
+
+def test_manual_wrap_is_idempotent(cfg, state, clock, answers):
+    _day_with_work(cfg, state, clock)
+    answers.extend(["good", "Tomorrow", ""])
+    wrap.run(cfg, state)
+    wrap.run(cfg, state)
+    assert task_notes.read_task_note(cfg, "Auth").subtasks[0].time_min == 25
