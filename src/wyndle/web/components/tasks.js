@@ -16,7 +16,7 @@ function iconButton(text, label, busy, onClick) {
   return button;
 }
 
-export function createTaskList({ focus, complete, note, remove, removeGroup, completeGroup, addSubtask }) {
+export function createTaskList({ focus, complete, reopen, note, remove, removeGroup, completeGroup, addSubtask }) {
   let previous = '';
   return {
     render(tasks, busy, highLevelTasks = []) {
@@ -39,9 +39,10 @@ export function createTaskList({ focus, complete, note, remove, removeGroup, com
       const row = task => {
         const item = element('div', `task-row${task.active ? ' active' : ''}${task.done ? ' done' : ''}`);
         const check = element('button', 'task-check', task.done ? '✓' : '');
-        check.setAttribute('aria-label', task.done ? `${task.title}, completed` : `Complete ${task.title}`);
-        check.disabled = task.done || busy;
-        check.addEventListener('click', () => complete(task));
+        check.setAttribute('aria-label', task.done ? `Mark ${task.title} not done` : `Complete ${task.title}`);
+        check.title = task.done ? 'Mark not done' : 'Complete';
+        check.disabled = busy;
+        check.addEventListener('click', () => (task.done ? reopen : complete)(task));
         const body = element('div', 'task-body');
         body.append(element('span', 'task-title', task.title));
         body.append(element('span', 'task-meta', [task.estimate ? `${task.estimate} min planned` : 'No estimate',

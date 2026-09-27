@@ -79,6 +79,7 @@ def snapshot(cfg: WyndleConfig, state: State) -> dict:
         "groups": [t.text for t in daily_notes.get_high_level_tasks(cfg.daily_dir)],
         "highLevelTasks": [{"title": t.text, "done": t.done}
                            for t in daily_notes.get_high_level_tasks(cfg.daily_dir)],
+        "recentGroups": daily_notes.get_recent_high_level_tasks(cfg.daily_dir),
         "timer": {"kind": kind, "end": state.get_int("today_ui_deadline") if kind else 0,
                   "duration": state.get_int("today_ui_duration") if kind else 0,
                   "title": daily_notes.strip_estimate(active or "")},
@@ -152,7 +153,7 @@ def dispatch(cfg: WyndleConfig, state: State, action: str, data: dict) -> dict:
     if action == "morning":
         _start_day(cfg, state, data)
         return snapshot(cfg, state)
-    if action not in {"add", "focus", "pause", "complete", "break", "wrap", "note",
+    if action not in {"add", "focus", "pause", "complete", "reopen", "break", "wrap", "note",
                       "add_group", "delete", "delete_group", "complete_group"}:
         raise ValueError("Unknown action.")
     if state.is_new_day() or state.get("today_started") != "true":
@@ -181,7 +182,7 @@ def dispatch(cfg: WyndleConfig, state: State, action: str, data: dict) -> dict:
             for sub in subs:
                 daily_notes.mark_subtask_done(cfg.daily_dir, sub.text, parent)
             _set_parent_done(cfg.daily_dir, parent, True)
-    elif action in {"focus", "complete", "note", "delete"}:
+    elif action in {"focus", "complete", "reopen", "note", "delete"}:
         subs = daily_notes.get_all_subtasks(cfg.daily_dir)
         sub = next((s for s in subs if _id(s) == data.get("id")), None)
         if sub is None:
@@ -206,6 +207,11 @@ def dispatch(cfg: WyndleConfig, state: State, action: str, data: dict) -> dict:
                 remaining = daily_notes.get_task_details(cfg.daily_dir, sub.parent)
                 _set_parent_done(cfg.daily_dir, sub.parent, all(s.done for s in remaining))
                 daily_notes.log_to_daily(cfg.daily_dir, f"Completed: **{sub.display_text}**")
+        elif action == "reopen":
+            if sub.done:
+                daily_notes.mark_subtask_done(cfg.daily_dir, sub.text, sub.parent, done=False)
+                _set_parent_done(cfg.daily_dir, sub.parent, False)
+                daily_notes.log_to_daily(cfg.daily_dir, f"Reopened: **{sub.display_text}**")
         elif action == "delete":
             if state.is_subtask_active(sub.text):
                 _pause(cfg, state)

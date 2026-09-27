@@ -17,11 +17,12 @@ ASSETS = {"/": ("index.html", "text/html"),
           "/app.js": ("app.js", "text/javascript"),
           "/style.css": ("style.css", "text/css")}
 for _asset in ("api.js", "components/tasks.js", "components/focus.js", "components/dialogs.js",
-               "components/durations.js", "components/help.js"):
+               "components/durations.js", "components/help.js", "components/pomodoro.js"):
     ASSETS[f"/{_asset}"] = (_asset, "text/javascript")
 ASSETS["/theme.css"] = ("theme.css", "text/css")
 ASSETS["/components.css"] = ("components.css", "text/css")
 ASSETS["/HOW_TO_USE.md"] = ("HOW_TO_USE.md", "text/markdown")
+ASSETS["/favicon.svg"] = ("favicon.svg", "image/svg+xml")
 for _character in ("dalinar", "kaladin"):
     ASSETS[f"/assets/{_character}.jpg"] = (f"assets/{_character}.jpg", "image/jpeg")
 

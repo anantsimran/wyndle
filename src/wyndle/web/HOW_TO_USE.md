@@ -27,6 +27,8 @@ Open **High-level task & estimate** to choose where the step belongs and its
 planned minutes:
 
 - **High-level task** groups related subtasks. The initial one is **Today**.
+  The list includes every high-level task from the last 30 days; picking an
+  older one adds it back to today.
 - **Minutes** estimates the whole task, rather than one focus block.
 - Choose **5, 10, 15, 30, 45, or 60 minutes** with one click.
 - The initial estimate is **15 minutes**. You can still type a custom whole
@@ -78,10 +80,22 @@ break time never counts toward focused time.
 Click **Back to the journey** to resume your last unfinished task with the
 selected focus duration, or **Pause** to end the break without starting work.
 
+## Pomodoro timer
+
+Click **Pomodoro** in the top bar for a classic 25-minute focus timer with
+5-minute breaks and a 15-minute break after every fourth round. **Skip** moves
+to the next phase; **Reset** returns to round 1. A chime and a message mark
+each phase’s end; the next phase waits for you to click **Start**.
+
+The Pomodoro is only a timer. It does not start, pause, or track any task, and
+nothing is saved. Closing or refreshing the page resets it. Hide it with **×**;
+the top-bar button keeps showing the time while it runs.
+
 ## Keep notes and finish tasks
 
 - Click the **+** beside a task to save a short note. Expand its note count to read it.
 - Click the circle beside a task to mark it complete. An active task pauses first.
+  Click the **✓** of a completed task to mark it not done again.
 - Open **Completed** to review what you finished.
 
 At the bottom, **time given to focus** shows today’s tracked time,
