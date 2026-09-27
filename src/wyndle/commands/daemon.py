@@ -138,7 +138,7 @@ def install(cfg: WyndleConfig) -> None:
     )
     if result.stdout.strip() != "ok":
         display.error(f"Can't import wyndle from {python_path}")
-        display.dim("Make sure wyndle is installed: pipx install wyndle")
+        display.dim("Make sure wyndle is installed: uv tool install . (from the repo)")
         display.dim(f"stderr: {result.stderr.strip()}")
         return
 

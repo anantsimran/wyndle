@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from wyndle.lib import display, time_utils
 from wyndle.lib.config import WyndleConfig
-from wyndle.lib.obsidian import (
+from wyndle.lib.daily_notes import (
     create_daily_note,
     get_task_details,
     get_yesterday_remaining,
@@ -47,8 +47,8 @@ def run(cfg: WyndleConfig, state: State) -> None:
 
     display.header(f"Good morning, {cfg.user_name}")
 
-    if cfg.features.obsidian:
-        create_daily_note(cfg.obsidian_daily_dir)
+    if cfg.features.notes:
+        create_daily_note(cfg.daily_dir)
 
     if mins_available <= 0:
         _recovery_mode(cfg, state)
@@ -59,14 +59,14 @@ def run(cfg: WyndleConfig, state: State) -> None:
 
     # Carry-over tasks (excluding daily chores)
     yesterday_tasks = [
-        t for t in get_yesterday_remaining(cfg.obsidian_daily_dir)
+        t for t in get_yesterday_remaining(cfg.daily_dir)
         if t != _CHORES_TASK_NAME
     ]
     carry = _prompt_carryover(yesterday_tasks)
     new_tasks = _prompt_new_tasks()
 
     carried = yesterday_tasks if carry else []
-    if cfg.features.obsidian:
+    if cfg.features.notes:
         # 1. Write chores as FIRST Task Details section (not in High Level Tasks)
         _add_chores_task(cfg)
         # 2. Carry-over tasks (High Level Tasks + Task Details)
@@ -92,24 +92,24 @@ def _carry_over_tasks(cfg: WyndleConfig, task_names: list[str]) -> None:
     Falls back to the previous daily note when the task note has no
     open subtasks.
     """
-    write_high_level_tasks(cfg.obsidian_daily_dir, task_names)
-    previous = previous_note_date(cfg.obsidian_daily_dir)
+    write_high_level_tasks(cfg.daily_dir, task_names)
+    previous = previous_note_date(cfg.daily_dir)
     for name in task_names:
         subtask_md = generate_daily_subtasks(cfg, name)
         if not subtask_md and previous:
             subtask_md = _subtasks_from_yesterday(cfg, name, previous)
         if subtask_md:
-            write_task_details(cfg.obsidian_daily_dir, name, subtask_md)
+            write_task_details(cfg.daily_dir, name, subtask_md)
 
 
 def _subtasks_from_yesterday(
     cfg: WyndleConfig, task_name: str, yesterday: str,
 ) -> str:
     """Read open subtasks from yesterday's daily note as a fallback."""
-    subs = get_task_details(cfg.obsidian_daily_dir, task_name, yesterday)
+    subs = get_task_details(cfg.daily_dir, task_name, yesterday)
     if not subs:
         return ""
-    notes = read_subtask_notes(cfg.obsidian_daily_dir, task_name, yesterday)
+    notes = read_subtask_notes(cfg.daily_dir, task_name, yesterday)
     lines: list[str] = []
     for s in subs:
         if s.done:
@@ -124,7 +124,7 @@ def _subtasks_from_yesterday(
 def _add_new_tasks(cfg: WyndleConfig, task_names: list[str]) -> None:
     """Write new tasks to daily note and create task note files."""
     if task_names:
-        write_high_level_tasks(cfg.obsidian_daily_dir, task_names)
+        write_high_level_tasks(cfg.daily_dir, task_names)
     for name in task_names:
         create_task_note(cfg, name)
 
@@ -141,7 +141,7 @@ def _add_chores_task(cfg: WyndleConfig) -> None:
     est = cfg.chore_estimate_min
     subtask_lines = [f"- [ ] {chore} ~{est}m" for chore in cfg.daily_chores]
     write_task_details(
-        cfg.obsidian_daily_dir, _CHORES_TASK_NAME,
+        cfg.daily_dir, _CHORES_TASK_NAME,
         "\n".join(subtask_lines), prepend=True,
     )
 
@@ -152,8 +152,8 @@ def _recovery_mode(cfg: WyndleConfig, state: State) -> None:
     reply = display.prompt("ONE thing to prep for tomorrow? (or 'skip')")
     if reply.lower() != "skip":
         state.set("tomorrow_first_task", reply)
-        if cfg.features.obsidian:
-            log_to_daily(cfg.obsidian_daily_dir, f"Prepped for tomorrow: **{reply}**")
+        if cfg.features.notes:
+            log_to_daily(cfg.daily_dir, f"Prepped for tomorrow: **{reply}**")
         display.success("Tomorrow-you will thank you.")
     state.set("today_started", "true")
     state.set("today_start_time", time_utils.now_time_str())
@@ -175,7 +175,7 @@ def _show_yesterday_wrap(cfg: WyndleConfig) -> None:
     """Display yesterday's shutdown notes."""
     display.accent("Yesterday's Wrap")
     display.console.print()
-    wrap = get_yesterday_wrap(cfg.obsidian_daily_dir)
+    wrap = get_yesterday_wrap(cfg.daily_dir)
     if wrap:
         for line in wrap.splitlines():
             display.dim(f"  {line}")
@@ -224,8 +224,8 @@ def _show_summary(
     display.dim(f"Daily chores: {', '.join(cfg.daily_chores)}")
     display.info(f"Hard stop: [bold]{cfg.hard_stop}[/bold] ({hours_available} from now)")
 
-    if cfg.features.obsidian:
-        log_to_daily(cfg.obsidian_daily_dir,
+    if cfg.features.notes:
+        log_to_daily(cfg.daily_dir,
                      f"Day started. Tasks: {', '.join(all_tasks) if all_tasks else 'none added'}")
 
     state.set("today_started", "true")

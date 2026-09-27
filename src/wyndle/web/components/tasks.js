@@ -7,12 +7,22 @@ function element(tag, className, text) {
   return node;
 }
 
-export function createTaskList({ focus, complete, note }) {
+function iconButton(text, label, busy, onClick) {
+  const button = element('button', 'quiet', text);
+  button.setAttribute('aria-label', label);
+  button.title = label;
+  button.disabled = busy;
+  button.addEventListener('click', onClick);
+  return button;
+}
+
+export function createTaskList({ focus, complete, note, remove, removeGroup, completeGroup, addSubtask }) {
   let previous = '';
   return {
-    render(tasks, busy) {
+    render(tasks, busy, highLevelTasks = []) {
       // Keep focused controls in the DOM when polling hasn't changed the list.
-      const signature = JSON.stringify([tasks.map(t => ({ ...t, elapsed: Math.floor(t.elapsed / 60) })), busy]);
+      const signature = JSON.stringify([tasks.map(t => ({ ...t, elapsed: Math.floor(t.elapsed / 60) })),
+        highLevelTasks, busy]);
       if (signature === previous) return;
       previous = signature;
       const open = document.getElementById('tasks');
@@ -24,6 +34,8 @@ export function createTaskList({ focus, complete, note }) {
         if (!groups.has(task.parent)) groups.set(task.parent, []);
         groups.get(task.parent).push(task);
       }
+      // A new high-level task has no subtasks yet but must still be visible.
+      highLevelTasks.filter(g => !g.done && !groups.has(g.title)).forEach(g => groups.set(g.title, []));
       const row = task => {
         const item = element('div', `task-row${task.active ? ' active' : ''}${task.done ? ' done' : ''}`);
         const check = element('button', 'task-check', task.done ? '✓' : '');
@@ -54,10 +66,20 @@ export function createTaskList({ focus, complete, note }) {
           play.addEventListener('click', () => focus(task));
           item.append(noteButton, play);
         }
+        item.append(iconButton('×', `Delete ${task.title}`, busy, () => remove(task)));
         return item;
       };
       for (const [parent, children] of groups) {
-        open.append(element('h3', 'task-group', parent));
+        const header = element('div', 'task-group-head');
+        const actions = element('div', 'task-group-actions');
+        actions.append(
+          iconButton('+', `Add a subtask to ${parent}`, busy, () => addSubtask(parent)),
+          iconButton('✓', `Complete ${parent} and all its subtasks`, busy, () => completeGroup(parent)),
+          iconButton('×', `Delete ${parent}`, busy, () => removeGroup(parent)),
+        );
+        header.append(element('h3', 'task-group', parent), actions);
+        open.append(header);
+        if (!children.length) open.append(element('p', 'small muted task-group-empty', 'No subtasks yet. Add one small step.'));
         children.forEach(task => open.append(row(task)));
       }
       const completed = tasks.filter(t => t.done);
@@ -65,7 +87,7 @@ export function createTaskList({ focus, complete, note }) {
       document.getElementById('completed').hidden = completed.length === 0;
       document.getElementById('completed-label').textContent = `Completed · ${completed.length}`;
       document.getElementById('task-count').textContent = tasks.filter(t => !t.done).length;
-      document.getElementById('empty').hidden = tasks.some(t => !t.done);
+      document.getElementById('empty').hidden = groups.size > 0;
     },
   };
 }

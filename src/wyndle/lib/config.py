@@ -124,11 +124,11 @@ class Features:
     """Feature toggles.
 
     Attributes:
-        obsidian:       Read/write Obsidian daily notes.
+        notes:          Read/write Markdown daily notes.
         notifications:  macOS notification banners (daemon + inline).
         hard_stop:      Enforce the hard-stop time.
     """
-    obsidian: bool = True
+    notes: bool = True
     notifications: bool = True
     hard_stop: bool = True
 
@@ -141,14 +141,12 @@ class WyndleConfig:
     default so the file can be partially filled or even empty.
     """
     user_name: str = "friend"
-    obsidian_vault: str = "~/Documents/ObsidianVault"
+    notes_dir: str = "~/Documents/Wyndle"
     wake_target: str = "07:00"
     work_start: str = "09:30"
     hard_stop: str = "20:00"
     sleep_target: str = "23:00"
-    daily_chores: list[str] = field(
-        default_factory=lambda: ["Plan the day", "Reply to Slack", "Meetings"],
-    )
+    daily_chores: list[str] = field(default_factory=lambda: ["Plan the day"])
     chore_estimate_min: int = 15
     scheduled_notifications: list[dict] = field(default_factory=list)
     late_thresholds: LateThresholds = field(default_factory=LateThresholds)
@@ -169,24 +167,29 @@ class WyndleConfig:
         return self.wyndle_dir / "state"
 
     @property
-    def obsidian_vault_path(self) -> Path:
-        """Resolved, expanded path to the Obsidian vault."""
-        return Path(self.obsidian_vault).expanduser()
+    def notes_path(self) -> Path:
+        """Resolved, expanded path to the notes folder."""
+        return Path(self.notes_dir).expanduser()
 
     @property
-    def obsidian_daily_dir(self) -> Path:
-        """Directory containing Obsidian daily notes."""
-        return self.obsidian_vault_path / "daily"
+    def daily_dir(self) -> Path:
+        """Directory containing daily notes."""
+        return self.notes_path / "daily"
 
     @property
-    def obsidian_tasks_dir(self) -> Path:
+    def tasks_dir(self) -> Path:
         """Directory containing persistent per-task note files."""
-        return self.obsidian_vault_path / "tasks"
+        return self.notes_path / "tasks"
+
+    @property
+    def weekly_dir(self) -> Path:
+        """Directory containing weekly reflection notes."""
+        return self.notes_path / "weekly"
 
     def ensure_dirs(self) -> None:
         """Create all required directories if they don't exist."""
-        for d in (self.wyndle_dir, self.state_dir, self.obsidian_daily_dir,
-                  self.obsidian_tasks_dir, self.obsidian_vault_path / "weekly"):
+        for d in (self.wyndle_dir, self.state_dir, self.daily_dir,
+                  self.tasks_dir, self.weekly_dir):
             d.mkdir(parents=True, exist_ok=True)
 
 

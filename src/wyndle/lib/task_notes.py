@@ -1,6 +1,6 @@
 """Persistent per-task note files -- CRUD and sync with daily notes.
 
-Each high-level task gets a markdown file in ``vault/tasks/<slug>.md``
+Each high-level task gets a markdown file in ``<notes>/tasks/<slug>.md``
 with a YAML frontmatter, a ``## Subtasks`` summary section, and
 per-subtask detail sections.
 
@@ -77,7 +77,7 @@ def task_slug(name: str) -> str:
 
 def task_note_path(cfg: WyndleConfig, name: str) -> Path:
     """Return the filesystem path for a task note."""
-    return cfg.obsidian_tasks_dir / f"{task_slug(name)}.md"
+    return cfg.tasks_dir / f"{task_slug(name)}.md"
 
 
 # ---------------------------------------------------------------------------
@@ -197,7 +197,7 @@ def _parse_legacy_format(doc: MarkdownDoc) -> list[TaskNoteSubtask]:
 
 def write_task_note(cfg: WyndleConfig, note: TaskNote) -> None:
     """Serialize a :class:`TaskNote` to its markdown file in v1.3.0 format."""
-    cfg.obsidian_tasks_dir.mkdir(parents=True, exist_ok=True)
+    cfg.tasks_dir.mkdir(parents=True, exist_ok=True)
     days = ", ".join(note.days_worked) if note.days_worked else ""
     lines: list[str] = [
         "---",
@@ -368,9 +368,9 @@ def get_all_remaining_counts(cfg: WyndleConfig) -> tuple[int, int, int]:
     """
     open_count = 0
     future_count = 0
-    if not cfg.obsidian_tasks_dir.exists():
+    if not cfg.tasks_dir.exists():
         return 0, 0, 0
-    for path in cfg.obsidian_tasks_dir.glob("*.md"):
+    for path in cfg.tasks_dir.glob("*.md"):
         doc = MarkdownDoc(path.read_text())
         fm = doc.frontmatter.data if doc.frontmatter else {}
         if str(fm.get("status", "open")) == "done":

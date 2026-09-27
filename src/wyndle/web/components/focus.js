@@ -1,3 +1,5 @@
+import { createDurationPicker } from './durations.js';
+
 export function createFocus({ act, toast }) {
   let minutes = 15;
   let state;
@@ -7,15 +9,9 @@ export function createFocus({ act, toast }) {
   const nextTask = () => state?.tasks.find(t => t.active)
     || state?.tasks.find(t => t.id === state.lastTaskId && !t.done)
     || state?.tasks.find(t => !t.done);
-  const buttons = [...document.querySelectorAll('[data-minutes]')];
-  buttons.forEach(button => button.addEventListener('click', () => {
-    minutes = Number(button.dataset.minutes);
-    buttons.forEach(b => {
-      b.classList.toggle('selected', b === button);
-      b.setAttribute('aria-pressed', String(b === button));
-    });
-    tick();
-  }));
+  createDurationPicker($('focus-durations'), {
+    value: minutes, onChange(value) { minutes = value; tick(); },
+  });
   $('focus').addEventListener('click', () => {
     if (state?.timer.kind === 'focus') { act('pause'); return; }
     const task = nextTask();

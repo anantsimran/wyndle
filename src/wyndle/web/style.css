@@ -5,6 +5,7 @@
 body { margin: 0; background: radial-gradient(ellipse at 90% 0%, var(--accent-soft), transparent 45%), var(--page); color: var(--ink); font-family: var(--font); -webkit-font-smoothing: antialiased; }
 .shell { max-width: 1060px; margin: auto; padding: 0 48px; }
 .topbar { display: flex; justify-content: space-between; align-items: center; min-height: 100px; border-bottom: 1px solid var(--line); }
+.topbar-actions { display: flex; align-items: center; gap: 16px; }
 .brand { display: flex; align-items: center; color: var(--ink); font-size: 25px; font-weight: 650; letter-spacing: -1.2px; text-decoration: none; }
 .brand-mark { display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); height: 32px; width: 32px; border-radius: 11px; margin-right: 10px; font-family: var(--font-display); font-size: 28px; font-style: italic; }
 .brand-dot { color: var(--warm); }
@@ -33,9 +34,7 @@ h2 { font: 24px/1.25 var(--font-display); font-weight: 400; }
 .timer-ring { border: 5px solid var(--accent-soft); outline: 1px solid var(--line); outline-offset: 5px; border-radius: 50%; width: 200px; height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 #countdown { font: 49px/1.2 var(--font-display); font-variant-numeric: tabular-nums; letter-spacing: -2px; }
 #timer-caption { font-size: 8px; letter-spacing: .13em; color: var(--muted); margin-top: 10px; }
-.durations { display: flex; justify-content: center; gap: 8px; margin-bottom: 22px; }
-.durations button { background: transparent; border: 1px solid var(--line); color: var(--muted); padding: 8px 15px; border-radius: 100px; font-size: 11px; }
-.durations button.selected { background: var(--accent-soft); border-color: var(--accent-soft); color: var(--ink); }
+.durations { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 22px; }
 .focus-secondary { display: flex; justify-content: space-between; margin-top: 10px; gap: 8px; }
 #timer-hint { font-size: 10px; line-height: 1.7; margin: 16px 0 0; }
 .gentle-note { display: flex; gap: 14px; align-items: center; justify-content: center; color: var(--muted); font: italic 14px/1.5 var(--font-display); padding-top: 8px; }

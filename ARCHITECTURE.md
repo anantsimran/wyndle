@@ -24,8 +24,8 @@ src/wyndle/
     reflect.py                # wyndle reflect (weekly review)
     daemon.py                 # wyndle daemon (launchd management)
   lib/
-    markdown_dom.py           # DOM-based markdown parser (no Obsidian dependency)
-    obsidian.py               # Daily note reading/writing via markdown_dom
+    markdown_dom.py           # DOM-based markdown parser for plain Markdown
+    daily_notes.py            # Daily note reading/writing via markdown_dom
     task_notes.py             # Persistent per-task note CRUD and sync
     models.py                 # Task, SubTask, TaskNote, WorkSummary dataclasses
     config.py                 # YAML config, generic dataclass hydration
@@ -39,7 +39,7 @@ src/wyndle/
 ## Markdown DOM (markdown_dom.py)
 
 The DOM parser is the foundation layer.  It replaces the previous regex-based line
-iteration and decouples all note operations from Obsidian.
+iteration and keeps all note operations on plain Markdown.
 
 ### Block Model
 
@@ -129,7 +129,7 @@ verbatim -- only modified blocks change.  Always ends with a newline.
 
 ### Inline Text Helpers
 
-Located in `markdown_dom.py`, used by both `obsidian.py` and `task_notes.py`:
+Located in `markdown_dom.py`, used by both `daily_notes.py` and `task_notes.py`:
 
 | Function | Input | Output |
 |----------|-------|--------|
@@ -146,11 +146,11 @@ Located in `markdown_dom.py`, used by both `obsidian.py` and `task_notes.py`:
                  =======                            ====
 
 Task Note        read open subtasks                 read current note
-(vault/tasks/)   + open notes                       strict-match merge notes
+(notes/tasks/)   + open notes                       strict-match merge notes
                        |                                  ^
                        v                                  |
 Daily Note       write checkboxes                   read checkboxes + notes
-(vault/daily/)   + indented notes                   read elapsed from state
+(notes/daily/)   + indented notes                   read elapsed from state
                  (no status tags)                         ^
                        |                                  |
                        v                                  |
@@ -227,8 +227,6 @@ type: daily
 ## Task Details
 ### Daily Chores
 - [ ] Plan the day ~15m
-- [ ] Reply to Slack ~15m
-- [ ] Meetings ~15m
 
 ### Project Alpha
 - [ ] Read docs ~30m
@@ -271,10 +269,10 @@ File-based key-value store in `~/.wyndle/state/`.
 ## Key Design Decisions
 
 **DOM-based parsing.** `markdown_dom.py` provides a structured parser that works
-with any markdown editor.  No Obsidian-specific assumptions.
+with any markdown editor.  No editor-specific assumptions.
 
 **Status tags in task notes only.** `~open`/`~deferred`/`~future` tags exist
-only in `vault/tasks/*.md`.  Daily notes are clean checkboxes.
+only in `<notes>/tasks/*.md`.  Daily notes are clean checkboxes.
 
 **Strict-match note sync.** Wrap compares daily note lines exactly against task
 note lines.  Changed lines are appended as new rather than overwriting.

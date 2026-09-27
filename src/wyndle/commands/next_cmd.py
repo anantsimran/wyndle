@@ -11,7 +11,7 @@ from wyndle.commands.start import close_active_subtask
 from wyndle.commands.start import run as start_run
 from wyndle.lib import display
 from wyndle.lib.config import WyndleConfig
-from wyndle.lib.obsidian import get_all_subtasks
+from wyndle.lib.daily_notes import get_all_subtasks
 from wyndle.lib.state import State
 
 
@@ -31,7 +31,7 @@ def run(cfg: WyndleConfig, state: State) -> None:
         display.dim("No active sub-task to close.")
         display.console.print()
 
-    remaining = [s for s in get_all_subtasks(cfg.obsidian_daily_dir) if not s.done]
+    remaining = [s for s in get_all_subtasks(cfg.daily_dir) if not s.done]
     if not remaining:
         display.success("All sub-tasks complete. Run 'wyndle wrap' to end the day.")
         return

@@ -19,8 +19,8 @@ import time
 
 from wyndle.lib import display, time_utils
 from wyndle.lib.config import WyndleConfig
+from wyndle.lib.daily_notes import strip_estimate
 from wyndle.lib.notifier import notify
-from wyndle.lib.obsidian import strip_estimate
 from wyndle.lib.state import State
 
 
@@ -217,7 +217,7 @@ def _prompt_next_action(
     display.accent("What next?")
     display.dim("1) Another block on same sub-task")
     display.dim("2) Switch to different sub-task")
-    display.dim("3) Open Obsidian to update")
+    display.dim("3) Open your daily note to update")
     display.dim("4) Done for now")
     display.console.print()
     next_choice = display.prompt("Choice? [1/2/3/4]")
@@ -228,9 +228,9 @@ def _prompt_next_action(
         from wyndle.commands.start import switch_task
         switch_task(cfg, state)
     elif next_choice == "3":
-        from wyndle.lib.obsidian import open_daily_note
-        open_daily_note(cfg.obsidian_vault_path, cfg.obsidian_daily_dir)
-        display.dim("Obsidian opened. Run 'wyndle start' when ready.")
+        from wyndle.lib.daily_notes import open_daily_note
+        open_daily_note(cfg.daily_dir)
+        display.dim("Daily note opened. Run 'wyndle start' when ready.")
     else:
         state.pause_active_subtask()
         display.dim("Sub-task paused. Run 'wyndle start' or 'wyndle switch' to continue.")

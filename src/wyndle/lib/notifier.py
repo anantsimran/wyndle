@@ -303,7 +303,7 @@ def _check_idle_nothing_active(cfg: WyndleConfig, state: State) -> None:
         if block_end > 0:
             since_end = (time_utils.epoch_now() - block_end) // 60
             if since_end >= 5:
-                from wyndle.lib.obsidian import strip_estimate
+                from wyndle.lib.daily_notes import strip_estimate
                 subtask_text = state.get("today_active_subtask_text", "your task")
                 _fire(state, "auto_extend", subtask=strip_estimate(subtask_text)[:40])
         return
@@ -445,8 +445,8 @@ def _check_scheduled_notifications(cfg: WyndleConfig, state: State) -> None:
 
 def _fire_remaining_work(cfg: WyndleConfig) -> None:
     """Send a notification with the total estimated minutes remaining."""
-    from wyndle.lib.obsidian import get_remaining_estimate_min
-    remaining = get_remaining_estimate_min(cfg.obsidian_daily_dir)
+    from wyndle.lib.daily_notes import get_remaining_estimate_min
+    remaining = get_remaining_estimate_min(cfg.daily_dir)
     if remaining > 0:
         msg = f"~{time_utils.hours_minutes(remaining)} of estimated work remaining"
         notify("Wyndle", msg, sound="Morse")

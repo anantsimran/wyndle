@@ -4,7 +4,7 @@ Parses markdown into an ordered list of heading-delimited blocks with
 optional YAML frontmatter.  Supports querying by heading text/level,
 mutation (replace, append, insert), and lossless serialization.
 
-Decoupled from Obsidian -- works with any markdown editor or plain files.
+Works with any markdown editor or plain files.
 
 Block model::
 

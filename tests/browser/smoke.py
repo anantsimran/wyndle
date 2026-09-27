@@ -24,7 +24,7 @@ def main():
             def wyndle_dir(self):
                 return root / "state-home"
 
-        cfg = TestConfig(obsidian_vault=str(root / "notes"), daily_chores=[])
+        cfg = TestConfig(notes_dir=str(root / "notes"), daily_chores=[])
         state = State(cfg.state_dir)
         server = make_server(cfg, state, 0)
         thread = threading.Thread(target=server.serve_forever, daemon=True)

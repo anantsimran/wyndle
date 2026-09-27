@@ -1,0 +1,76 @@
+"""Task hierarchy and removal operations for the dashboard."""
+
+from wyndle.lib import daily_notes, task_notes
+from wyndle.lib.config import WyndleConfig
+from wyndle.lib.markdown_dom import MarkdownDoc
+from wyndle.lib.models import SubTask
+
+
+def add_group(cfg: WyndleConfig, name: str) -> str:
+    """Create an empty high-level task, or return its existing canonical name."""
+    daily = cfg.daily_dir
+    path = daily_notes.daily_note_path(daily)
+    doc = MarkdownDoc(path.read_text())
+    details = doc.find_section("Task Details", level=2)
+    if details is None or doc.find_section("High Level Tasks", level=2) is None:
+        raise ValueError("The daily note needs High Level Tasks and Task Details sections.")
+    existing = next((t.text for t in daily_notes.get_high_level_tasks(daily)
+                     if t.text.casefold() == name.casefold()), None)
+    block = doc.find_subsection(details, name)
+    name = existing or (block.title if block else name)
+    if not existing and name != "Daily Chores":
+        daily_notes.write_high_level_tasks(daily, [name])
+    if block is None:
+        daily_notes.write_task_details(daily, name, "")
+    return name
+
+
+def _archive_subtasks(cfg: WyndleConfig, parent: str, names: set[str]) -> None:
+    """Preserve saved history but keep removed subtasks out of future carryover."""
+    if not task_notes.task_note_path(cfg, parent).exists():
+        return
+    note = task_notes.read_task_note(cfg, parent)
+    changed = False
+    for sub in note.subtasks:
+        if sub.name in names and sub.status != "done":
+            sub.status = "deferred"
+            changed = True
+    if changed:
+        task_notes.write_task_note(cfg, note)
+
+
+def delete_subtask(cfg: WyndleConfig, sub: SubTask) -> None:
+    """Remove a checkbox and its indented notes, retaining sibling content."""
+    path = daily_notes.daily_note_path(cfg.daily_dir)
+    doc = MarkdownDoc(path.read_text())
+    details = doc.find_section("Task Details", level=2)
+    block = doc.find_subsection(details, sub.parent)
+    start = sub.line_num
+    indent = len(block.content[start].expandtabs()) - len(block.content[start].lstrip())
+    end = start + 1
+    while end < len(block.content):
+        line = block.content[end]
+        if line.strip() and len(line.expandtabs()) - len(line.lstrip()) <= indent:
+            break
+        end += 1
+    _archive_subtasks(cfg, sub.parent, {sub.display_text})
+    del block.content[start:end]
+    path.write_text(doc.serialize())
+
+
+def delete_group(cfg: WyndleConfig, parent: str) -> None:
+    """Remove the high-level checkbox and its entire Task Details subtree."""
+    daily = cfg.daily_dir
+    path = daily_notes.daily_note_path(daily)
+    doc = MarkdownDoc(path.read_text())
+    high = doc.find_section("High Level Tasks", level=2)
+    if high:
+        for idx, _, text in reversed(doc.get_checkboxes(high)):
+            if text.casefold() == parent.casefold():
+                del high.content[idx]
+    details = doc.find_section("Task Details", level=2)
+    block = doc.find_subsection(details, parent) if details else None
+    if block:
+        doc.remove_subsection(block)
+    # Persistent history is intentionally kept; this group is no longer in carryover.
+    path.write_text(doc.serialize())

@@ -9,8 +9,9 @@ import hashlib
 from pathlib import Path
 
 from wyndle.commands import morning, wrap
-from wyndle.lib import obsidian, time_utils
+from wyndle.lib import daily_notes, time_utils
 from wyndle.lib.config import WyndleConfig
+from wyndle.lib.dashboard_tasks import add_group, delete_group, delete_subtask
 from wyndle.lib.markdown_dom import MarkdownDoc
 from wyndle.lib.models import WorkSummary
 from wyndle.lib.state import State, _subtask_key
@@ -43,9 +44,9 @@ def snapshot(cfg: WyndleConfig, state: State) -> dict:
     active = state.get_active_subtask_text() if current else None
     tasks = []
     notes = {}
-    for sub in obsidian.get_all_subtasks(cfg.obsidian_daily_dir):
+    for sub in daily_notes.get_all_subtasks(cfg.daily_dir):
         if sub.parent not in notes:
-            notes[sub.parent] = obsidian.read_subtask_notes(cfg.obsidian_daily_dir, sub.parent)
+            notes[sub.parent] = daily_notes.read_subtask_notes(cfg.daily_dir, sub.parent)
         tasks.append({
             "id": _id(sub), "title": sub.display_text, "parent": sub.parent,
             "done": sub.done, "estimate": sub.estimate_min,
@@ -66,8 +67,8 @@ def snapshot(cfg: WyndleConfig, state: State) -> dict:
         kind = ""
     return {
         "date": time_utils.now_date_str(), "now": time_utils.epoch_now(),
-        "name": cfg.user_name, "notesPath": str(cfg.obsidian_vault_path),
-        "dailyNote": str(obsidian.daily_note_path(cfg.obsidian_daily_dir)),
+        "name": cfg.user_name, "notesPath": str(cfg.notes_path),
+        "dailyNote": str(daily_notes.daily_note_path(cfg.daily_dir)),
         "started": current and state.get("today_started") == "true",
         "wrapped": current and state.get("today_wrapped") == "true",
         "focusedSeconds": seconds if current else 0,
@@ -75,19 +76,21 @@ def snapshot(cfg: WyndleConfig, state: State) -> dict:
         "minutesLeft": time_utils.minutes_until(cfg.hard_stop),
         "tasks": tasks,
         "lastTaskId": last_id,
-        "groups": [t.text for t in obsidian.get_high_level_tasks(cfg.obsidian_daily_dir)],
+        "groups": [t.text for t in daily_notes.get_high_level_tasks(cfg.daily_dir)],
+        "highLevelTasks": [{"title": t.text, "done": t.done}
+                           for t in daily_notes.get_high_level_tasks(cfg.daily_dir)],
         "timer": {"kind": kind, "end": state.get_int("today_ui_deadline") if kind else 0,
                   "duration": state.get_int("today_ui_duration") if kind else 0,
-                  "title": obsidian.strip_estimate(active or "")},
+                  "title": daily_notes.strip_estimate(active or "")},
         "tomorrow": state.get("tomorrow_first_task"),
-        "carryover": obsidian.get_yesterday_remaining(cfg.obsidian_daily_dir),
+        "carryover": daily_notes.get_yesterday_remaining(cfg.daily_dir),
     }
 
 
 def _pause(cfg: WyndleConfig, state: State) -> None:
     if state.get("today_ui_kind") == "break":
         elapsed = max(0, time_utils.epoch_now() - state.get_int("today_ui_started")) // 60
-        obsidian.log_to_daily(cfg.obsidian_daily_dir, f"Break ended: {elapsed}m actual")
+        daily_notes.log_to_daily(cfg.daily_dir, f"Break ended: {elapsed}m actual")
     state.pause_active_subtask()
     state.set_block_active(False)
     for key in ("kind", "deadline", "duration", "started", "task"):
@@ -101,16 +104,16 @@ def _start_day(cfg: WyndleConfig, state: State, data: dict) -> None:
     wrap.auto_wrap_yesterday(cfg, state)
     morning._init_day(state)
     cfg.ensure_dirs()
-    obsidian.create_daily_note(cfg.obsidian_daily_dir)
+    daily_notes.create_daily_note(cfg.daily_dir)
     morning._add_chores_task(cfg)
     if data.get("carryover", True):
-        existing = {t.text for t in obsidian.get_high_level_tasks(cfg.obsidian_daily_dir)}
-        carried = [t for t in obsidian.get_yesterday_remaining(cfg.obsidian_daily_dir)
+        existing = {t.text for t in daily_notes.get_high_level_tasks(cfg.daily_dir)}
+        carried = [t for t in daily_notes.get_yesterday_remaining(cfg.daily_dir)
                    if t != "Daily Chores" and t not in existing]
         morning._carry_over_tasks(cfg, carried)
     state.set("today_started", "true")
     state.set("today_start_time", time_utils.now_time_str())
-    obsidian.log_to_daily(cfg.obsidian_daily_dir, "Day started from dashboard.")
+    daily_notes.log_to_daily(cfg.daily_dir, "Day started from dashboard.")
 
 
 def _add_task(cfg: WyndleConfig, data: dict) -> None:
@@ -118,24 +121,22 @@ def _add_task(cfg: WyndleConfig, data: dict) -> None:
     parent = _text(data, "parent", required=False) or "Today"
     estimate = _minutes(data, "estimate", 15, 0)
     if any(_subtask_key(s.text) == _subtask_key(title)
-           for s in obsidian.get_all_subtasks(cfg.obsidian_daily_dir)):
+           for s in daily_notes.get_all_subtasks(cfg.daily_dir)):
         raise ValueError("That task name already exists today. Give this one a distinct name.")
-    daily = cfg.obsidian_daily_dir
-    groups = [t.text for t in obsidian.get_high_level_tasks(daily)]
-    if parent.casefold() not in {g.casefold() for g in groups} and parent != "Daily Chores":
-        obsidian.write_high_level_tasks(daily, [parent])
-    path = obsidian.daily_note_path(daily)
+    daily = cfg.daily_dir
+    parent = add_group(cfg, parent)
+    path = daily_notes.daily_note_path(daily)
     doc = MarkdownDoc(path.read_text())
     details = doc.find_section("Task Details", level=2)
     block = doc.find_subsection(details, parent) if details else None
     content = "\n".join(block.content) if block else ""
     line = f"- [ ] {title}" + (f" ~{estimate}m" if estimate else "")
-    obsidian.write_task_details(daily, parent, content.rstrip() + "\n" + line + "\n")
+    daily_notes.write_task_details(daily, parent, content.rstrip() + "\n" + line + "\n")
     _set_parent_done(daily, parent, False)
 
 
 def _set_parent_done(daily: Path, parent: str, done: bool) -> None:
-    path = obsidian.daily_note_path(daily)
+    path = daily_notes.daily_note_path(daily)
     doc = MarkdownDoc(path.read_text())
     high = doc.find_section("High Level Tasks", level=2)
     if high:
@@ -151,7 +152,8 @@ def dispatch(cfg: WyndleConfig, state: State, action: str, data: dict) -> dict:
     if action == "morning":
         _start_day(cfg, state, data)
         return snapshot(cfg, state)
-    if action not in {"add", "focus", "pause", "complete", "break", "wrap", "note"}:
+    if action not in {"add", "focus", "pause", "complete", "break", "wrap", "note",
+                      "add_group", "delete", "delete_group", "complete_group"}:
         raise ValueError("Unknown action.")
     if state.is_new_day() or state.get("today_started") != "true":
         raise ValueError("Start your day first.")
@@ -161,8 +163,26 @@ def dispatch(cfg: WyndleConfig, state: State, action: str, data: dict) -> dict:
         raise ValueError("Today is wrapped. Come back tomorrow for a fresh start.")
     if action == "add":
         _add_task(cfg, data)
-    elif action in {"focus", "complete", "note"}:
-        subs = obsidian.get_all_subtasks(cfg.obsidian_daily_dir)
+    elif action == "add_group":
+        add_group(cfg, _text(data, "title"))
+    elif action in {"delete_group", "complete_group"}:
+        parent = _text(data, "parent")
+        current = snapshot(cfg, state)
+        names = current["groups"] + [t["parent"] for t in current["tasks"]]
+        if parent not in names:
+            raise ValueError("That high-level task changed. Refresh and try again.")
+        subs = [s for s in daily_notes.get_all_subtasks(cfg.daily_dir) if s.parent == parent]
+        if any(state.is_subtask_active(s.text) for s in subs):
+            _pause(cfg, state)
+        if action == "delete_group":
+            delete_group(cfg, parent)
+            daily_notes.log_to_daily(cfg.daily_dir, f"Deleted high-level task: **{parent}**")
+        else:
+            for sub in subs:
+                daily_notes.mark_subtask_done(cfg.daily_dir, sub.text, parent)
+            _set_parent_done(cfg.daily_dir, parent, True)
+    elif action in {"focus", "complete", "note", "delete"}:
+        subs = daily_notes.get_all_subtasks(cfg.daily_dir)
         sub = next((s for s in subs if _id(s) == data.get("id")), None)
         if sub is None:
             raise ValueError("That task changed. Refresh and try again.")
@@ -177,18 +197,26 @@ def dispatch(cfg: WyndleConfig, state: State, action: str, data: dict) -> dict:
             state.start_subtask_timer(sub.text)
             _begin_timer(state, "focus", duration)
             state.set("today_ui_task", sub.text)
-            obsidian.log_to_daily(cfg.obsidian_daily_dir, f"Started: **{sub.display_text}**")
+            daily_notes.log_to_daily(cfg.daily_dir, f"Started: **{sub.display_text}**")
         elif action == "complete":
             if state.is_subtask_active(sub.text):
                 _pause(cfg, state)
             if not sub.done:
-                obsidian.mark_subtask_done(cfg.obsidian_daily_dir, sub.text, sub.parent)
-                remaining = obsidian.get_task_details(cfg.obsidian_daily_dir, sub.parent)
-                _set_parent_done(cfg.obsidian_daily_dir, sub.parent, all(s.done for s in remaining))
-                obsidian.log_to_daily(cfg.obsidian_daily_dir, f"Completed: **{sub.display_text}**")
+                daily_notes.mark_subtask_done(cfg.daily_dir, sub.text, sub.parent)
+                remaining = daily_notes.get_task_details(cfg.daily_dir, sub.parent)
+                _set_parent_done(cfg.daily_dir, sub.parent, all(s.done for s in remaining))
+                daily_notes.log_to_daily(cfg.daily_dir, f"Completed: **{sub.display_text}**")
+        elif action == "delete":
+            if state.is_subtask_active(sub.text):
+                _pause(cfg, state)
+            delete_subtask(cfg, sub)
+            remaining = daily_notes.get_task_details(cfg.daily_dir, sub.parent)
+            _set_parent_done(cfg.daily_dir, sub.parent,
+                             bool(remaining) and all(s.done for s in remaining))
+            daily_notes.log_to_daily(cfg.daily_dir, f"Deleted subtask: **{sub.display_text}**")
         else:
             note = _text(data, "note")
-            path = obsidian.daily_note_path(cfg.obsidian_daily_dir)
+            path = daily_notes.daily_note_path(cfg.daily_dir)
             doc = MarkdownDoc(path.read_text())
             block = doc.find_subsection(doc.find_section("Task Details", level=2), sub.parent)
             block.content.insert(sub.line_num + 1, f"  - {note}")
@@ -199,7 +227,7 @@ def dispatch(cfg: WyndleConfig, state: State, action: str, data: dict) -> dict:
         duration = _minutes(data, "minutes", 5)
         _pause(cfg, state)
         _begin_timer(state, "break", duration)
-        obsidian.log_to_daily(cfg.obsidian_daily_dir, f"Break started: {duration}m")
+        daily_notes.log_to_daily(cfg.daily_dir, f"Break started: {duration}m")
     elif action == "wrap":
         tomorrow = _text(data, "tomorrow", required=False)
         reflection = _text(data, "reflection", required=False)

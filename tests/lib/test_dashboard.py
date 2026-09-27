@@ -1,6 +1,6 @@
 import pytest
 
-from wyndle.lib import dashboard, obsidian, task_notes, time_utils
+from wyndle.lib import daily_notes, dashboard, task_notes, time_utils
 
 
 def start(cfg, state):
@@ -28,14 +28,14 @@ def test_full_day_with_break_and_wrap(cfg, state, clock):
     dashboard.dispatch(cfg, state, "note", {"id": task["id"], "note": "Use storm blue"})
     result = dashboard.dispatch(cfg, state, "complete", {"id": task["id"]})
     assert not result["timer"]["kind"]
-    assert obsidian.get_high_level_tasks(cfg.obsidian_daily_dir)[0].done
+    assert daily_notes.get_high_level_tasks(cfg.daily_dir)[0].done
     result = dashboard.dispatch(cfg, state, "wrap", {"tomorrow": "Polish", "reflection": "Good"})
     assert result["wrapped"] and result["focusedSeconds"] == 180
     dashboard.dispatch(cfg, state, "wrap", {})
     note = task_notes.read_task_note(cfg, "Today")
     assert note.subtasks[0].time_min == 3
     assert note.subtasks[0].notes == [("Use storm blue", "open")]
-    assert "Tomorrow: Polish" in obsidian.daily_note_path(cfg.obsidian_daily_dir).read_text()
+    assert "Tomorrow: Polish" in daily_notes.daily_note_path(cfg.daily_dir).read_text()
 
 
 def test_morning_idempotent_and_chores_visible(cfg, state, clock):
@@ -68,7 +68,7 @@ def test_refresh_after_midnight_is_read_only(cfg, state, clock):
 ])
 def test_invalid_action_does_not_change_notes(cfg, state, clock, action, data):
     start(cfg, state)
-    path = obsidian.daily_note_path(cfg.obsidian_daily_dir)
+    path = daily_notes.daily_note_path(cfg.daily_dir)
     before = path.read_text()
     with pytest.raises(ValueError):
         dashboard.dispatch(cfg, state, action, data)
@@ -104,3 +104,46 @@ def test_focus_expiry_does_not_discard_overflow(cfg, state, clock):
     assert result["focusedSeconds"] == 420
     assert result["timer"]["end"] < time_utils.epoch_now()
     assert not state.is_block_active()
+
+
+def test_add_group_is_visible_empty_and_case_insensitive(cfg, state, clock):
+    start(cfg, state)
+    result = dashboard.dispatch(cfg, state, "add_group", {"title": "Ship A2"})
+    assert {"title": "Ship A2", "done": False} in result["highLevelTasks"]
+    result = dashboard.dispatch(cfg, state, "add_group", {"title": "ship a2"})
+    assert [g["title"] for g in result["highLevelTasks"]].count("Ship A2") == 1
+    assert add(cfg, state, parent="SHIP A2")["parent"] == "Ship A2"
+
+
+def test_delete_subtask_pauses_and_keeps_siblings(cfg, state, clock):
+    start(cfg, state)
+    doomed = add(cfg, state, title="Doomed", parent="Auth")
+    keep = add(cfg, state, title="Keep", parent="Auth")
+    dashboard.dispatch(cfg, state, "note", {"id": doomed["id"], "note": "gone"})
+    dashboard.dispatch(cfg, state, "note", {"id": keep["id"], "note": "stays"})
+    dashboard.dispatch(cfg, state, "focus", {"id": doomed["id"]})
+    result = dashboard.dispatch(cfg, state, "delete", {"id": doomed["id"]})
+    assert not result["timer"]["kind"]
+    assert [t["title"] for t in result["tasks"] if t["parent"] == "Auth"] == ["Keep"]
+    assert daily_notes.read_subtask_notes(cfg.daily_dir, "Auth") == {"Keep": ["stays"]}
+
+
+def test_delete_group_removes_heading_and_subtasks(cfg, state, clock):
+    start(cfg, state)
+    add(cfg, state, title="One", parent="Auth")
+    result = dashboard.dispatch(cfg, state, "delete_group", {"parent": "Auth"})
+    assert "Auth" not in result["groups"]
+    assert not any(t["parent"] == "Auth" for t in result["tasks"])
+    with pytest.raises(ValueError, match="changed"):
+        dashboard.dispatch(cfg, state, "delete_group", {"parent": "Auth"})
+
+
+def test_complete_group_marks_everything_done(cfg, state, clock):
+    start(cfg, state)
+    first = add(cfg, state, title="One", parent="Auth")
+    add(cfg, state, title="Two", parent="Auth")
+    dashboard.dispatch(cfg, state, "focus", {"id": first["id"]})
+    result = dashboard.dispatch(cfg, state, "complete_group", {"parent": "Auth"})
+    assert not result["timer"]["kind"]
+    assert all(t["done"] for t in result["tasks"] if t["parent"] == "Auth")
+    assert {"title": "Auth", "done": True} in result["highLevelTasks"]

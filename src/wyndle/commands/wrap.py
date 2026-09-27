@@ -13,8 +13,7 @@ from __future__ import annotations
 
 from wyndle.lib import display, time_utils
 from wyndle.lib.config import WyndleConfig
-from wyndle.lib.models import WorkSummary
-from wyndle.lib.obsidian import (
+from wyndle.lib.daily_notes import (
     get_high_level_tasks,
     get_remaining_tasks,
     get_task_details,
@@ -24,6 +23,7 @@ from wyndle.lib.obsidian import (
     replace_placeholder,
     strip_estimate,
 )
+from wyndle.lib.models import WorkSummary
 from wyndle.lib.state import State
 from wyndle.lib.task_notes import (
     read_task_note,
@@ -50,7 +50,7 @@ def run(cfg: WyndleConfig, state: State) -> None:
     start_time = state.get("today_start_time", "??:??")
 
     _print_day_stats(start_time, total_focused)
-    tasks = get_high_level_tasks(cfg.obsidian_daily_dir)
+    tasks = get_high_level_tasks(cfg.daily_dir)
     summary_lines, ws = _print_time_summary(cfg, state, tasks)
     _print_work_done(ws)
     _print_totals(ws, summary_lines)
@@ -58,7 +58,7 @@ def run(cfg: WyndleConfig, state: State) -> None:
 
     progress, tomorrow_task, reflection = _collect_reflections(state)
 
-    if cfg.features.obsidian:
+    if cfg.features.notes:
         _write_shutdown_notes(
             cfg, total_focused, ws, progress,
             tomorrow_task, reflection, summary_lines,
@@ -126,8 +126,8 @@ def _task_summary(
     cfg: WyndleConfig, state: State, task,
 ) -> tuple[list[str], WorkSummary]:
     """Print and return summary for one high-level task."""
-    subs = get_task_details(cfg.obsidian_daily_dir, task.text)
-    est_total = get_task_estimate(cfg.obsidian_daily_dir, task.text)
+    subs = get_task_details(cfg.daily_dir, task.text)
+    est_total = get_task_estimate(cfg.daily_dir, task.text)
     actual_total = sum(state.get_subtask_elapsed_min(s.text) for s in subs)
     ws = WorkSummary(
         total=len(subs),
@@ -200,7 +200,7 @@ def _print_totals(ws: WorkSummary, summary_lines: list[str]) -> None:
 
 def _print_remaining(cfg: WyndleConfig) -> None:
     """Show unfinished tasks if any."""
-    remaining = get_remaining_tasks(cfg.obsidian_daily_dir)
+    remaining = get_remaining_tasks(cfg.daily_dir)
     if remaining.high_level:
         display.warn(f"Unfinished tasks: {len(remaining.high_level)}")
         for t in remaining.high_level:
@@ -242,9 +242,9 @@ def _write_shutdown_notes(
     shutdown_text += "\nTime tracking:\n"
     shutdown_text += "\n".join(summary_lines)
 
-    replace_placeholder(cfg.obsidian_daily_dir, "> _filled by wyndle wrap_", f"> {shutdown_text}")
+    replace_placeholder(cfg.daily_dir, "> _filled by wyndle wrap_", f"> {shutdown_text}")
     log_to_daily(
-        cfg.obsidian_daily_dir,
+        cfg.daily_dir,
         f"Shutdown at {time_utils.now_friendly()}. "
         f"Focused {total_focused}m. Tomorrow: **{tomorrow_task}**",
     )
@@ -261,7 +261,7 @@ def sync_task_notes(cfg: WyndleConfig, state: State, date_str: str) -> None:
         state:    State store holding that day's subtask timers.
         date_str: ISO date of the daily note to sync from.
     """
-    daily_dir = cfg.obsidian_daily_dir
+    daily_dir = cfg.daily_dir
     for t in get_high_level_tasks(daily_dir, date_str):
         note = read_task_note(cfg, t.text)
         subtask_notes = read_subtask_notes(daily_dir, t.text, date_str)
@@ -283,7 +283,7 @@ def auto_wrap_yesterday(cfg: WyndleConfig, state: State) -> None:
     following commands (until ``morning`` clears the day) don't sync,
     and add the same elapsed time, again.
     """
-    if not cfg.features.obsidian:
+    if not cfg.features.notes:
         return
     stored_date = state.get("today_date", "")
     if not stored_date or stored_date == time_utils.now_date_str():

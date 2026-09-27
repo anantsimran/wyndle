@@ -19,7 +19,7 @@ import random
 
 from wyndle.lib import display
 from wyndle.lib.config import WyndleConfig
-from wyndle.lib.obsidian import log_to_daily
+from wyndle.lib.daily_notes import log_to_daily
 from wyndle.lib.state import State
 from wyndle.lib.timer import timer_display
 
@@ -67,9 +67,9 @@ def run(cfg: WyndleConfig, state: State) -> None:
 
 
 def _log(cfg: WyndleConfig, msg: str) -> None:
-    """Log a stuck event to Obsidian if the feature is enabled."""
-    if cfg.features.obsidian:
-        log_to_daily(cfg.obsidian_daily_dir, msg)
+    """Log a stuck event to the daily note if the feature is enabled."""
+    if cfg.features.notes:
+        log_to_daily(cfg.daily_dir, msg)
 
 
 def _dont_know_where(cfg: WyndleConfig, state: State, task: str) -> None:

@@ -13,21 +13,20 @@ Wyndle manages a single daily loop: morning planning, timed focus blocks, break 
 
 ### Web dashboard
 
-From this checkout (Python 3.10+):
+From this checkout, with [uv](https://docs.astral.sh/uv/) installed (Python 3.10+):
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e '.[dev]'
-wyndle ui
+uv sync
+uv run wyndle ui
 ```
 
-On Windows, activate with `.venv\Scripts\Activate.ps1` in PowerShell.
+`uv sync` creates `.venv` in the checkout and installs wyndle in editable mode.
+Prefix the commands below with `uv run`, or activate `.venv` first
+(`source .venv/bin/activate`, or `.venv\Scripts\Activate.ps1` in PowerShell).
 
 Your browser opens at **http://127.0.0.1:8765**. Click **Start my day**, type a
 task and press **Enter**, then click its **▶** button to focus. Complete tasks,
-add notes, take breaks, and wrap the day in the dashboard. No Obsidian app,
-frontend build, account, or cloud service is needed.
+add notes, take breaks, and wrap the day in the dashboard. Nofrontend build, account, or cloud service is needed.
 
 The design draws on Dalinar’s next-step resolve and Kaladin’s care, with storm
 blue, warm gold, light/dark themes, and a responsive layout. The Stormlight
@@ -44,10 +43,9 @@ refresh, closing the tab, or restarting the server. At the end of a block, the
 page shows a check-in and overtime; breaks never add to focused time. Browser
 check-ins require an open page. Pause before stepping away for the night.
 
-Existing `~/.wyndle/config.yaml`, state, and Markdown notes are reused. New web
-users get `~/Documents/Wyndle` as their notes folder. The existing
-`obsidian_vault` config key now also serves as the dashboard’s notes-folder
-setting: it can point to any folder, and Obsidian does not need to be installed.
+Existing `~/.wyndle/config.yaml`, state, and Markdown notes are reused. The
+`notes_dir` config key sets the notes folder for both the CLI and the dashboard,
+and defaults to `~/Documents/Wyndle`. It can point to any folder.
 Use distinct task names within a day; the existing CLI timer identifies tasks
 by their text. Advanced edits such as renaming tasks still use the Markdown file.
 
@@ -103,8 +101,9 @@ Change aesthetics in the CSS files; add features through a workflow action and
 a component. There is no duplicate task store or separate VS Code frontend.
 
 ```bash
-python -m pytest -q
-ruff check src tests
+uv sync --extra dev        # test and lint tools
+uv run pytest -q
+uv run ruff check src tests
 cd vscode
 npm test
 ```
@@ -112,8 +111,7 @@ npm test
 Optional real-browser check (uses an installed Google Chrome and temporary data):
 
 ```bash
-python -m pip install playwright
-python tests/browser/smoke.py
+uv run --with playwright python tests/browser/smoke.py
 ```
 
 ---
@@ -145,18 +143,21 @@ Requires Python 3.10+.
 
 Wyndle is not published on PyPI. Install it from GitHub.
 
-### pipx (recommended)
+### uv (recommended)
 
 ```bash
-brew install pipx
-pipx ensurepath
-pipx install git+https://github.com/anantsimran/wyndle.git
+brew install uv
+uv tool update-shell
+uv tool install git+https://github.com/anantsimran/wyndle.git
 
 # Or from a local clone
 git clone https://github.com/anantsimran/wyndle.git
 cd wyndle
-pipx install .
+uv tool install .
 ```
+
+`uv tool install` puts the `wyndle` executable in `~/.local/bin`; `uv tool
+update-shell` adds that directory to your PATH.
 
 For a development setup, see [Development](#development).
 
@@ -182,7 +183,7 @@ Key fields:
 
 ```yaml
 user_name: "your-name"
-obsidian_vault: "~/Documents/ObsidianVault"
+notes_dir: "~/Documents/Wyndle"
 work_start: "09:30"
 hard_stop: "20:00"
 ```
@@ -382,7 +383,7 @@ The first wyndle command of a new day (any command, not just `morning`) auto-wra
 
 ### Tracking daily chores
 
-Chores appear as subtasks under "Daily Chores" in Task Details (not in High Level Tasks). Track with `wyndle start` like any task. Default chores: Plan the day, Reply to Slack, Meetings. Resets daily, not carried over.
+Chores appear as subtasks under "Daily Chores" in Task Details (not in High Level Tasks). Track with `wyndle start` like any task. Default chores: Plan the day. Resets daily, not carried over.
 
 ### Parking work for later
 
@@ -408,13 +409,13 @@ Subtask timer continues via 5-minute overflow blocks. Daemon sends auto-extend n
 
 ### Multiple machines
 
-State is local (`~/.wyndle/state/`). Vault syncs daily notes and task notes between machines via your editor's sync mechanism (iCloud, Syncthing, etc.).
+State is local (`~/.wyndle/state/`). Your notes folder syncs daily notes and task notes between machines via your editor's sync mechanism (iCloud, Syncthing, etc.).
 
 ### Disabling features
 
 ```yaml
 features:
-  obsidian: false
+  notes: false
   notifications: false
   hard_stop: false
 ```
@@ -427,7 +428,7 @@ The markdown parser handles all standard list markers: `-`, `*`, `+`, and number
 
 ## Daily Note Format
 
-Created at `<vault>/daily/YYYY-MM-DD.md`:
+Created at `<notes>/daily/YYYY-MM-DD.md`:
 
 ```markdown
 ---
@@ -445,8 +446,6 @@ type: daily
 ## Task Details
 ### Daily Chores
 - [ ] Plan the day ~15m
-- [ ] Reply to Slack ~15m
-- [ ] Meetings ~15m
 
 ### Build auth flow
 - [ ] Read OAuth docs ~30m
@@ -497,7 +496,7 @@ Indented bullets under a subtask are notes, synced to/from task notes by wrap/mo
 
 ## Task Notes
 
-Persistent per-task files at `<vault>/tasks/<slug>.md`. Track full lifecycle across days.
+Persistent per-task files at `<notes>/tasks/<slug>.md`. Track full lifecycle across days.
 
 Created by `wyndle morning` on first add. Updated by `wyndle wrap`. Read during morning carryover.
 
@@ -591,7 +590,7 @@ v1.3.0 reads both the new format (with `## Subtasks` summary) and the v1.2.x for
 
 ## Status Tags
 
-Status tags control carryover and visibility. They exist ONLY in task note files (`vault/tasks/*.md`), never in daily notes.
+Status tags control carryover and visibility. They exist ONLY in task note files (`<notes>/tasks/*.md`), never in daily notes.
 
 ### Subtask status
 
@@ -646,7 +645,7 @@ Location: `~/.wyndle/config.yaml`. Created on first run.
 
 ```yaml
 user_name: "friend"
-obsidian_vault: "~/Documents/ObsidianVault"
+notes_dir: "~/Documents/Wyndle"
 
 wake_target: "07:00"
 work_start: "09:30"
@@ -671,13 +670,11 @@ hard_stop_settings:
 
 daily_chores:
   - "Plan the day"
-  - "Reply to Slack"
-  - "Meetings"
 
 chore_estimate_min: 15
 
 features:
-  obsidian: true
+  notes: true
   notifications: true
   hard_stop: true
 
@@ -724,7 +721,7 @@ src/wyndle/
     daemon.py                 # wyndle daemon (launchd)
   lib/
     markdown_dom.py           # DOM-based markdown parser
-    obsidian.py               # Daily note reading/writing via DOM
+    daily_notes.py            # Daily note reading/writing via DOM
     task_notes.py             # Per-task note CRUD and sync
     models.py                 # Dataclasses (Task, SubTask, TaskNote, etc.)
     config.py                 # YAML config
@@ -737,9 +734,9 @@ src/wyndle/
 
 ### Key design decisions
 
-**DOM-based parsing.** `markdown_dom.py` parses markdown into a structured block model. Supports all bullet types (-, *, +, numbered) and nested indentation. No Obsidian dependency.
+**DOM-based parsing.** `markdown_dom.py` parses markdown into a structured block model. Supports all bullet types (-, *, +, numbered) and nested indentation. Plain Markdown only.
 
-**Status tags in task notes only.** `~open`/`~deferred`/`~future` tags exist only in `vault/tasks/*.md`. Daily notes are clean checkboxes.
+**Status tags in task notes only.** `~open`/`~deferred`/`~future` tags exist only in `<notes>/tasks/*.md`. Daily notes are clean checkboxes.
 
 **Strict-match note sync.** Wrap compares daily note lines exactly against task note lines. Changed lines are appended as new `~open` entries rather than overwriting.
 
@@ -829,16 +826,14 @@ Requires Python 3.10+.
 ```bash
 git clone https://github.com/anantsimran/wyndle.git
 cd wyndle
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
-pre-commit install          # ruff + pytest on every commit
+uv sync --extra dev
+uv run pre-commit install   # ruff + pytest on every commit
 ```
 
 ```bash
-pytest                      # run tests
-ruff check .                # lint
-pre-commit run --all-files  # everything the hook runs
+uv run pytest                      # run tests
+uv run ruff check .                # lint
+uv run pre-commit run --all-files  # everything the hook runs
 ```
 
 ### Repo layout
@@ -849,7 +844,7 @@ src/wyndle/          # package (see Architecture)
   commands/          # one module per CLI command
   lib/               # shared logic: parsing, state, notes, timer, notifier
 tests/               # mirrors src/wyndle/
-  conftest.py        # fixtures: frozen clock, temp HOME + vault, scripted prompts
+  conftest.py        # fixtures: frozen clock, temp HOME + notes folder, scripted prompts
   commands/          # command flows (morning, wrap, break, start)
   lib/               # unit tests per lib module
   test_cli.py        # CLI smoke tests
@@ -859,7 +854,7 @@ Conventions:
 
 - Tests mirror the source tree: `src/wyndle/lib/foo.py` -> `tests/lib/test_foo.py`.
 - All clock access goes through `wyndle.lib.time_utils.now()`, so tests freeze time with the `clock` fixture. Don't call `datetime.now()` / `date.today()` directly.
-- Tests never touch the real `~/.wyndle` or vault: the `home` fixture points `HOME` at a temp directory.
+- Tests never touch the real `~/.wyndle` or notes folder: the `home` fixture points `HOME` at a temp directory.
 - The version lives only in `src/wyndle/__init__.py`.
 - `main` is protected: changes go through a pull request.
 
@@ -878,12 +873,12 @@ Conventions:
 - **Breaks aren't focus time.** Break time no longer counts toward focused minutes, `wyndle restart` no longer restarts a break, and the daemon doesn't nag during breaks.
 - **Notifications.** Milestones fire once per day (previously about once per week); scheduled notifications no longer skip every few days.
 - **Re-running `wyndle morning`** no longer duplicates high-level tasks.
-- `wyndle open` works with vault names containing spaces.
+- `wyndle open` works with notes folder names containing spaces.
 - Tests (pytest), pre-commit hooks (ruff + pytest), and shared helpers replacing duplicated sync / close-subtask code.
 
 ### v1.3.0
 
-- **DOM-based markdown parser.** New `markdown_dom.py` replaces regex-based line iteration. Supports all bullet types (-, *, +, numbered) and arbitrarily nested indentation. No Obsidian dependency -- works with any markdown editor.
+- **DOM-based markdown parser.** New `markdown_dom.py` replaces regex-based line iteration. Supports all bullet types (-, *, +, numbered) and arbitrarily nested indentation. Works with any markdown editor.
 - **Daily chores NOT in High Level Tasks.** Chores are now only in Task Details as the first subsection. They are trackable but don't clutter the priority list. Default chores changed to: Plan the day, Reply to Slack, Meetings.
 - **Task note format v1.3.0.** New `## Subtasks` summary section at the top of each task note with one-liner metadata (name, estimate, status, added date). Detail sections below for time, jira, and notes. Reads legacy v1.2.x format and upgrades on write.
 - **Status tags (~open, ~deferred, ~future).** Tags live in task note files only, never in daily notes. `~future` subtasks appear in backlog counts (`wyndle status`) but not in the daily note.
