@@ -24,7 +24,6 @@ from __future__ import annotations
 
 import hashlib
 import re
-from datetime import date
 from pathlib import Path
 
 from wyndle.lib import time_utils
@@ -94,7 +93,7 @@ class State:
 
     def is_new_day(self) -> bool:
         """Return ``True`` if the stored date differs from today."""
-        return self.get("today_date", "") != date.today().isoformat()
+        return self.get("today_date", "") != time_utils.now_date_str()
 
     # -- Subtask timer --
 

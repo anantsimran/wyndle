@@ -140,19 +140,19 @@ NOTIFICATION_CONFIG: dict[str, dict] = {
         "title": "3 Hours Focused!",
         "message": "180m of real work. Exceptional day.",
         "sound": "Morse",
-        "cooldown_min": 9999,
+        "cooldown_min": 0,  # once-per-day guard lives in _check_milestones
     },
     "milestone_120": {
         "title": "2 Hours Focused!",
         "message": "120m today. Solid.",
         "sound": "Morse",
-        "cooldown_min": 9999,
+        "cooldown_min": 0,  # once-per-day guard lives in _check_milestones
     },
     "milestone_60": {
         "title": "First Hour Done",
         "message": "60m focused. Real progress.",
         "sound": "Morse",
-        "cooldown_min": 9999,
+        "cooldown_min": 0,  # once-per-day guard lives in _check_milestones
     },
 }
 
@@ -313,7 +313,8 @@ def _check_idle_nothing_active(cfg: WyndleConfig, state: State) -> None:
     if not day_start:
         return
     try:
-        idle_min = int((time_utils.now() - time_utils.time_to_datetime(day_start)).total_seconds() / 60)
+        idle = time_utils.now() - time_utils.time_to_datetime(day_start)
+        idle_min = int(idle.total_seconds() / 60)
     except (ValueError, TypeError):
         return
     if idle_min < 10:
@@ -383,14 +384,20 @@ def _check_post_wrap(cfg: WyndleConfig, state: State) -> None:
 
 
 def _check_milestones(state: State) -> None:
-    """Fire one-time milestone celebrations at 60/120/180 minutes."""
+    """Fire milestone celebrations at 60/120/180 minutes, once per day each.
+
+    The once-per-day guard is a ``today_*`` marker (wiped by
+    :meth:`State.clear_day`) rather than the cooldown, which would
+    suppress the same milestone on the following days.
+    """
     focused = state.get_int("today_focused_min", 0)
-    if focused >= 180:
-        _fire(state, "milestone_180")
-    elif focused >= 120:
-        _fire(state, "milestone_120")
-    elif focused >= 60:
-        _fire(state, "milestone_60")
+    for threshold in (180, 120, 60):
+        if focused >= threshold:
+            marker = f"today_milestone_{threshold}"
+            if not state.exists(marker):
+                if _fire(state, f"milestone_{threshold}"):
+                    state.set(marker, "true")
+            return
 
 
 def _check_scheduled_notifications(cfg: WyndleConfig, state: State) -> None:
@@ -405,8 +412,11 @@ def _check_scheduled_notifications(cfg: WyndleConfig, state: State) -> None:
         Computes the sum of estimates for uncompleted subtasks and
         sends a message like ``"~45m of estimated work remaining"``.
 
-    Each notification fires at most once per day using a cooldown of
-    1440 minutes keyed by its scheduled time.
+    Each notification fires at most once per day: the fire window is
+    two minutes, so a 12-hour cooldown keyed by the scheduled time
+    blocks repeats.  A full 1440-minute cooldown would not work, since
+    each day's fire lands a little later than the last and eventually
+    falls outside the window.
     """
     now_dt = time_utils.now()
     for entry in cfg.scheduled_notifications:
@@ -422,7 +432,7 @@ def _check_scheduled_notifications(cfg: WyndleConfig, state: State) -> None:
         if not (0 <= delta_sec <= 120):
             continue
         cooldown_key = f"sched_{sched_time.replace(':', '')}"
-        if not _should_notify(state, cooldown_key, cooldown_min=1440):
+        if not _should_notify(state, cooldown_key, cooldown_min=720):
             continue
         notif_type = entry.get("type", "")
         if notif_type == "remaining_work":
@@ -438,7 +448,8 @@ def _fire_remaining_work(cfg: WyndleConfig) -> None:
     from wyndle.lib.obsidian import get_remaining_estimate_min
     remaining = get_remaining_estimate_min(cfg.obsidian_daily_dir)
     if remaining > 0:
-        notify("Wyndle", f"~{time_utils.hours_minutes(remaining)} of estimated work remaining", sound="Morse")
+        msg = f"~{time_utils.hours_minutes(remaining)} of estimated work remaining"
+        notify("Wyndle", msg, sound="Morse")
     else:
         notify("Wyndle", "No estimated work remaining. Nice!", sound="Morse")
 

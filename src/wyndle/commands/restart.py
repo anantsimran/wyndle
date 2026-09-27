@@ -19,7 +19,6 @@ from wyndle.lib.obsidian import log_to_daily, parse_estimate, strip_estimate
 from wyndle.lib.state import State
 from wyndle.lib.timer import start_focus_block
 
-
 _VALID_DURATIONS = {5, 15, 30}
 
 

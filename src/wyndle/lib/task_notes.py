@@ -52,13 +52,10 @@ from wyndle.lib.config import WyndleConfig
 from wyndle.lib.markdown_dom import (
     HeadingBlock,
     MarkdownDoc,
+    parse_added_date,
     parse_estimate,
     parse_status_tag,
-    parse_added_date,
-    strip_estimate,
     strip_all_metadata,
-    _parse_yaml_flat,
-    _serialize_yaml_flat,
 )
 from wyndle.lib.models import TaskNote, TaskNoteSubtask
 
@@ -131,7 +128,11 @@ def _parse_new_format(doc: MarkdownDoc, summary: HeadingBlock) -> list[TaskNoteS
             name=name, added=added, estimate_min=est,
             status=status or "open",
         )
-        detail = doc.find_section(name, level=2)
+        # Exact match: a substring search would let a subtask named e.g.
+        # "tasks" resolve to the "## Subtasks" summary block itself.
+        detail = next(
+            (b for b in doc.blocks if b.level == 2 and b.title == name), None,
+        )
         if detail is not None:
             _fill_detail_fields(detail, doc, sub)
         subtasks.append(sub)
@@ -164,38 +165,27 @@ def _fill_detail_fields(
 
 
 def _parse_legacy_format(doc: MarkdownDoc) -> list[TaskNoteSubtask]:
-    """Parse v1.2.x format: ``## SubtaskName`` with inline metadata fields."""
+    """Parse v1.2.x format: ``## SubtaskName`` with inline metadata fields.
+
+    Shares the v1.3.0 detail fields; ``added``, ``status`` and
+    ``estimate_min`` lived in the detail section before they moved to
+    the summary line.
+    """
     subtasks: list[TaskNoteSubtask] = []
     for block in doc.blocks:
-        if block.level != 2:
-            continue
-        if block.title.lower() in ("subtasks",):
+        if block.level != 2 or block.title.lower() == "subtasks":
             continue
         sub = TaskNoteSubtask(name=block.title)
-        in_notes = False
+        _fill_detail_fields(block, doc, sub)
         for line in block.content:
-            stripped = line.strip()
-            if stripped == "### Notes":
-                in_notes = True
-                continue
-            if in_notes:
-                if stripped.startswith("- "):
-                    sub.notes.append((stripped[2:].strip(), "open"))
-                elif stripped:
-                    sub.notes.append((stripped, "open"))
-                continue
-            if stripped.startswith("- started:"):
-                sub.started = stripped.split(":", 1)[1].strip()
-            elif stripped.startswith("- added:"):
-                sub.added = stripped.split(":", 1)[1].strip()
-            elif stripped.startswith("- time_min:"):
-                sub.time_min = int(stripped.split(":", 1)[1].strip() or "0")
-            elif stripped.startswith("- status:"):
-                sub.status = stripped.split(":", 1)[1].strip() or "open"
-            elif stripped.startswith("- jira_link:"):
-                sub.jira_link = stripped.split(":", 1)[1].strip()
-            elif stripped.startswith("- estimate_min:"):
-                sub.estimate_min = int(stripped.split(":", 1)[1].strip() or "0")
+            key, _, value = line.strip().removeprefix("- ").partition(":")
+            value = value.strip()
+            if key == "added":
+                sub.added = value
+            elif key == "status":
+                sub.status = value or "open"
+            elif key == "estimate_min":
+                sub.estimate_min = int(value or "0")
         subtasks.append(sub)
     return subtasks
 
@@ -393,7 +383,8 @@ def get_all_remaining_counts(cfg: WyndleConfig) -> tuple[int, int, int]:
             if not stripped.startswith("- "):
                 continue
             _, status = parse_status_tag(stripped[2:])
-            if status == "open":
+            # Untagged lines are "open", matching _parse_new_format.
+            if status in ("open", ""):
                 open_count += 1
             elif status == "future":
                 future_count += 1
