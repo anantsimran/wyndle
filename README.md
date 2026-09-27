@@ -37,6 +37,10 @@ wyndle ui --no-browser        # serve without opening a tab
 wyndle ui --port 8766         # choose another port if 8765 is occupied
 ```
 
+To use the dashboard from another device (e.g. your phone over Tailscale), add
+`export WYNDLE_ALLOWED_HOSTS="your-mac.tailXXXX.ts.net"` to `~/.zshrc` and run
+`tailscale serve --bg http://127.0.0.1:8765`. Use `serve`, not `funnel`, which is public.
+
 Keep the command running while using the dashboard. Ctrl+C stops the web server.
 Focus time continues until you pause or complete the task, including after a
 refresh, closing the tab, or restarting the server. At the end of a block, the

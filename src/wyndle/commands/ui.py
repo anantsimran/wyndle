@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import threading
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -34,8 +35,15 @@ class DashboardHTTPServer(ThreadingHTTPServer):
 
 
 def make_server(cfg: WyndleConfig, state: State, port: int = 8765) -> ThreadingHTTPServer:
-    """Create a loopback-only server; all reads and writes share a lock."""
+    """Create a loopback-only server; all reads and writes share a lock.
+
+    Hostnames in the comma-separated ``WYNDLE_ALLOWED_HOSTS`` environment
+    variable (e.g. a Tailscale ``*.ts.net`` name) are also accepted, over HTTPS.
+    """
     lock = threading.Lock()
+    # Remote hosts arrive via an HTTPS proxy (tailscale serve) on the default port.
+    remote = {host.strip() for host in os.environ.get("WYNDLE_ALLOWED_HOSTS", "").split(",")
+              if host.strip()}
 
     class Handler(BaseHTTPRequestHandler):
         def setup(self) -> None:
@@ -62,12 +70,13 @@ def make_server(cfg: WyndleConfig, state: State, port: int = 8765) -> ThreadingH
 
         def _local_request(self) -> bool:
             port = self.server.server_port
-            allowed = {f"127.0.0.1:{port}", f"localhost:{port}"}
-            if self.headers.get("Host") not in allowed:
+            local = {f"127.0.0.1:{port}", f"localhost:{port}"}
+            if self.headers.get("Host") not in local | remote:
                 self._json(403, {"error": "Only local dashboard requests are allowed."})
                 return False
+            origins = {f"http://{host}" for host in local} | {f"https://{host}" for host in remote}
             origin = self.headers.get("Origin")
-            if origin and origin not in {f"http://{host}" for host in allowed}:
+            if origin and origin not in origins:
                 self._json(403, {"error": "Cross-origin requests are not allowed."})
                 return False
             return True
