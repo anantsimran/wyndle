@@ -16,6 +16,18 @@ def test_create_daily_note_uses_template(cfg, clock):
     assert obsidian.get_high_level_tasks(cfg.obsidian_daily_dir) == []  # placeholder skipped
 
 
+def test_completion_targets_the_right_subtask_not_a_high_level_checkbox(cfg, clock):
+    daily = cfg.obsidian_daily_dir
+    obsidian.create_daily_note(daily)
+    obsidian.write_high_level_tasks(daily, ["Read docs", "Auth", "API"])
+    obsidian.write_task_details(daily, "Auth", "- [ ] Read docs")
+    obsidian.write_task_details(daily, "API", "- [ ] Read docs")
+    assert obsidian.mark_subtask_done(daily, "Read docs", parent="API")
+    assert not obsidian.get_high_level_tasks(daily)[0].done
+    assert not obsidian.get_task_details(daily, "Auth")[0].done
+    assert obsidian.get_task_details(daily, "API")[0].done
+
+
 def test_log_goes_to_log_section_not_shutdown_notes(cfg, clock):
     daily = cfg.obsidian_daily_dir
     obsidian.log_to_daily(daily, "first")

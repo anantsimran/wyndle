@@ -1,5 +1,10 @@
 # Architecture
 
+For a practical modification guide covering all three interfaces, see
+[DEVELOPING.md](DEVELOPING.md). The browser dashboard uses `lib/dashboard.py`
+through the local server in `commands/ui.py`; its modular assets live in `web/`.
+The `vscode/` extension embeds that same dashboard and shares its backend.
+
 ## Module Layout
 
 ```
