@@ -1,6 +1,6 @@
 """wyndle start [task] — Begin a timed focus block on a sub-task.
 
-Reads high-level tasks and subtasks from the Obsidian daily note.
+Reads high-level tasks and subtasks from the daily note.
 Tracks elapsed time per subtask.  Switching pauses the old subtask
 and resumes the new one.
 
@@ -13,8 +13,7 @@ from __future__ import annotations
 
 from wyndle.lib import display, time_utils
 from wyndle.lib.config import WyndleConfig
-from wyndle.lib.models import SubTask
-from wyndle.lib.obsidian import (
+from wyndle.lib.daily_notes import (
     get_all_subtasks,
     get_high_level_tasks,
     get_task_details,
@@ -23,6 +22,7 @@ from wyndle.lib.obsidian import (
     mark_subtask_done,
     strip_estimate,
 )
+from wyndle.lib.models import SubTask
 from wyndle.lib.state import State
 from wyndle.lib.timer import start_focus_block
 
@@ -50,24 +50,24 @@ def run(cfg: WyndleConfig, state: State, task: str = "") -> None:
 
     if not subtask:
         display.dim("No sub-tasks found. Working on the task directly.")
-        display.dim("Tip: add sub-tasks with estimates in Obsidian -> wyndle open")
+        display.dim("Tip: add sub-tasks with estimates in your notes -> wyndle open")
         state.start_subtask_timer(hl_task)
-        if cfg.features.obsidian:
-            log_to_daily(cfg.obsidian_daily_dir, f"Started: **{hl_task}**")
+        if cfg.features.notes:
+            log_to_daily(cfg.daily_dir, f"Started: **{hl_task}**")
         start_focus_block(hl_task, 0, cfg, state)
         return
 
     state.start_subtask_timer(subtask.text)
-    if cfg.features.obsidian:
+    if cfg.features.notes:
         msg = f"Started: **{subtask.display_text}** (under {hl_task})"
         if subtask.estimate_min:
             msg += f" — est: {subtask.estimate_min}m"
-        log_to_daily(cfg.obsidian_daily_dir, msg)
+        log_to_daily(cfg.daily_dir, msg)
     start_focus_block(subtask.text, subtask.estimate_min, cfg, state)
 
 
 def _pick_high_level(cfg: WyndleConfig, state: State) -> str:
-    """Interactively pick a high-level task from the Obsidian daily note.
+    """Interactively pick a high-level task from the daily note.
 
     Falls back to today's ``one_thing`` or a free-text prompt if no
     tasks are found.
@@ -79,7 +79,7 @@ def _pick_high_level(cfg: WyndleConfig, state: State) -> str:
     Returns:
         Selected task name string.
     """
-    tasks = get_high_level_tasks(cfg.obsidian_daily_dir)
+    tasks = get_high_level_tasks(cfg.daily_dir)
     remaining = [t for t in tasks if not t.done]
 
     if not remaining:
@@ -90,10 +90,10 @@ def _pick_high_level(cfg: WyndleConfig, state: State) -> str:
                 return one_thing
         return display.prompt("What are you working on?")
 
-    display.accent("Today's tasks (from Obsidian):")
+    display.accent("Today's tasks:")
     for i, t in enumerate(remaining, 1):
-        est = get_task_estimate(cfg.obsidian_daily_dir, t.text)
-        subs = get_task_details(cfg.obsidian_daily_dir, t.text)
+        est = get_task_estimate(cfg.daily_dir, t.text)
+        subs = get_task_details(cfg.daily_dir, t.text)
         sub_remaining = len([s for s in subs if not s.done])
         parts = [f"{sub_remaining} items" if sub_remaining else "no sub-tasks"]
         if est:
@@ -122,7 +122,7 @@ def _pick_subtask(cfg: WyndleConfig, state: State, hl_task: str) -> SubTask | No
     Returns:
         Selected :class:`SubTask`, or ``None`` if no subtasks exist.
     """
-    subs = get_task_details(cfg.obsidian_daily_dir, hl_task)
+    subs = get_task_details(cfg.daily_dir, hl_task)
     remaining = [s for s in subs if not s.done]
     if not remaining:
         return None
@@ -172,10 +172,10 @@ def close_active_subtask(cfg: WyndleConfig, state: State) -> bool:
     elapsed = state.get_subtask_elapsed_min(paused)
     display.info(f"Paused: [bold]{name}[/bold] ({elapsed}m elapsed)")
     if display.confirm("Mark this sub-task as done?"):
-        if mark_subtask_done(cfg.obsidian_daily_dir, paused):
+        if mark_subtask_done(cfg.daily_dir, paused):
             display.success(f"Marked done: {name}")
-            if cfg.features.obsidian:
-                log_to_daily(cfg.obsidian_daily_dir, f"Completed: **{name}** ({elapsed}m)")
+            if cfg.features.notes:
+                log_to_daily(cfg.daily_dir, f"Completed: **{name}** ({elapsed}m)")
     display.console.print()
     return True
 
@@ -193,11 +193,11 @@ def switch_task(cfg: WyndleConfig, state: State) -> None:
     """
     close_active_subtask(cfg, state)
 
-    all_subs = get_all_subtasks(cfg.obsidian_daily_dir)
+    all_subs = get_all_subtasks(cfg.daily_dir)
     remaining = [s for s in all_subs if not s.done]
 
     if not remaining:
-        display.warn("No sub-tasks found. Add them in Obsidian -> wyndle open")
+        display.warn("No sub-tasks found. Add them in your notes -> wyndle open")
         return
 
     display.accent("All sub-tasks:")
@@ -208,7 +208,7 @@ def switch_task(cfg: WyndleConfig, state: State) -> None:
     for s in remaining:
         if s.parent != current_parent:
             current_parent = s.parent
-            est = get_task_estimate(cfg.obsidian_daily_dir, current_parent)
+            est = get_task_estimate(cfg.daily_dir, current_parent)
             est_str = f"  (est: {time_utils.hours_minutes(est)})" if est else ""
             display.info(f"  [bold]{current_parent}[/bold]{est_str}")
         num += 1
@@ -230,9 +230,9 @@ def switch_task(cfg: WyndleConfig, state: State) -> None:
             selected = num_map[idx]
             state.set("today_current_task", selected.parent)
             state.start_subtask_timer(selected.text)
-            if cfg.features.obsidian:
+            if cfg.features.notes:
                 log_to_daily(
-                    cfg.obsidian_daily_dir,
+                    cfg.daily_dir,
                     f"Switched to: **{selected.display_text}** (under {selected.parent})",
                 )
             start_focus_block(selected.text, selected.estimate_min, cfg, state)

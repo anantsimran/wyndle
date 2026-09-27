@@ -1,4 +1,4 @@
-"""Shared fixtures: a controllable clock, an isolated home/vault, and state."""
+"""Shared fixtures: a controllable clock, an isolated home/notes folder, and state."""
 
 from __future__ import annotations
 
@@ -43,7 +43,7 @@ def home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 @pytest.fixture
 def cfg(home: Path) -> WyndleConfig:
-    c = WyndleConfig(obsidian_vault=str(home / "vault"), daily_chores=["Reply to Slack"])
+    c = WyndleConfig(notes_dir=str(home / "notes"), daily_chores=["Reply to Slack"])
     c.ensure_dirs()
     return c
 

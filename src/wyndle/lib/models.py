@@ -91,7 +91,7 @@ class TaskNoteSubtask:
 class TaskNote:
     """Persistent task note tracking a high-level task across days.
 
-    Stored as ``vault/tasks/<slug>.md``.  Created by morning, updated
+    Stored as ``<notes>/tasks/<slug>.md``.  Created by morning, updated
     by wrap.
 
     Attributes:

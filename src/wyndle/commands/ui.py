@@ -16,10 +16,12 @@ from wyndle.lib.state import State
 ASSETS = {"/": ("index.html", "text/html"),
           "/app.js": ("app.js", "text/javascript"),
           "/style.css": ("style.css", "text/css")}
-for _asset in ("api.js", "components/tasks.js", "components/focus.js", "components/dialogs.js"):
+for _asset in ("api.js", "components/tasks.js", "components/focus.js", "components/dialogs.js",
+               "components/durations.js", "components/help.js"):
     ASSETS[f"/{_asset}"] = (_asset, "text/javascript")
 ASSETS["/theme.css"] = ("theme.css", "text/css")
 ASSETS["/components.css"] = ("components.css", "text/css")
+ASSETS["/HOW_TO_USE.md"] = ("HOW_TO_USE.md", "text/markdown")
 for _character in ("dalinar", "kaladin"):
     ASSETS[f"/assets/{_character}.jpg"] = (f"assets/{_character}.jpg", "image/jpeg")
 
@@ -73,7 +75,11 @@ def make_server(cfg: WyndleConfig, state: State, port: int = 8765) -> ThreadingH
             if not self._local_request():
                 return
             path = urlsplit(self.path).path
-            if path == "/api/status":
+            if path == "/api/help":
+                from wyndle.lib.help import help_content
+
+                self._json(200, help_content())
+            elif path == "/api/status":
                 try:
                     with lock:
                         self._json(200, {"app": "wyndle", "protocol": 1, **snapshot(cfg, state)})
@@ -120,13 +126,7 @@ def run(port: int, open_browser: bool) -> None:
     config_exists = (WyndleConfig().wyndle_dir / "config.yaml").exists()
     cfg = load_config()
     if not config_exists:
-        # A new dashboard user needs only a notes folder, not Obsidian.
-        import yaml
-
-        path = init_default_config()
-        data = yaml.safe_load(path.read_text())
-        data["obsidian_vault"] = "~/Documents/Wyndle"
-        path.write_text(yaml.safe_dump(data, sort_keys=False))
+        init_default_config()
         cfg = load_config()
     state = State(cfg.state_dir)
     server = make_server(cfg, state, port)

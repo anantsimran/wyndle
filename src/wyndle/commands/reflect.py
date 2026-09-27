@@ -51,7 +51,7 @@ def run(cfg: WyndleConfig, state: State, monthly: bool = False) -> None:
 
     worked, didnt_work, tweak = _prompt_reflection()
 
-    if cfg.features.obsidian:
+    if cfg.features.notes:
         _save_review(cfg, period, days, day_data, done_subs, undone_subs,
                      on_time, estimated, worked, didnt_work, tweak)
 
@@ -77,7 +77,7 @@ def _scan_daily_notes(
     for i in range(days):
         check_date = today - timedelta(days=i)
         date_str = check_date.isoformat()
-        note_path = cfg.obsidian_daily_dir / f"{date_str}.md"
+        note_path = cfg.daily_dir / f"{date_str}.md"
         entry = {"date": date_str, "exists": note_path.exists()}
         if not note_path.exists():
             results.append(entry)
@@ -193,7 +193,7 @@ def _scan_subtask_data(
 
     for i in range(days):
         check_date = today - timedelta(days=i)
-        note_path = cfg.obsidian_daily_dir / f"{check_date.isoformat()}.md"
+        note_path = cfg.daily_dir / f"{check_date.isoformat()}.md"
         if not note_path.exists():
             continue
         doc = MarkdownDoc(note_path.read_text())
@@ -337,7 +337,7 @@ def _save_review(
     worked: str, didnt_work: str, tweak: str,
 ) -> None:
     """Write the review to a markdown file in the weekly/ directory."""
-    weekly_dir = cfg.obsidian_vault_path / "weekly"
+    weekly_dir = cfg.notes_path / "weekly"
     weekly_dir.mkdir(parents=True, exist_ok=True)
     suffix = "monthly" if days > 7 else "reflect"
     path = weekly_dir / f"{time_utils.now_date_str()}-{suffix}.md"

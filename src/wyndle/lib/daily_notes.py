@@ -1,10 +1,10 @@
-"""Obsidian vault integration -- daily notes, task reading, logging.
+"""Daily note handling -- reading, writing, and logging.
 
 The daily note is the **editing surface** for today's tasks.
-Persistent task history lives in ``vault/tasks/`` (see :mod:`task_notes`).
+Persistent task history lives in ``<notes>/tasks/`` (see :mod:`task_notes`).
 
 v1.3.0: All parsing uses :mod:`markdown_dom` instead of regex-based
-line iteration.  This decouples from Obsidian -- any markdown editor works.
+line iteration.  Plain Markdown -- any markdown editor works.
 
 Estimate format
 ---------------
@@ -26,7 +26,6 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from urllib.parse import quote
 
 from wyndle.lib import time_utils
 from wyndle.lib.markdown_dom import (
@@ -457,19 +456,14 @@ def get_yesterday_remaining(daily_dir: Path) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
-def open_daily_note(vault_path: Path, daily_dir: Path) -> None:
-    """Open today's daily note in the Obsidian app (macOS).
+def open_daily_note(daily_dir: Path) -> None:
+    """Open today's daily note in the default Markdown editor (macOS).
 
-    Falls back to printing the path on non-macOS systems.
+    Creates the note first if it does not exist.  Falls back to printing
+    the path on non-macOS systems.
     """
     note = create_daily_note(daily_dir)
     if sys.platform != "darwin":
         print(f"  Open manually: {note}")
         return
-    vault_name = quote(vault_path.name, safe="")
-    file_path = quote(str(note.relative_to(vault_path).with_suffix("")), safe="")
-    uri = f"obsidian://open?vault={vault_name}&file={file_path}"
-    try:
-        subprocess.run(["open", uri], check=False, capture_output=True)
-    except OSError:
-        subprocess.run(["open", str(note)], check=False, capture_output=True)
+    subprocess.run(["open", str(note)], check=False, capture_output=True)

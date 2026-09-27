@@ -7,7 +7,7 @@
 user_name: "anant"
 
 # --- Paths ---
-obsidian_vault: "~/Documents/ObsidianVault"
+notes_dir: "~/Documents/Wyndle"
 
 # --- Schedule (24h format) ---
 wake_target: "07:00"
@@ -37,15 +37,13 @@ hard_stop_settings:
 # --- Daily Chores (added to every morning) ---
 daily_chores:
   - "Plan the day"
-  - "Reply to Slack"
-  - "Meetings"
 
 # Minutes estimated per chore (used in Task Details section)
 chore_estimate_min: 15
 
 # --- Features (true/false) ---
 features:
-  obsidian: true
+  notes: true
   notifications: true
   hard_stop: true
 

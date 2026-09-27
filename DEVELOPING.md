@@ -73,7 +73,7 @@ into a library module and leave presentation in commands.
 | `state.py` | File-backed keys, day boundaries, per-subtask elapsed seconds, active timer flags. Changes affect every interface. |
 | `time_utils.py` | Clock, date/time formatting, and duration math. Use this clock so tests can control time. |
 | `markdown_dom.py` | Parse heading blocks, frontmatter, checkboxes, notes, and metadata. Preserve unrelated content when writing. |
-| `obsidian.py` | Read/write daily Markdown notes. The historical name does not imply an Obsidian app dependency. |
+| `daily_notes.py` | Read/write daily Markdown notes. |
 | `task_notes.py` | Persistent task history, note merging, status tags, and carryover generation. |
 | `timer.py` | Blocking terminal countdown and overflow. The browser does not run this blocking loop. |
 | `display.py` | Rich terminal rendering and prompts; keep browser markup elsewhere. |
@@ -185,16 +185,16 @@ state out of extension settings and the source checkout.
 ## Verification and packaging
 
 ```bash
-python -m pip install -e '.[dev]'
-python -m pytest -q
-ruff check src tests
-pre-commit run --all-files
+uv sync --extra dev
+uv run pytest -q
+uv run ruff check src tests
+uv run pre-commit run --all-files
 cd vscode
 npm test
 npm run package
 ```
 
-`tests/conftest.py` supplies an isolated home/vault, controllable clock, and
+`tests/conftest.py` supplies an isolated home/notes folder, controllable clock, and
 scripted prompt answers. HTTP tests use temporary notes and ephemeral loopback
 ports. They need permission to bind a local socket.
 
@@ -205,8 +205,7 @@ It checks start-day → quick-add → focus → reload → pause → break → n
 To check Python distribution assets:
 
 ```bash
-python -m pip install build
-python -m build
+uv build
 ```
 
 Install the built wheel into a clean environment and check `wyndle ui`, especially

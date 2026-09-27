@@ -2,15 +2,15 @@
 
 Pauses the active subtask, runs a break timer, and offers to resume
 the previous subtask when the break is over.  Break time is logged
-to Obsidian separately from focus time.
+to the daily note separately from focus time.
 """
 
 from __future__ import annotations
 
 from wyndle.lib import display, time_utils
 from wyndle.lib.config import WyndleConfig
+from wyndle.lib.daily_notes import log_to_daily, parse_estimate, strip_estimate
 from wyndle.lib.notifier import notify
-from wyndle.lib.obsidian import log_to_daily, parse_estimate, strip_estimate
 from wyndle.lib.state import State
 from wyndle.lib.timer import timer_display
 
@@ -67,8 +67,8 @@ def run(cfg: WyndleConfig, state: State) -> None:
     display.dim(f"Starting {break_min}m break: {break_name}")
     display.console.print()
 
-    if cfg.features.obsidian:
-        log_to_daily(cfg.obsidian_daily_dir, f"Break started: **{break_name}** ({break_min}m)")
+    if cfg.features.notes:
+        log_to_daily(cfg.daily_dir, f"Break started: **{break_name}** ({break_min}m)")
 
     # Timed outside the subtask timers: those feed focused minutes in wrap
     # and the "last subtask" that `restart` resumes.  Marking the block
@@ -85,8 +85,8 @@ def run(cfg: WyndleConfig, state: State) -> None:
 
     elapsed = (time_utils.epoch_now() - started) // 60
 
-    if cfg.features.obsidian:
-        log_to_daily(cfg.obsidian_daily_dir, f"Break ended: **{break_name}** ({elapsed}m actual)")
+    if cfg.features.notes:
+        log_to_daily(cfg.daily_dir, f"Break ended: **{break_name}** ({elapsed}m actual)")
 
     display.console.print()
     display.success(f"Break done! ({elapsed}m)")

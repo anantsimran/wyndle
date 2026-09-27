@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from wyndle.lib import display, time_utils
 from wyndle.lib.config import WyndleConfig
-from wyndle.lib.obsidian import (
+from wyndle.lib.daily_notes import (
     get_high_level_tasks,
     get_task_details,
     get_task_estimate,
@@ -62,7 +62,7 @@ def run(cfg: WyndleConfig, state: State) -> None:
 
     # -- Tasks --
     display.console.print()
-    tasks = get_high_level_tasks(cfg.obsidian_daily_dir)
+    tasks = get_high_level_tasks(cfg.daily_dir)
     remaining_hl = [t for t in tasks if not t.done]
     done_hl = [t for t in tasks if t.done]
 
@@ -99,7 +99,7 @@ def run(cfg: WyndleConfig, state: State) -> None:
                 display.warn(f"  Over capacity by {time_utils.hours_minutes(-slack)}")
 
     # -- Future subtask count from task notes --
-    if cfg.features.obsidian:
+    if cfg.features.notes:
         _print_future_counts(cfg)
 
 
@@ -112,8 +112,8 @@ def _print_task_detail(
         Tuple of (remaining_estimate_min, elapsed_on_remaining_min)
         for uncompleted subtasks only.
     """
-    est = get_task_estimate(cfg.obsidian_daily_dir, task_text)
-    subs = get_task_details(cfg.obsidian_daily_dir, task_text)
+    est = get_task_estimate(cfg.daily_dir, task_text)
+    subs = get_task_details(cfg.daily_dir, task_text)
     total_elapsed = sum(state.get_subtask_elapsed_min(s.text) for s in subs)
     is_active = task_text == current_task
 

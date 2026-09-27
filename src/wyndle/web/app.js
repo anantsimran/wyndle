@@ -3,6 +3,8 @@ import { request, duration } from './api.js';
 import { createFocus } from './components/focus.js';
 import { createTaskList } from './components/tasks.js';
 import { connectDialogs } from './components/dialogs.js';
+import { createDurationPicker } from './components/durations.js';
+import { connectHelp } from './components/help.js';
 
 const $ = id => document.getElementById(id);
 let state;
@@ -29,6 +31,7 @@ async function act(action, data) {
     error('');
     if (action === 'complete') toast('Another step forward. That counts.');
     if (action === 'note') toast('Saved for future you.');
+    if (action === 'delete' || action === 'delete_group') toast('Removed from today. Past history is kept.');
     return true;
   } catch (err) { error(err.message); return false; }
   finally { busy = false; render(); }
@@ -36,8 +39,23 @@ async function act(action, data) {
 
 const focus = createFocus({ act, toast });
 const dialogs = connectDialogs(act);
+connectHelp();
+const estimateInput = $('task-estimate');
+const estimatePicker = createDurationPicker($('estimate-presets'), {
+  value: estimateInput.valueAsNumber,
+  onChange(minutes) { estimateInput.value = minutes; },
+});
+estimateInput.addEventListener('input', () => estimatePicker.setValue(estimateInput.valueAsNumber));
 const tasks = createTaskList({ focus: task => focus.focus(task),
-  complete: task => act('complete', { id: task.id }), note: dialogs.note });
+  complete: task => act('complete', { id: task.id }), note: dialogs.note,
+  remove: task => dialogs.remove(task), removeGroup: group => dialogs.removeGroup(group),
+  completeGroup: group => act('complete_group', { parent: group }),
+  addSubtask: parent => {
+    $('task-parent').value = parent;
+    document.querySelector('#add-form details').open = true;
+    addFocus();
+  },
+});
 
 function render() {
   if (!state) return;
@@ -63,7 +81,7 @@ function render() {
   }));
   document.querySelectorAll('form button[type="submit"]').forEach(button => { button.disabled = busy; });
   focus.render(state, busy);
-  tasks.render(state.tasks, busy);
+  tasks.render(state.tasks, busy, state.highLevelTasks);
 }
 
 function addFocus() { $('task-title').focus(); $('task-title').scrollIntoView({ block: 'center' }); }

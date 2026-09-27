@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from wyndle.lib import display
 from wyndle.lib.config import WyndleConfig
-from wyndle.lib.obsidian import log_to_daily, parse_estimate, strip_estimate
+from wyndle.lib.daily_notes import log_to_daily, parse_estimate, strip_estimate
 from wyndle.lib.state import State
 from wyndle.lib.timer import start_focus_block
 
@@ -82,9 +82,9 @@ def run(cfg: WyndleConfig, state: State, minutes: str = "") -> None:
 
     state.start_subtask_timer(subtask_text)
 
-    if cfg.features.obsidian:
+    if cfg.features.notes:
         log_to_daily(
-            cfg.obsidian_daily_dir,
+            cfg.daily_dir,
             f"Restarted: **{display_name}** ({block_min}m)"
             if block_min
             else f"Restarted: **{display_name}**",

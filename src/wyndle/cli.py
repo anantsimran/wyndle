@@ -33,7 +33,9 @@ def _setup() -> tuple[WyndleConfig, State]:
 # Root group
 # ---------------------------------------------------------------------------
 
-@click.group(invoke_without_command=True)
+@click.group(invoke_without_command=True, epilog=(
+    "How to use: wyndle help --guide. In the dashboard, choose How to use."
+))
 @click.pass_context
 def main(ctx: click.Context) -> None:
     """Wyndle -- ADHD-Aware Productivity System for the Terminal."""
@@ -49,7 +51,7 @@ def main(ctx: click.Context) -> None:
 @click.option("--port", type=click.IntRange(1, 65535), default=8765, show_default=True)
 @click.option("--browser/--no-browser", default=True, help="Open the dashboard in your browser.")
 def ui(port: int, browser: bool) -> None:
-    """Open the local web dashboard (no Obsidian app required)."""
+    """Open the local web dashboard."""
     from wyndle.commands.ui import run
     try:
         run(port, browser)
@@ -61,7 +63,7 @@ def ui(port: int, browser: bool) -> None:
 
 @main.command()
 def morning() -> None:
-    """Start your day: yesterday recap -> add tasks -> open Obsidian."""
+    """Start your day: yesterday recap -> add tasks -> open your notes."""
     cfg, state = _setup()
     from wyndle.commands.morning import run
     run(cfg, state)
@@ -70,7 +72,7 @@ def morning() -> None:
 @main.command()
 @click.argument("task", nargs=-1)
 def start(task: tuple[str, ...]) -> None:
-    """Begin a timed focus block (picks sub-task from Obsidian)."""
+    """Begin a timed focus block (picks sub-task from your daily note)."""
     cfg, state = _setup()
     from wyndle.commands.start import run
     run(cfg, state, " ".join(task))
@@ -86,7 +88,7 @@ def switch() -> None:
 
 @main.command(name="break")
 def break_cmd() -> None:
-    """Take a break -- lunch, walk, stretch. Tracked in Obsidian."""
+    """Take a break -- lunch, walk, stretch. Tracked in your daily note."""
     cfg, state = _setup()
     from wyndle.commands.break_cmd import run
     run(cfg, state)
@@ -118,13 +120,13 @@ def status() -> None:
 
 @main.command(name="open")
 def open_cmd() -> None:
-    """Open today's Obsidian daily note for editing."""
+    """Open today's daily note for editing."""
     cfg, state = _setup()
-    from wyndle.lib.obsidian import create_daily_note, open_daily_note
-    create_daily_note(cfg.obsidian_daily_dir)
-    open_daily_note(cfg.obsidian_vault_path, cfg.obsidian_daily_dir)
+    from wyndle.lib.daily_notes import create_daily_note, open_daily_note
+    create_daily_note(cfg.daily_dir)
+    open_daily_note(cfg.daily_dir)
     from wyndle.lib.display import success
-    success("Opening Obsidian daily note...")
+    success("Opening today's daily note...")
 
 
 @main.command()
@@ -218,6 +220,7 @@ def _help_screen() -> None:
 
     accent("  [bold]Dashboard[/bold]")
     bold_print("[bold]wyndle ui[/bold]         Open the web UI (also available in VS Code)")
+    bold_print("[bold]wyndle help --guide[/bold]  Read the dashboard's How to use guide")
     console.print()
 
     accent("  [bold]Day Flow[/bold]")
@@ -233,7 +236,7 @@ def _help_screen() -> None:
 
     accent("  [bold]Info & Editing[/bold]")
     bold_print("[bold]wyndle status[/bold]     Remaining tasks with est vs actual time")
-    bold_print("[bold]wyndle open[/bold]       Open today's Obsidian daily note")
+    bold_print("[bold]wyndle open[/bold]       Open today's daily note")
     bold_print("[bold]wyndle reflect[/bold]    Weekly review (subtask + day summary)")
     bold_print("[bold]wyndle reflect monthly[/bold]  Monthly review")
     console.print()
@@ -247,7 +250,7 @@ def _help_screen() -> None:
     dim("───────────")
     dim("1. [bold]wyndle morning[/bold] -- shows yesterday's wrap, add tasks")
     dim("")
-    dim("2. [bold]wyndle open[/bold] -- edit in Obsidian:")
+    dim("2. [bold]wyndle open[/bold] -- edit your daily note:")
     dim("   Reorder high-level tasks (top = highest priority)")
     dim("   Add sub-tasks with time estimates:")
     dim("       ### Build auth flow")
@@ -274,13 +277,22 @@ def _help_screen() -> None:
     console.print()
 
     dim("Config: ~/.wyndle/config.yaml")
-    dim("Vault:  ~/Documents/ObsidianVault  (edit in config)")
+    dim("Notes:  ~/Documents/Wyndle  (edit in config)")
 
 
 @main.command(name="help")
-def help_cmd() -> None:
+@click.option("--guide", is_flag=True, help="Read the same How to use guide as the dashboard.")
+def help_cmd(guide: bool) -> None:
     """Show full help screen with usage guide."""
-    _help_screen()
+    if guide:
+        from rich.markdown import Markdown
+
+        from wyndle.lib.display import console
+        from wyndle.lib.help import guide_markdown
+
+        console.print(Markdown(guide_markdown()))
+    else:
+        _help_screen()
 
 
 if __name__ == "__main__":

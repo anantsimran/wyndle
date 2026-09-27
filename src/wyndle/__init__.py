@@ -13,11 +13,11 @@ Architecture (v1.3.0)
                    v  v      v     v v    v      v      v       v       v
                 +--------------------------------------------------------------+
                 |                      lib/ layer                               |
-                |  +--------------+  +-----------+  +-----------+              |
-                |  | markdown_dom |  |  obsidian  |  |   timer   |              |
-                |  |   (v1.3.0)  |  |            |  |           |              |
-                |  +--------------+  +-----------+  +-----------+              |
-                |         |               |              |                      |
+                |  +--------------+  +-------------+  +-----------+            |
+                |  | markdown_dom |  | daily_notes |  |   timer   |            |
+                |  |   (v1.3.0)  |  |             |  |           |            |
+                |  +--------------+  +-------------+  +-----------+            |
+                |         |                |             |                      |
                 |  +--------------+       |              |                      |
                 |  | task_notes   |-------+              |                      |
                 |  +--------------+                      |                      |
@@ -34,11 +34,11 @@ Architecture (v1.3.0)
 
 Data sync flow::
 
-    Task Note (vault/tasks/)  --morning-->  Daily Note (vault/daily/)
+    Task Note (notes/tasks/)  --morning-->  Daily Note (notes/daily/)
                                             User edits subtask notes
     Task Note  <--wrap--  Daily Note + State (~/.wyndle/state/)
 
-Parsing: markdown_dom.py provides DOM-based parser (no Obsidian dependency).
+Parsing: markdown_dom.py provides DOM-based parser for plain Markdown.
 Status tags (~open/~deferred/~future) live in task notes only.
 """
 
