@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import re
 from datetime import date, timedelta
-from pathlib import Path
 
 from wyndle.lib import display, time_utils
 from wyndle.lib.config import WyndleConfig

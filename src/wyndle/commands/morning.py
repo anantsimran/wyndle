@@ -2,12 +2,11 @@
 
 Flow (v1.3.0):
 
-1. Auto-wrap yesterday if forgotten (syncs notes + times to task notes).
-2. Clear day state.
-3. Show yesterday's shutdown notes.
-4. Carry-over tasks with open subtasks + open notes from task notes.
-5. Prompt for new high-level tasks (creates task note files).
-6. Write everything to the daily note.
+1. Clear day state (yesterday was already auto-wrapped by ``cli._setup``).
+2. Show the previous day's shutdown notes.
+3. Carry-over tasks with open subtasks + open notes from task notes.
+4. Prompt for new high-level tasks (creates task note files).
+5. Write everything to the daily note.
 
 v1.3.0 changes:
 - Daily chores are NOT added to High Level Tasks.
@@ -21,73 +20,26 @@ from wyndle.lib import display, time_utils
 from wyndle.lib.config import WyndleConfig
 from wyndle.lib.obsidian import (
     create_daily_note,
-    get_high_level_tasks,
+    get_task_details,
     get_yesterday_remaining,
     get_yesterday_wrap,
     log_to_daily,
+    previous_note_date,
     read_subtask_notes,
     write_high_level_tasks,
     write_task_details,
 )
 from wyndle.lib.state import State
-from wyndle.lib.task_notes import (
-    create_task_note,
-    generate_daily_subtasks,
-    read_task_note,
-    sync_subtask_from_daily,
-    write_task_note,
-)
-
+from wyndle.lib.task_notes import create_task_note, generate_daily_subtasks
 
 _CHORES_TASK_NAME = "Daily Chores"
 
 
-def auto_wrap_yesterday(cfg: WyndleConfig, state: State) -> None:
-    """Sync yesterday's work to task notes if wrap was forgotten.
-
-    Called from ``_setup()`` in cli.py so that ANY command triggers
-    auto-wrap.  Must run BEFORE ``clear_day()`` so state timers are
-    still available.
-    """
-    if not cfg.features.obsidian:
-        return
-    stored_date = state.get("today_date", "")
-    if not stored_date or stored_date == time_utils.now_date_str():
-        return
-    if state.get("today_wrapped", "false") == "true":
-        return
-    display.dim("  Yesterday wasn't wrapped. Auto-syncing task notes...")
-    tasks = get_high_level_tasks(cfg.obsidian_daily_dir, stored_date)
-    for t in tasks:
-        _sync_task_to_note(cfg, state, t.text, stored_date)
-    display.success("Auto-wrap complete.")
-    display.console.print()
-
-
-def _sync_task_to_note(
-    cfg: WyndleConfig, state: State, task_name: str, date_str: str,
-) -> None:
-    """Sync one task's subtask notes and times to its task note file."""
-    from wyndle.lib.obsidian import get_task_details, strip_estimate
-
-    note = read_task_note(cfg, task_name)
-    subtask_notes = read_subtask_notes(cfg.obsidian_daily_dir, task_name, date_str)
-    subs = get_task_details(cfg.obsidian_daily_dir, task_name, date_str)
-    for s in subs:
-        display_text = strip_estimate(s.text)
-        elapsed = state.get_subtask_elapsed_min(s.text)
-        daily_notes = subtask_notes.get(display_text, [])
-        sync_subtask_from_daily(
-            note, display_text, elapsed, s.done,
-            daily_notes, date_str, s.estimate_min,
-        )
-    if note.subtasks:
-        write_task_note(cfg, note)
-
-
 def run(cfg: WyndleConfig, state: State) -> None:
-    """Execute the full morning flow."""
-    auto_wrap_yesterday(cfg, state)
+    """Execute the full morning flow.
+
+    Yesterday's auto-wrap has already run in ``cli._setup``.
+    """
     _init_day(state)
 
     mins_available = time_utils.minutes_until(cfg.hard_stop)
@@ -137,17 +89,15 @@ def _init_day(state: State) -> None:
 def _carry_over_tasks(cfg: WyndleConfig, task_names: list[str]) -> None:
     """Write carried-over tasks with their open subtasks + open notes.
 
-    Falls back to yesterday's daily note when the task note has no
+    Falls back to the previous daily note when the task note has no
     open subtasks.
     """
-    from datetime import timedelta
-
     write_high_level_tasks(cfg.obsidian_daily_dir, task_names)
-    yesterday = (time_utils.now().date() - timedelta(days=1)).isoformat()
+    previous = previous_note_date(cfg.obsidian_daily_dir)
     for name in task_names:
         subtask_md = generate_daily_subtasks(cfg, name)
-        if not subtask_md:
-            subtask_md = _subtasks_from_yesterday(cfg, name, yesterday)
+        if not subtask_md and previous:
+            subtask_md = _subtasks_from_yesterday(cfg, name, previous)
         if subtask_md:
             write_task_details(cfg.obsidian_daily_dir, name, subtask_md)
 
@@ -156,8 +106,6 @@ def _subtasks_from_yesterday(
     cfg: WyndleConfig, task_name: str, yesterday: str,
 ) -> str:
     """Read open subtasks from yesterday's daily note as a fallback."""
-    from wyndle.lib.obsidian import get_task_details, strip_estimate, read_subtask_notes
-
     subs = get_task_details(cfg.obsidian_daily_dir, task_name, yesterday)
     if not subs:
         return ""

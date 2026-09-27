@@ -61,10 +61,6 @@ def timer_display(total_seconds: int, label: str) -> None:
             time.sleep(1)
             elapsed = int(time.time() - start)
             remaining = max(0, total_seconds - elapsed)
-    except KeyboardInterrupt:
-        sys.stdout.write("\033[?25h\n")  # show cursor
-        sys.stdout.flush()
-        raise
     finally:
         sys.stdout.write("\033[?25h\n")  # show cursor
         sys.stdout.flush()
@@ -150,7 +146,10 @@ def _show_estimate_context(
         display.info(f"Estimated: [bold]{estimate_min}m[/bold]")
         if elapsed_before:
             remaining_est = estimate_min - elapsed_before
-            display.info(f"Already done: [bold]{elapsed_before}m[/bold] ({remaining_est}m remaining est.)")
+            display.info(
+                f"Already done: [bold]{elapsed_before}m[/bold] "
+                f"({remaining_est}m remaining est.)"
+            )
     elif elapsed_before:
         display.dim(f"Already done: {elapsed_before}m")
     display.console.print()

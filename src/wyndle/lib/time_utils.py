@@ -7,7 +7,7 @@ consistent throughout the CLI.
 
 from __future__ import annotations
 
-from datetime import date, datetime, time
+from datetime import datetime, time
 
 
 def now() -> datetime:
@@ -22,7 +22,7 @@ def now_time_str() -> str:
 
 def now_date_str() -> str:
     """Current date as ``YYYY-MM-DD`` ISO format."""
-    return date.today().isoformat()
+    return now().date().isoformat()
 
 
 def now_friendly() -> str:
@@ -57,7 +57,7 @@ def time_to_datetime(time_str: str) -> datetime:
     Returns:
         :class:`datetime.datetime` for today at the given time.
     """
-    return datetime.combine(date.today(), parse_time(time_str))
+    return datetime.combine(now().date(), parse_time(time_str))
 
 
 def minutes_until(time_str: str) -> int:

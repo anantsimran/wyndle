@@ -8,14 +8,14 @@ src/wyndle/
   cli.py                      # Click command router (lazy imports), auto-wrap
   default_config.yaml
   commands/
-    morning.py                # Auto-wrap, carryover, chores, new tasks
+    morning.py                # Carryover, chores, new tasks
     start.py                  # wyndle start + wyndle switch
     restart.py                # wyndle restart [minutes]
     next_cmd.py               # wyndle next (close current -> start next)
     break_cmd.py              # wyndle break
     stuck.py                  # wyndle stuck
     status.py                 # wyndle status (with remaining time + future counts)
-    wrap.py                   # wyndle wrap (work summary, task note sync)
+    wrap.py                   # wyndle wrap + auto-wrap (work summary, task note sync)
     reflect.py                # wyndle reflect (weekly review)
     daemon.py                 # wyndle daemon (launchd management)
   lib/
@@ -90,7 +90,9 @@ Blocks are stored flat.  Nesting is determined by heading level at query time:
 ```
 
 `doc.get_subsections(parent)` returns direct children (one level deeper).
-`doc.find_subsection(parent, title)` finds a child by title substring match.
+`doc.find_subsection(parent, title)` finds a child by exact title (case-insensitive).
+It is deliberately not a substring match, so `Auth refactor` can never resolve to
+(and overwrite) a sibling `### Auth`.
 
 ### Query API
 
@@ -98,7 +100,7 @@ Blocks are stored flat.  Nesting is determined by heading level at query time:
 |--------|---------|-----|
 | `find_section(title, level)` | `HeadingBlock \| None` | Find first matching section |
 | `get_subsections(parent)` | `list[HeadingBlock]` | Direct child headings |
-| `find_subsection(parent, title)` | `HeadingBlock \| None` | Child by title match |
+| `find_subsection(parent, title)` | `HeadingBlock \| None` | Child by exact title |
 | `get_checkboxes(block)` | `list[(idx, done, text)]` | Parse `- [x]`/`- [ ]` lines |
 | `get_checkbox_notes(block)` | `dict[str, list[str]]` | Indented notes per checkbox (flattened) |
 | `get_nested_notes(block)` | `list[NoteItem]` | Full nested tree of all list items |
@@ -111,7 +113,7 @@ Blocks are stored flat.  Nesting is determined by heading level at query time:
 | `append_content(block, lines)` | Append to content |
 | `insert_after(anchor, block)` | Insert after anchor + children |
 | `insert_before(anchor, block)` | Insert before anchor |
-| `remove_subsection(parent, sub)` | Remove sub + children |
+| `remove_subsection(sub)` | Remove sub + children |
 | `append_block(block)` | Append to end of document |
 | `update_frontmatter(data)` | Replace frontmatter |
 
@@ -250,12 +252,13 @@ File-based key-value store in `~/.wyndle/state/`.
 | `today_one_thing` | task name | morning |
 | `today_current_task` | task name | start |
 | `today_focused_min` | integer | timer |
-| `today_wrapped` | `true` | wrap |
-| `today_block_active` | `true` | timer |
+| `today_wrapped` | `true` | wrap, auto-wrap |
+| `today_block_active` | `true` | timer, break |
 | `today_block_end` | unix epoch | timer |
-| `today_active_subtask` | hash key | start/switch/break |
-| `today_active_subtask_text` | raw text | start/switch/break |
+| `today_active_subtask` | hash key | start/switch/restart |
+| `today_active_subtask_text` | raw text | start/switch/restart |
 | `today_last_subtask_text` | raw text | start/switch/restart |
+| `today_milestone_<min>` | `true` | notifier |
 | `tomorrow_first_task` | task name | wrap |
 | `st_<hash>_elapsed` | seconds (int) | state |
 | `st_<hash>_active_since` | unix epoch | state |
@@ -280,7 +283,12 @@ dataclasses from YAML dicts.
 
 **Lazy imports.** Command modules imported inside Click handlers.
 
-**Auto-wrap.** `_setup()` in cli.py syncs the previous day on every command.
+**Auto-wrap.** `_setup()` in cli.py calls `wrap.auto_wrap_yesterday`, which syncs
+the previous day to task notes on the first command of a new day and then marks
+it wrapped so later commands do not sync (and add its time) again.
+
+**Centralized clock.** All time reads go through `time_utils.now()`; tests freeze
+it with the `clock` fixture in `tests/conftest.py`.
 
 **Chores as Task Details only.** Daily chores are trackable subtasks but do not
 clutter the High Level Tasks priority list.

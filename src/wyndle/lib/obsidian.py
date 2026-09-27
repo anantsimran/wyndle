@@ -22,10 +22,11 @@ Indented bullets under a subtask are notes::
 
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
-from datetime import timedelta
 from pathlib import Path
+from urllib.parse import quote
 
 from wyndle.lib import time_utils
 from wyndle.lib.markdown_dom import (
@@ -93,12 +94,8 @@ def daily_note_path(daily_dir: Path, date_str: str | None = None) -> Path:
     return daily_dir / f"{date_str or time_utils.now_date_str()}.md"
 
 
-def create_daily_note(daily_dir: Path, chores: list[str] | None = None) -> Path:
+def create_daily_note(daily_dir: Path) -> Path:
     """Create today's daily note if it doesn't exist yet.
-
-    Args:
-        daily_dir: Directory for daily notes.
-        chores:    Unused in v1.3.0 (chores added by morning command).
 
     Returns:
         Path to the (possibly newly created) note.
@@ -137,15 +134,30 @@ def _save_doc(daily_dir: Path, doc: MarkdownDoc, date_str: str | None = None) ->
 
 
 def log_to_daily(daily_dir: Path, msg: str) -> None:
-    """Append a timestamped log entry to today's daily note.
+    """Add a timestamped entry to the ``## Log`` section of today's note.
+
+    Falls back to appending at the end of the file when the note has no
+    ``## Log`` section.
 
     Args:
         daily_dir: Directory containing daily notes.
         msg:       Message to log (may contain markdown).
     """
     note_path = create_daily_note(daily_dir)
-    with open(note_path, "a") as f:
-        f.write(f"- **{time_utils.now_friendly()}** — {msg}\n")
+    entry = f"- **{time_utils.now_friendly()}** — {msg}"
+    doc = MarkdownDoc(note_path.read_text())
+    log = doc.find_section("Log", level=2)
+    if log is None:
+        with open(note_path, "a") as f:
+            f.write(entry + "\n")
+        return
+    # Insert after the last non-blank line so the blank separator before
+    # the next heading is preserved.
+    idx = len(log.content)
+    while idx > 0 and not log.content[idx - 1].strip():
+        idx -= 1
+    log.content.insert(idx, entry)
+    note_path.write_text(doc.serialize())
 
 
 def replace_placeholder(daily_dir: Path, placeholder: str, replacement: str) -> None:
@@ -276,7 +288,11 @@ def write_high_level_tasks(daily_dir: Path, tasks: list[str]) -> None:
         line for line in section.content
         if "(add tasks via" not in line
     ]
-    section.content.extend(f"- [ ] {t}" for t in tasks)
+    existing = {text.lower() for _, _, text in doc.get_checkboxes(section)}
+    for t in tasks:
+        if t.lower() not in existing:
+            section.content.append(f"- [ ] {t}")
+            existing.add(t.lower())
     _save_doc(daily_dir, doc)
 
 
@@ -304,7 +320,7 @@ def write_task_details(
         content=content.splitlines() if content else [],
     )
     if existing is not None:
-        doc.remove_subsection(details, existing)
+        doc.remove_subsection(existing)
     subs = doc.get_subsections(details)
     if prepend and subs:
         doc.insert_before(subs[0], new_block)
@@ -384,16 +400,26 @@ def get_remaining_estimate_min(daily_dir: Path) -> int:
 # ---------------------------------------------------------------------------
 
 
-def _yesterday_date_str(daily_dir: Path) -> str | None:
-    """Return yesterday's ISO date if the note file exists, else None."""
-    yesterday = (time_utils.now().date() - timedelta(days=1)).isoformat()
-    path = daily_dir / f"{yesterday}.md"
-    return yesterday if path.exists() else None
+_DATE_STEM_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def previous_note_date(daily_dir: Path) -> str | None:
+    """Return the ISO date of the most recent daily note before today.
+
+    Not strictly yesterday: after a weekend or a skipped day the last
+    worked day is still the one to carry over from.
+    """
+    today = time_utils.now_date_str()
+    dates = [
+        p.stem for p in daily_dir.glob("*.md")
+        if _DATE_STEM_RE.match(p.stem) and p.stem < today
+    ]
+    return max(dates) if dates else None
 
 
 def get_yesterday_wrap(daily_dir: Path) -> str | None:
-    """Read shutdown notes from yesterday's daily note."""
-    date_str = _yesterday_date_str(daily_dir)
+    """Read shutdown notes from the previous daily note."""
+    date_str = previous_note_date(daily_dir)
     if date_str is None:
         return None
     doc = _load_doc(daily_dir, date_str)
@@ -403,16 +429,16 @@ def get_yesterday_wrap(daily_dir: Path) -> str | None:
     if section is None:
         return None
     lines = [
-        l.strip().lstrip("> ").strip()
-        for l in section.content
-        if l.strip() and l.strip() != "> _filled by wyndle wrap_"
+        line.strip().lstrip("> ").strip()
+        for line in section.content
+        if line.strip() and line.strip() != "> _filled by wyndle wrap_"
     ]
     return "\n".join(lines) if lines else None
 
 
 def get_yesterday_remaining(daily_dir: Path) -> list[str]:
-    """Get uncompleted high-level task texts from yesterday."""
-    date_str = _yesterday_date_str(daily_dir)
+    """Get uncompleted high-level task texts from the previous daily note."""
+    date_str = previous_note_date(daily_dir)
     if date_str is None:
         return []
     tasks = get_high_level_tasks(daily_dir, date_str)
@@ -433,8 +459,8 @@ def open_daily_note(vault_path: Path, daily_dir: Path) -> None:
     if sys.platform != "darwin":
         print(f"  Open manually: {note}")
         return
-    vault_name = vault_path.name
-    file_path = str(note.relative_to(vault_path)).replace(".md", "")
+    vault_name = quote(vault_path.name, safe="")
+    file_path = quote(str(note.relative_to(vault_path).with_suffix("")), safe="")
     uri = f"obsidian://open?vault={vault_name}&file={file_path}"
     try:
         subprocess.run(["open", uri], check=False, capture_output=True)

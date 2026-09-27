@@ -42,4 +42,4 @@ Parsing: markdown_dom.py provides DOM-based parser (no Obsidian dependency).
 Status tags (~open/~deferred/~future) live in task notes only.
 """
 
-__version__ = "1.3.0"
+__version__ = "1.3.1"

@@ -24,7 +24,7 @@ def _setup() -> tuple[WyndleConfig, State]:
     cfg = load_config()
     cfg.ensure_dirs()
     state = State(cfg.state_dir)
-    from wyndle.commands.morning import auto_wrap_yesterday
+    from wyndle.commands.wrap import auto_wrap_yesterday
     auto_wrap_yesterday(cfg, state)
     return cfg, state
 
@@ -197,7 +197,7 @@ def daemon_test() -> None:
 
 def _help_screen() -> None:
     """Render the full help screen with usage guide."""
-    from wyndle.lib.display import bold_print, console, dim, header, accent
+    from wyndle.lib.display import accent, bold_print, console, dim, header
 
     header("Wyndle -- ADHD-Aware Productivity System")
     console.print()

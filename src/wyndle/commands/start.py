@@ -20,6 +20,8 @@ from wyndle.lib.obsidian import (
     get_task_details,
     get_task_estimate,
     log_to_daily,
+    mark_subtask_done,
+    strip_estimate,
 )
 from wyndle.lib.state import State
 from wyndle.lib.timer import start_focus_block
@@ -157,6 +159,27 @@ def _pick_subtask(cfg: WyndleConfig, state: State, hl_task: str) -> SubTask | No
     return remaining[0]
 
 
+def close_active_subtask(cfg: WyndleConfig, state: State) -> bool:
+    """Pause the active subtask and offer to check it off in the daily note.
+
+    Returns:
+        ``True`` if a subtask was active.
+    """
+    paused = state.pause_active_subtask()
+    if not paused:
+        return False
+    name = strip_estimate(paused)
+    elapsed = state.get_subtask_elapsed_min(paused)
+    display.info(f"Paused: [bold]{name}[/bold] ({elapsed}m elapsed)")
+    if display.confirm("Mark this sub-task as done?"):
+        if mark_subtask_done(cfg.obsidian_daily_dir, paused):
+            display.success(f"Marked done: {name}")
+            if cfg.features.obsidian:
+                log_to_daily(cfg.obsidian_daily_dir, f"Completed: **{name}** ({elapsed}m)")
+    display.console.print()
+    return True
+
+
 def switch_task(cfg: WyndleConfig, state: State) -> None:
     """Pause the current subtask and switch to a different one.
 
@@ -168,21 +191,7 @@ def switch_task(cfg: WyndleConfig, state: State) -> None:
         cfg:   Current configuration.
         state: Current state store.
     """
-    from wyndle.lib.obsidian import mark_subtask_done, strip_estimate
-
-    paused = state.pause_active_subtask()
-    if paused:
-        elapsed = state.get_subtask_elapsed_min(paused)
-        display.dim(f"Paused: {strip_estimate(paused)} ({elapsed}m elapsed)")
-        if display.confirm("Mark this sub-task as done?"):
-            if mark_subtask_done(cfg.obsidian_daily_dir, paused):
-                display.success(f"Marked done: {strip_estimate(paused)}")
-                if cfg.features.obsidian:
-                    log_to_daily(
-                        cfg.obsidian_daily_dir,
-                        f"Completed: **{strip_estimate(paused)}** ({elapsed}m)",
-                    )
-        display.console.print()
+    close_active_subtask(cfg, state)
 
     all_subs = get_all_subtasks(cfg.obsidian_daily_dir)
     remaining = [s for s in all_subs if not s.done]
