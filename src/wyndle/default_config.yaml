@@ -1,0 +1,64 @@
+# ============================================================================
+# WYNDLE CONFIG — Edit this file to customize your system
+# Location: ~/.wyndle/config.yaml
+# ============================================================================
+
+# --- Identity ---
+user_name: "friend"
+
+# --- Paths ---
+obsidian_vault: "~/Documents/ObsidianVault"
+
+# --- Schedule (24h format) ---
+wake_target: "07:00"
+work_start: "09:30"
+hard_stop: "20:00"
+sleep_target: "23:00"
+
+# --- Late Start Thresholds ---
+late_thresholds:
+  mild: "10:30"
+  moderate: "12:00"
+  severe: "14:00"
+
+# --- Timer Settings (minutes) ---
+timer:
+  micro_block: 5
+  short_block: 15
+  long_block: 30
+
+# --- Hard Stop Escalation ---
+hard_stop_settings:
+  warn_before_min: 15
+  grace_min: 10
+  max_extensions: 2
+  extension_min: 30
+
+# --- Daily Chores (added to every morning) ---
+daily_chores:
+  - "Plan the day"
+  - "Reply to Slack"
+  - "Meetings"
+
+# Minutes estimated per chore (used in Task Details section)
+chore_estimate_min: 15
+
+# --- Features (true/false) ---
+features:
+  obsidian: true
+  notifications: true
+  hard_stop: true
+
+# --- Scheduled Notifications ---
+# Static: fires a custom message at the given time.
+# Dynamic: set type to "remaining_work" to compute remaining estimates.
+# Requires features.notifications: true and wyndle daemon running.
+scheduled_notifications:
+  - time: "10:00"
+    message: "Start the work early, dont slack"
+  - time: "13:30"
+    type: "remaining_work"
+  - time: "15:00"
+    message: "Go for a walk"
+  - time: "17:00"
+    message: "End the day early, dont slack"
