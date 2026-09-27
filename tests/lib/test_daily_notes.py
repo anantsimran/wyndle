@@ -84,6 +84,18 @@ def test_previous_note_skips_gaps(cfg, clock):
     assert daily_notes.previous_note_date(daily) == "2026-04-03"
 
 
+def test_recent_high_level_tasks_span_30_days_newest_first(cfg, clock):
+    _daily(cfg, "2026-03-08", "## High Level Tasks\n- [ ] Too old\n")
+    _daily(cfg, "2026-03-09", "## High Level Tasks\n- [x] Auth\n- [ ] Billing\n")
+    _daily(cfg, "2026-04-06", "## High Level Tasks\n- [ ] AUTH\n")
+    _daily(cfg, "2026-04-08", "## High Level Tasks\n- [ ] Future\n")
+    daily_notes.create_daily_note(cfg.daily_dir)
+    daily_notes.write_high_level_tasks(cfg.daily_dir, ["Today task"])
+    assert daily_notes.get_recent_high_level_tasks(cfg.daily_dir) == [
+        "Today task", "AUTH", "Billing",
+    ]
+
+
 def test_yesterday_remaining_and_wrap_after_weekend(cfg, clock):
     _daily(cfg, "2026-04-03", (
         "## High Level Tasks\n- [x] Done thing\n- [ ] Open thing\n"

@@ -63,6 +63,13 @@ footer summary { font-size: 10px; }
 .empty { padding: 34px 10px; text-align: center; color: var(--muted); font-size: 12px; }
 .empty > span { font-size: 32px; color: var(--warm); }
 .empty h3 { font: 22px var(--font-display); color: var(--ink); }
+.pomodoro { position: fixed; right: 24px; bottom: 24px; width: 250px; padding: 16px 18px; text-align: center; z-index: 5; }
+.pomodoro .section-top > .quiet { padding: 4px 8px; font-size: 16px; }
+#pomodoro-clock { display: block; font: 44px/1.2 var(--font-display); font-variant-numeric: tabular-nums; letter-spacing: -2px; margin-top: 10px; }
+#pomodoro-round { margin: 4px 0 12px; }
+.pomodoro-actions { display: flex; justify-content: center; gap: 4px; }
+.pomodoro-actions .primary { padding: 10px 18px; font-size: 12px; }
+.pomodoro > p:last-child { font-size: 9px; margin: 12px 0 0; }
 @media (max-width: 780px) {
   .shell { padding: 0 24px; max-width: 600px; }
   .workspace { grid-template-columns: 1fr; gap: 28px; }
@@ -99,6 +106,7 @@ footer summary { font-size: 10px; }
   #timer-caption { font-size: 6px; }
   .durations { margin-bottom: 14px; }
   .gentle-note { display: none; }
+  .pomodoro { left: 12px; right: 12px; bottom: 12px; width: auto; }
   .companion-card { gap: 12px; }
   .companion-card img { width: 70px; height: 88px; }
   .companion-card p { font-size: 12px; margin-top: 5px; }

@@ -1,10 +1,22 @@
 /* Reusable controls and surfaces. Layout lives in style.css. */
-button, input { font: inherit; }
+button, input, select { font: inherit; }
 button { border: 0; cursor: pointer; transition: background .15s, transform .15s; }
 button:active:not(:disabled) { transform: translateY(1px); }
 button:disabled { opacity: .45; cursor: default; }
 :focus-visible { outline: 3px solid var(--warm); outline-offset: 4px; }
-input { width: 100%; border: 1px solid var(--line); border-radius: 9px; padding: 12px; background: var(--page); color: var(--ink); }
+input, select { width: 100%; border: 1px solid var(--line); border-radius: 9px; padding: 12px; background: var(--page); color: var(--ink); }
+/* Browsers without customizable selects keep their native menu. */
+@supports (appearance: base-select) {
+  select, ::picker(select) { appearance: base-select; }
+  select { display: flex; align-items: center; cursor: pointer; }
+  select::picker-icon { color: var(--muted); transition: rotate .15s; }
+  select:open::picker-icon { rotate: 180deg; }
+  ::picker(select) { border: 1px solid var(--line); border-radius: var(--radius-small); background: var(--surface); color: var(--ink); box-shadow: 0 12px 32px #10202e29; padding: 6px; margin-block: 6px; max-height: 280px; }
+  option { padding: 9px 12px; border-radius: 8px; font-size: 13px; overflow-wrap: anywhere; cursor: pointer; }
+  option:hover, option:focus-visible { background: var(--surface-soft); outline: none; }
+  option:checked { background: var(--accent-soft); font-weight: 600; }
+  option::checkmark { color: var(--accent); }
+}
 input[type=checkbox] { width: auto; accent-color: var(--accent); }
 input::placeholder { color: var(--muted); }
 label { display: block; font-size: 12px; font-weight: 600; margin: 14px 0 8px; }

@@ -7,7 +7,10 @@ export function connectDialogs(act) {
   $('group-form').addEventListener('submit', async event => {
     event.preventDefault();
     if (await act('add_group', { title: $('group-title').value })) {
-      $('task-parent').value = $('group-title').value.trim();
+      // The server matches existing names case-insensitively, so find its canonical spelling.
+      const title = $('group-title').value.trim().toLowerCase();
+      const option = [...$('task-parent').options].find(o => o.value.toLowerCase() === title);
+      if (option) $('task-parent').value = option.value;
       $('group-title').value = '';
       $('group-dialog').close();
       $('task-title').focus();

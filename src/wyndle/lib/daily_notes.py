@@ -25,6 +25,7 @@ from __future__ import annotations
 import re
 import subprocess
 import sys
+from datetime import timedelta
 from pathlib import Path
 
 from wyndle.lib import time_utils
@@ -330,12 +331,15 @@ def write_task_details(
     _save_doc(daily_dir, doc)
 
 
-def mark_subtask_done(daily_dir: Path, subtask_text: str, parent: str = "") -> bool:
+def mark_subtask_done(
+    daily_dir: Path, subtask_text: str, parent: str = "", done: bool = True,
+) -> bool:
     """Check off a subtask in today's daily note (``[ ]`` -> ``[x]``).
 
     Args:
         daily_dir:    Directory containing daily notes.
         subtask_text: Raw subtask text to match.
+        done:         ``False`` unchecks a completed subtask instead.
 
     Returns:
         ``True`` if the checkbox was found and updated.
@@ -349,9 +353,11 @@ def mark_subtask_done(daily_dir: Path, subtask_text: str, parent: str = "") -> b
     for block in doc.get_subsections(details):
         if parent and block.title.casefold() != parent.casefold():
             continue
-        for idx, done, text in doc.get_checkboxes(block):
-            if not done and text == subtask_text.strip():
-                block.content[idx] = block.content[idx].replace("[ ]", "[x]", 1)
+        for idx, checked, text in doc.get_checkboxes(block):
+            if checked != done and text == subtask_text.strip():
+                old, new = ("[ ]", "[x]") if done else ("[x]", "[ ]")
+                line = block.content[idx].replace("[X]", "[x]", 1)
+                block.content[idx] = line.replace(old, new, 1)
                 _save_doc(daily_dir, doc)
                 return True
     return False
@@ -421,6 +427,22 @@ def previous_note_date(daily_dir: Path) -> str | None:
         if _DATE_STEM_RE.match(p.stem) and p.stem < today
     ]
     return max(dates) if dates else None
+
+
+def get_recent_high_level_tasks(daily_dir: Path, days: int = 30) -> list[str]:
+    """Return distinct high-level task names from the last ``days`` days, newest first.
+
+    Includes today. Names differing only in case appear once, with the newest spelling.
+    """
+    today = time_utils.now_date_str()
+    cutoff = (time_utils.now() - timedelta(days=days)).strftime("%Y-%m-%d")
+    dates = sorted((p.stem for p in daily_dir.glob("*.md")
+                    if _DATE_STEM_RE.match(p.stem) and cutoff < p.stem <= today), reverse=True)
+    names: dict[str, str] = {}
+    for date_str in dates:
+        for task in get_high_level_tasks(daily_dir, date_str):
+            names.setdefault(task.text.casefold(), task.text)
+    return list(names.values())
 
 
 def get_yesterday_wrap(daily_dir: Path) -> str | None:

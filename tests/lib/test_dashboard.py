@@ -147,3 +147,13 @@ def test_complete_group_marks_everything_done(cfg, state, clock):
     assert not result["timer"]["kind"]
     assert all(t["done"] for t in result["tasks"] if t["parent"] == "Auth")
     assert {"title": "Auth", "done": True} in result["highLevelTasks"]
+
+
+def test_reopen_unchecks_subtask_and_its_group(cfg, state, clock):
+    start(cfg, state)
+    task = add(cfg, state, title="One", parent="Auth")
+    dashboard.dispatch(cfg, state, "complete", {"id": task["id"]})
+    result = dashboard.dispatch(cfg, state, "reopen", {"id": task["id"]})
+    assert not next(t for t in result["tasks"] if t["id"] == task["id"])["done"]
+    assert {"title": "Auth", "done": False} in result["highLevelTasks"]
+    assert "- [ ] One ~15m" in daily_notes.daily_note_path(cfg.daily_dir).read_text()

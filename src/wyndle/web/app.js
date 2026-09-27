@@ -5,6 +5,7 @@ import { createTaskList } from './components/tasks.js';
 import { connectDialogs } from './components/dialogs.js';
 import { createDurationPicker } from './components/durations.js';
 import { connectHelp } from './components/help.js';
+import { createPomodoro } from './components/pomodoro.js';
 
 const $ = id => document.getElementById(id);
 let state;
@@ -40,6 +41,7 @@ async function act(action, data) {
 const focus = createFocus({ act, toast });
 const dialogs = connectDialogs(act);
 connectHelp();
+createPomodoro({ toast });
 const estimateInput = $('task-estimate');
 const estimatePicker = createDurationPicker($('estimate-presets'), {
   value: estimateInput.valueAsNumber,
@@ -47,7 +49,8 @@ const estimatePicker = createDurationPicker($('estimate-presets'), {
 });
 estimateInput.addEventListener('input', () => estimatePicker.setValue(estimateInput.valueAsNumber));
 const tasks = createTaskList({ focus: task => focus.focus(task),
-  complete: task => act('complete', { id: task.id }), note: dialogs.note,
+  complete: task => act('complete', { id: task.id }), reopen: task => act('reopen', { id: task.id }),
+  note: dialogs.note,
   remove: task => dialogs.remove(task), removeGroup: group => dialogs.removeGroup(group),
   completeGroup: group => act('complete_group', { parent: group }),
   addSubtask: parent => {
@@ -76,9 +79,26 @@ function render() {
   $('stat-done').textContent = `${state.tasks.filter(t => t.done).length} / ${state.tasks.length}`;
   $('stat-left').textContent = duration(state.tasks.filter(t => !t.done)
     .reduce((sum, t) => sum + Math.max(0, t.estimate * 60 - t.elapsed), 0));
-  $('groups').replaceChildren(...state.groups.map(group => {
-    const option = document.createElement('option'); option.value = group; return option;
-  }));
+  // Case-insensitive, like the server's high-level task matching.
+  const parentNames = new Map();
+  for (const name of ['Today', ...state.groups, ...state.recentGroups]) {
+    if (!parentNames.has(name.toLowerCase())) parentNames.set(name.toLowerCase(), name);
+  }
+  // Daily Chores is not a high-level task, but its + button still needs to select it.
+  const unlisted = [...new Set(state.tasks.map(t => t.parent))]
+    .filter(name => !parentNames.has(name.toLowerCase()));
+  const parents = [...parentNames.values(), ...unlisted];
+  const parentSelect = $('task-parent');
+  // Rebuilding on every poll would reset the selection and close an open dropdown.
+  if (parents.join('\n') !== [...parentSelect.options].map(o => o.value).join('\n')) {
+    const current = parentSelect.value;
+    parentSelect.replaceChildren(...parents.map(name => {
+      const option = new Option(name);
+      option.hidden = unlisted.includes(name);
+      return option;
+    }));
+    parentSelect.value = parents.includes(current) ? current : 'Today';
+  }
   document.querySelectorAll('form button[type="submit"]').forEach(button => { button.disabled = busy; });
   focus.render(state, busy);
   tasks.render(state.tasks, busy, state.highLevelTasks);
