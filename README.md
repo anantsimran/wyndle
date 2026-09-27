@@ -1,4 +1,8 @@
-# Wyndle v1.3.0
+# Wyndle
+
+> **Why "Wyndle"?** Named after Wyndle, Lift's spren in Brandon Sanderson's *Stormlight Archive*:
+> a fussy, patient, endlessly loyal vine who follows an impulsive, easily distracted human around
+> and keeps nudging her back on track. That's the job this tool does.
 
 Terminal-based productivity system built for ADHD. File-based state that survives terminal crashes. Works with any markdown editor.
 
@@ -10,7 +14,6 @@ Wyndle manages a single daily loop: morning planning, timed focus blocks, break 
 
 - [Installation](#installation)
 - [Post-Install Setup](#post-install-setup)
-- [Publishing to GitHub](#publishing-to-github)
 - [Commands Reference](#commands-reference)
 - [Daily Workflow](#daily-workflow)
 - [Use Cases](#use-cases)
@@ -22,6 +25,7 @@ Wyndle manages a single daily loop: morning planning, timed focus blocks, break 
 - [Architecture](#architecture)
 - [State Management](#state-management)
 - [Troubleshooting](#troubleshooting)
+- [Development](#development)
 - [Changelog](#changelog)
 
 ---
@@ -30,12 +34,14 @@ Wyndle manages a single daily loop: morning planning, timed focus blocks, break 
 
 Requires Python 3.10+.
 
+Wyndle is not published on PyPI. Install it from GitHub.
+
 ### pipx (recommended)
 
 ```bash
 brew install pipx
 pipx ensurepath
-pipx install wyndle
+pipx install git+https://github.com/anantsimran/wyndle.git
 
 # Or from a local clone
 git clone https://github.com/anantsimran/wyndle.git
@@ -43,21 +49,7 @@ cd wyndle
 pipx install .
 ```
 
-### pip
-
-```bash
-pip install wyndle
-```
-
-### From source (development)
-
-```bash
-git clone https://github.com/anantsimran/wyndle.git
-cd wyndle
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
-```
+For a development setup, see [Development](#development).
 
 ### Verify
 
@@ -101,68 +93,17 @@ wyndle morning
 
 ---
 
-## Publishing to GitHub
-
-### First-time setup
-
-```bash
-cd wyndle
-git init
-git add .
-git commit -m "Initial commit"
-```
-
-Create a new repository on GitHub (do NOT initialize with README/license/gitignore since you already have these locally), then:
-
-```bash
-git remote add origin git@github.com:anantsimran/wyndle.git
-git branch -M main
-git push -u origin main
-```
-
-### Subsequent pushes
-
-```bash
-git add .
-git commit -m "description of changes"
-git push
-```
-
-### Tagging a release
-
-```bash
-git tag -a v1.3.0 -m "v1.3.0 release"
-git push origin v1.3.0
-```
-
-### Publishing to PyPI (optional)
-
-```bash
-pip install build twine
-python -m build
-twine upload dist/*
-```
-
-### SSH key setup (if needed)
-
-```bash
-ssh-keygen -t ed25519 -C "your@email.com"
-cat ~/.ssh/id_ed25519.pub
-# Copy output -> GitHub Settings -> SSH and GPG keys -> New SSH key
-ssh -T git@github.com  # verify
-```
-
----
-
 ## Commands Reference
 
 ### wyndle morning
 
-Start your day. Shows yesterday's shutdown notes, carries over unfinished tasks (with open subtasks and open notes from task note files), prompts for new tasks, and writes to today's daily note.
+Start your day. Shows the previous day's shutdown notes, carries over unfinished tasks (with open subtasks and open notes from task note files), prompts for new tasks, and writes to today's daily note.
 
 Daily chores are added as subtasks in Task Details (not in High Level Tasks). They are always the first section and reset daily.
 
-If yesterday was not wrapped, auto-syncs subtask notes and elapsed times to task note files before starting the new day.
+"Previous day" means the most recent daily note before today, not strictly yesterday, so on Monday you pick up Friday's unfinished tasks.
+
+If the previous day was not wrapped, the first command of the new day auto-syncs its subtask notes and elapsed times to task note files (once).
 
 ```bash
 wyndle morning
@@ -208,7 +149,7 @@ wyndle switch
 
 ### wyndle break
 
-Pause active subtask, start a break timer. After the break, offers to resume.
+Pause active subtask, start a break timer. After the break, offers to resume. Break time is logged but never counted as focused time, and the daemon stays quiet during the break.
 
 | Choice | Type | Duration |
 |--------|------|----------|
@@ -328,7 +269,7 @@ Daemon fires escalating notifications: 60m, 30m, 15m, at stop, past grace (3m co
 
 ### Forgetting to wrap yesterday
 
-`wyndle morning` auto-wraps: reads yesterday's daily note, syncs subtask notes and times to task note files, then starts today. Auto-wrap runs on ANY command, not just morning.
+The first wyndle command of a new day (any command, not just `morning`) auto-wraps the previous day: it syncs subtask notes and times to task note files, exactly once.
 
 ### Tracking daily chores
 
@@ -411,6 +352,8 @@ _Auto-logged by Wyndle_
 > _filled by wyndle wrap_
 ```
 
+Each `###` heading under Task Details must match its high-level task's text exactly (case-insensitive). `### Auth` belongs to `Auth` only, never to `Auth refactor`.
+
 Daily Chores are in Task Details only (not in High Level Tasks). They are always the first subsection and get the same time-tracking as any other subtask.
 
 Status tags (`~open`, `~deferred`, `~future`) do NOT appear in daily notes. They live only in task note files.
@@ -422,7 +365,7 @@ Status tags (`~open`, `~deferred`, `~future`) do NOT appear in daily notes. They
 | High Level Tasks | start, status, wrap, morning | morning |
 | Task Details | start, switch, status, wrap | morning (carryover), you (in editor) |
 | Log | -- | all commands (append-only) |
-| Shutdown Notes | morning (yesterday's), reflect | wrap |
+| Shutdown Notes | morning (previous day's), reflect | wrap |
 
 ### Estimate format
 
@@ -573,7 +516,7 @@ macOS only. Uses launchd, checks every 60 seconds.
 | SERIOUSLY STOP | Way past grace | 2m |
 | Wind down | 30m before sleep, day wrapped | 20m |
 | Bedtime | At sleep target | 15m |
-| 1h/2h/3h focused | Milestone | once each |
+| 1h/2h/3h focused | Milestone | once each per day |
 | Scheduled (static) | Config-driven time + message | once/day |
 | Scheduled (remaining_work) | Config-driven time, computes remaining estimates | once/day |
 
@@ -660,14 +603,14 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for full details including the DOM parser
 src/wyndle/
   cli.py                      # Click command router, auto-wrap
   commands/
-    morning.py                # Auto-wrap, carryover, chores, new tasks
+    morning.py                # Carryover, chores, new tasks
     start.py                  # wyndle start + wyndle switch
     restart.py                # wyndle restart [minutes]
     next_cmd.py               # wyndle next (close + start)
     break_cmd.py              # wyndle break
     stuck.py                  # wyndle stuck
     status.py                 # wyndle status (remaining time + future counts)
-    wrap.py                   # wyndle wrap (work summary, task note sync)
+    wrap.py                   # wyndle wrap + auto-wrap (work summary, task note sync)
     reflect.py                # wyndle reflect (weekly/monthly)
     daemon.py                 # wyndle daemon (launchd)
   lib/
@@ -709,12 +652,13 @@ State lives in `~/.wyndle/state/` as individual files:
 | `today_one_thing` | task name | morning |
 | `today_current_task` | task name | start |
 | `today_focused_min` | integer | timer (accumulated) |
-| `today_wrapped` | `true` | wrap |
-| `today_block_active` | `true` | timer (during block) |
+| `today_wrapped` | `true` | wrap, auto-wrap |
+| `today_block_active` | `true` | timer (during block), break |
 | `today_block_end` | unix epoch | timer (on Ctrl+C) |
-| `today_active_subtask` | hash key | start/switch/break |
-| `today_active_subtask_text` | raw text | start/switch/break |
+| `today_active_subtask` | hash key | start/switch/restart |
+| `today_active_subtask_text` | raw text | start/switch/restart |
 | `today_last_subtask_text` | raw text | start/switch/restart |
+| `today_milestone_<min>` | `true` | notifier (milestone already sent today) |
 | `tomorrow_first_task` | task name | wrap |
 | `st_<hash>_elapsed` | seconds (int) | state (accumulated) |
 | `st_<hash>_active_since` | unix epoch | state |
@@ -759,13 +703,74 @@ Time is keyed by hash of normalised text. Renaming a subtask creates a new hash,
 
 Config is read fresh on every command. Edits apply immediately.
 
+### Subtasks missing from `wyndle start`
+
+The `### ...` heading under Task Details must exactly match the high-level task text (case-insensitive).
+
 ### Task note still in v1.2.x format
 
 Run `wyndle wrap` or `wyndle morning` -- any write to the task note upgrades it to v1.3.0 format automatically.
 
 ---
 
+## Development
+
+Requires Python 3.10+.
+
+```bash
+git clone https://github.com/anantsimran/wyndle.git
+cd wyndle
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+pre-commit install          # ruff + pytest on every commit
+```
+
+```bash
+pytest                      # run tests
+ruff check .                # lint
+pre-commit run --all-files  # everything the hook runs
+```
+
+### Repo layout
+
+```
+src/wyndle/          # package (see Architecture)
+  cli.py             # command router
+  commands/          # one module per CLI command
+  lib/               # shared logic: parsing, state, notes, timer, notifier
+tests/               # mirrors src/wyndle/
+  conftest.py        # fixtures: frozen clock, temp HOME + vault, scripted prompts
+  commands/          # command flows (morning, wrap, break, start)
+  lib/               # unit tests per lib module
+  test_cli.py        # CLI smoke tests
+```
+
+Conventions:
+
+- Tests mirror the source tree: `src/wyndle/lib/foo.py` -> `tests/lib/test_foo.py`.
+- All clock access goes through `wyndle.lib.time_utils.now()`, so tests freeze time with the `clock` fixture. Don't call `datetime.now()` / `date.today()` directly.
+- Tests never touch the real `~/.wyndle` or vault: the `home` fixture points `HOME` at a temp directory.
+- The version lives only in `src/wyndle/__init__.py`.
+- `main` is protected: changes go through a pull request.
+
+---
+
 ## Changelog
+
+### v1.3.1
+
+- **Carryover after gaps.** `wyndle morning` now carries over from the most recent daily note, not strictly yesterday's, so Monday picks up Friday's unfinished tasks.
+- **Log entries land in `## Log`.** They were appended to the end of the file, inside Shutdown Notes, which polluted the next morning's recap and hid start times from `wyndle reflect`.
+- **Auto-wrap runs once.** It used to re-sync the previous day on every command until `morning` (and twice during `morning`), adding the same time to task notes repeatedly.
+- **Exact task heading matching.** `### Auth` no longer matches `Auth refactor`; writing one task's details could previously overwrite another's.
+- **Task note detail lookup is exact.** A subtask named like another heading (e.g. `tasks` vs `## Subtasks`) no longer loses its time and notes.
+- **Legacy (v1.2.x) task notes keep their notes** when read and upgraded.
+- **Breaks aren't focus time.** Break time no longer counts toward focused minutes, `wyndle restart` no longer restarts a break, and the daemon doesn't nag during breaks.
+- **Notifications.** Milestones fire once per day (previously about once per week); scheduled notifications no longer skip every few days.
+- **Re-running `wyndle morning`** no longer duplicates high-level tasks.
+- `wyndle open` works with vault names containing spaces.
+- Tests (pytest), pre-commit hooks (ruff + pytest), and shared helpers replacing duplicated sync / close-subtask code.
 
 ### v1.3.0
 

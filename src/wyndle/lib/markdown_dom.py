@@ -23,7 +23,6 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
-
 # ---------------------------------------------------------------------------
 # Inline text helpers (used by multiple modules)
 # ---------------------------------------------------------------------------
@@ -60,7 +59,7 @@ def parse_status_tag(text: str) -> tuple[str, str]:
     match = _STATUS_RE.search(text)
     if not match:
         return text, ""
-    clean = (text[: match.start()].rstrip() + " " + text[match.end() :]).strip()
+    clean = (text[: match.start()].rstrip() + " " + text[match.end() :].lstrip()).strip()
     return clean, match.group(1)
 
 
@@ -74,7 +73,7 @@ def parse_added_date(text: str) -> tuple[str, str]:
     match = _ADDED_RE.search(text)
     if not match:
         return text, ""
-    clean = (text[: match.start()].rstrip() + " " + text[match.end() :]).strip()
+    clean = (text[: match.start()].rstrip() + " " + text[match.end() :].lstrip()).strip()
     return clean, match.group(1)
 
 
@@ -226,13 +225,15 @@ class MarkdownDoc:
                 children.append(block)
         return children
 
-    def find_subsection(
-        self, parent: HeadingBlock, title_contains: str,
-    ) -> HeadingBlock | None:
-        """Find a subsection of *parent* by title substring (case-insensitive)."""
-        needle = title_contains.lower()
+    def find_subsection(self, parent: HeadingBlock, title: str) -> HeadingBlock | None:
+        """Find a subsection of *parent* by exact title (case-insensitive).
+
+        Deliberately not a substring match: ``"Auth refactor"`` must never
+        resolve to a sibling ``### Auth``, or writes would replace it.
+        """
+        needle = title.strip().lower()
         for sub in self.get_subsections(parent):
-            if needle in sub.title.lower() or sub.title.lower() in needle:
+            if sub.title.lower() == needle:
                 return sub
         return None
 
@@ -326,7 +327,7 @@ class MarkdownDoc:
         """Insert *new_block* immediately before *anchor*."""
         self.blocks.insert(self.blocks.index(anchor), new_block)
 
-    def remove_subsection(self, parent: HeadingBlock, sub: HeadingBlock) -> None:
+    def remove_subsection(self, sub: HeadingBlock) -> None:
         """Remove *sub* and all its nested children from the block list."""
         idx = self.blocks.index(sub)
         end = idx + 1

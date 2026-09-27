@@ -60,7 +60,7 @@ def run(cfg: WyndleConfig, state: State) -> None:
             cfg, total_focused, ws, progress,
             tomorrow_task, reflection, summary_lines,
         )
-        _sync_all_task_notes(cfg, state, tasks)
+        sync_task_notes(cfg, state, time_utils.now_date_str())
 
     state.set("today_wrapped", "true")
     display.console.print()
@@ -135,7 +135,9 @@ def _task_summary(
     done_marker = "\u2713" if task.done else "\u2610"
     est_str = time_utils.hours_minutes(est_total) if est_total else "\u2014"
     actual_str = time_utils.hours_minutes(actual_total) if actual_total else "0m"
-    display.info(f"  {done_marker} [bold]{task.text}[/bold]    est: {est_str}  actual: {actual_str}")
+    display.info(
+        f"  {done_marker} [bold]{task.text}[/bold]    est: {est_str}  actual: {actual_str}"
+    )
     lines = [f"{done_marker} {task.text}  est: {est_str}  actual: {actual_str}"]
 
     for s in subs:
@@ -161,7 +163,10 @@ def _print_work_done(ws: WorkSummary) -> None:
     display.info(f"  Completed: [bold]{ws.completed}/{ws.total} subtasks ({pct}%)[/bold]")
     est_str = time_utils.hours_minutes(ws.estimated_min) if ws.estimated_min else "\u2014"
     actual_str = time_utils.hours_minutes(ws.actual_min) if ws.actual_min else "0m"
-    display.info(f"  Time tracked: [bold]{actual_str}[/bold] (actual) vs [bold]{est_str}[/bold] (estimated)")
+    display.info(
+        f"  Time tracked: [bold]{actual_str}[/bold] (actual) "
+        f"vs [bold]{est_str}[/bold] (estimated)"
+    )
     if ws.estimated_done > 0:
         display.info(
             f"  On-time: [bold]{ws.on_time}/{ws.estimated_done} sub-tasks within estimate[/bold]"
@@ -241,24 +246,48 @@ def _write_shutdown_notes(
     )
 
 
-def _sync_all_task_notes(cfg: WyndleConfig, state: State, tasks: list) -> None:
-    """Sync subtask notes and elapsed times to task note files.
+def sync_task_notes(cfg: WyndleConfig, state: State, date_str: str) -> None:
+    """Sync subtask notes and elapsed times from a daily note to task notes.
 
     Uses strict-match note merging: new/changed notes are appended
     with ``~open`` tag.  Existing tagged notes are preserved.
+
+    Args:
+        cfg:      Current configuration.
+        state:    State store holding that day's subtask timers.
+        date_str: ISO date of the daily note to sync from.
     """
-    today = time_utils.now_date_str()
-    for t in tasks:
+    daily_dir = cfg.obsidian_daily_dir
+    for t in get_high_level_tasks(daily_dir, date_str):
         note = read_task_note(cfg, t.text)
-        subtask_notes = read_subtask_notes(cfg.obsidian_daily_dir, t.text)
-        subs = get_task_details(cfg.obsidian_daily_dir, t.text)
-        for s in subs:
-            display_text = strip_estimate(s.text)
-            elapsed = state.get_subtask_elapsed_min(s.text)
-            daily_notes = subtask_notes.get(display_text, [])
+        subtask_notes = read_subtask_notes(daily_dir, t.text, date_str)
+        for s in get_task_details(daily_dir, t.text, date_str):
             sync_subtask_from_daily(
-                note, display_text, elapsed, s.done,
-                daily_notes, today, s.estimate_min,
+                note, s.display_text, state.get_subtask_elapsed_min(s.text), s.done,
+                subtask_notes.get(s.display_text, []), date_str, s.estimate_min,
             )
         if note.subtasks:
             write_task_note(cfg, note)
+
+
+def auto_wrap_yesterday(cfg: WyndleConfig, state: State) -> None:
+    """Sync the last worked day to task notes if wrap was forgotten.
+
+    Called from ``_setup()`` in cli.py so that ANY command triggers
+    auto-wrap.  Must run BEFORE ``State.clear_day()`` so that day's
+    timers are still available.  Writes ``today_wrapped`` so that the
+    following commands (until ``morning`` clears the day) don't sync,
+    and add the same elapsed time, again.
+    """
+    if not cfg.features.obsidian:
+        return
+    stored_date = state.get("today_date", "")
+    if not stored_date or stored_date == time_utils.now_date_str():
+        return
+    if state.get("today_wrapped", "false") == "true":
+        return
+    display.dim("  Yesterday wasn't wrapped. Auto-syncing task notes...")
+    sync_task_notes(cfg, state, stored_date)
+    state.set("today_wrapped", "true")
+    display.success("Auto-wrap complete.")
+    display.console.print()

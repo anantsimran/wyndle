@@ -7,7 +7,7 @@ to Obsidian separately from focus time.
 
 from __future__ import annotations
 
-from wyndle.lib import display
+from wyndle.lib import display, time_utils
 from wyndle.lib.config import WyndleConfig
 from wyndle.lib.notifier import notify
 from wyndle.lib.obsidian import log_to_daily, parse_estimate, strip_estimate
@@ -63,9 +63,6 @@ def run(cfg: WyndleConfig, state: State) -> None:
     else:
         break_min = default_min
 
-    break_label = f"Break: {break_name}"
-    state.start_subtask_timer(break_label)
-
     display.console.print()
     display.dim(f"Starting {break_min}m break: {break_name}")
     display.console.print()
@@ -73,13 +70,20 @@ def run(cfg: WyndleConfig, state: State) -> None:
     if cfg.features.obsidian:
         log_to_daily(cfg.obsidian_daily_dir, f"Break started: **{break_name}** ({break_min}m)")
 
-    timer_display(break_min * 60, break_name)
+    # Timed outside the subtask timers: those feed focused minutes in wrap
+    # and the "last subtask" that `restart` resumes.  Marking the block
+    # active keeps the daemon's idle / auto-extend nudges quiet.
+    started = time_utils.epoch_now()
+    state.set_block_active(True)
+    try:
+        timer_display(break_min * 60, break_name)
+    finally:
+        state.set_block_active(False)
 
     if cfg.features.notifications:
         notify("Break Over", f"{break_name} — {break_min}m done. Ready to get back?")
 
-    state.pause_active_subtask()
-    elapsed = state.get_subtask_elapsed_min(break_label)
+    elapsed = (time_utils.epoch_now() - started) // 60
 
     if cfg.features.obsidian:
         log_to_daily(cfg.obsidian_daily_dir, f"Break ended: **{break_name}** ({elapsed}m actual)")
