@@ -12,6 +12,12 @@ Use **How to use** in the top bar whenever you need this guide. The terminal
 version is `wyndle help --guide`. For command options, use `wyndle --help`
 or a command’s own help, such as `wyndle ui --help`.
 
+Use **Notes** or **Stats** in the top bar at any time, including before you
+start your day. **Notes** lets you read saved daily, task, and review Markdown
+files. Choose a file from the list; use **Refresh** after changing files in an
+editor. **Stats** shows the last 7 or 30 days of tracked time and completed
+steps, with a day-by-day breakdown.
+
 ## Start your day
 
 Click **Start my day**. If you have unfinished work from a previous day,
@@ -93,7 +99,8 @@ the top-bar button keeps showing the time while it runs.
 
 ## Keep notes and finish tasks
 
-- Click the **+** beside a task to save a short note. Expand its note count to read it.
+- Click the **+** beside a task, including a completed task, to save a short
+  note. Expand its note count to read it.
 - Click the circle beside a task to mark it complete. An active task pauses first.
   Click the **✓** of a completed task to mark it not done again.
 - Open **Completed** to review what you finished.
@@ -122,7 +129,8 @@ day and carry unfinished work forward if you want to.
 
 Your work stays on this computer. Expand **Your notes** in the footer to find
 the notes folder. Daily notes are in `daily/YYYY-MM-DD.md`; persistent project
-notes are in `tasks/`. Any Markdown editor can open them.
+notes are in `tasks/`, and saved reviews are in `weekly/`. Any Markdown editor
+can open them. The **Notes** viewer displays their Markdown as plain text.
 
 The browser and VS Code use the same local server. Keep the server running
 while using them. If VS Code started it, closing the extension stops that

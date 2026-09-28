@@ -40,6 +40,9 @@ from wyndle.lib.models import RemainingWork, SubTask, Task
 # Re-export for backward compatibility
 __all__ = ["parse_estimate", "strip_estimate"]
 
+_SHUTDOWN_RE = re.compile(r"Shutdown at (\d{2}:\d{2} [AP]M)")
+_DAY_STARTED_TIME_RE = re.compile(r"\*\*(\d{2}:\d{2} [AP]M)\*\* .+ Day started")
+
 
 # ---------------------------------------------------------------------------
 # Daily note template
@@ -126,6 +129,38 @@ def _save_doc(daily_dir: Path, doc: MarkdownDoc, date_str: str | None = None) ->
     """Write a MarkdownDoc back to its daily note file."""
     path = daily_note_path(daily_dir, date_str)
     path.write_text(doc.serialize())
+
+
+def extract_day_times(doc: MarkdownDoc) -> tuple[str, str]:
+    """Extract day start and shutdown times from the Log section."""
+    log = doc.find_section("Log", level=2)
+    start_time = ""
+    end_time = ""
+    if log is None:
+        return start_time, end_time
+    for line in log.content:
+        if not start_time:
+            m = _DAY_STARTED_TIME_RE.search(line)
+            if m:
+                start_time = m.group(1)
+        m = _SHUTDOWN_RE.search(line)
+        if m:
+            end_time = m.group(1)
+    return start_time, end_time
+
+
+def extract_focused_minutes(doc: MarkdownDoc) -> int:
+    """Extract focused minutes from shutdown notes."""
+    shutdown = doc.find_section("Shutdown Notes", level=2)
+    if shutdown is None:
+        return 0
+    for line in shutdown.content:
+        stripped = line.strip().lstrip("> ").strip()
+        if stripped.startswith("Total focused:"):
+            m = re.search(r"(\d+)m", stripped)
+            if m:
+                return int(m.group(1))
+    return 0
 
 
 # ---------------------------------------------------------------------------

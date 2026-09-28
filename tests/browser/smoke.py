@@ -6,6 +6,7 @@ Screenshots are written to /tmp/wyndle-desktop.png and /tmp/wyndle-sidebar.png.
 
 import tempfile
 import threading
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from playwright.sync_api import expect, sync_playwright
@@ -25,6 +26,18 @@ def main():
                 return root / "state-home"
 
         cfg = TestConfig(notes_dir=str(root / "notes"), daily_chores=[])
+        cfg.ensure_dirs()
+        yesterday = (datetime.now().date() - timedelta(days=1)).isoformat()
+        daily_markdown = (
+            "# Yesterday's work\n\n"
+            "## High Level Tasks\n- [x] Project\n\n"
+            "## Task Details\n### Project\n- [x] Finished ~15m\n- [ ] Next ~20m\n\n"
+            "## Shutdown Notes\n> Total focused: 12m\n"
+        )
+        (cfg.daily_dir / f"{yesterday}.md").write_text(daily_markdown)
+        task_markdown = "# Project notes\n\n<img src=x onerror=alert(1)> stays text\n"
+        (cfg.tasks_dir / "project.md").write_text(task_markdown)
+        (cfg.weekly_dir / "review.md").write_text("# Weekly review\n\nA small win.\n")
         state = State(cfg.state_dir)
         server = make_server(cfg, state, 0)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -40,6 +53,40 @@ def main():
                 assert page.locator(".hero-art img").evaluate(
                     "img => img.complete && img.naturalWidth > 0"
                 )
+                assert page.evaluate("""async () => {
+                    const icon = document.querySelector('link[rel="icon"][href="/favicon.png"]');
+                    if (!icon) return false;
+                    const image = new Image();
+                    image.src = icon.href;
+                    try { await image.decode(); return image.naturalWidth > 0; }
+                    catch { return false; }
+                }""")
+
+                page.get_by_role("button", name="Notes", exact=True).click()
+                expect(page.locator("#note-markdown")).to_be_visible()
+                assert page.locator("#note-markdown").text_content() == daily_markdown
+                page.locator("#notes-select").select_option(label="Project notes · project.md")
+                expect(page.locator("#note-markdown")).to_have_text(task_markdown)
+                assert page.locator("#note-markdown img").count() == 0
+                page.locator("#notes-refresh").click()
+                expect(page.locator("#notes-select option:checked")).to_have_attribute(
+                    "data-kind", "tasks"
+                )
+                expect(page.locator("#note-markdown")).to_have_text(task_markdown)
+                page.locator("#notes-select").select_option(label="Weekly review · review.md")
+                expect(page.locator("#note-title")).to_have_text("Weekly review")
+                page.locator("#notes-close").click()
+
+                page.get_by_role("button", name="Stats", exact=True).click()
+                expect(page.locator("#history-days")).to_have_text("1 / 7")
+                expect(page.locator("#history-focus")).to_have_text("12m")
+                expect(page.locator("#history-tasks")).to_have_text("1 / 2")
+                page.locator("#stats-month").click()
+                expect(page.locator("#history-days")).to_have_text("1 / 30")
+                expect(page.locator("#stats-month")).to_have_attribute("aria-pressed", "true")
+                page.locator("#stats-close").click()
+
+                page.locator("#carry").uncheck()
                 page.get_by_role("button", name="Start my day").click()
                 expect(page.locator("#workspace")).to_be_visible()
                 titles = ["Sketch the first screen", "Write one small test", "Read the tricky bit"]
@@ -70,6 +117,10 @@ def main():
                 expect(page.get_by_text("<script> stays text", exact=True)).to_be_visible()
                 page.get_by_role("button", name="Complete Sketch the first screen").click()
                 expect(page.locator("#stat-done")).to_have_text("1 / 3")
+                page.get_by_role("button", name="Stats", exact=True).click()
+                expect(page.locator("#history-days")).to_have_text("2 / 30")
+                expect(page.locator("#history-tasks")).to_have_text("2 / 5")
+                page.locator("#stats-close").click()
                 page.locator("#wrap-toggle").click()
                 page.locator("#tomorrow").fill("Take the next step")
                 page.get_by_role("button", name="Finish my day").click()

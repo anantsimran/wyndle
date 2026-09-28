@@ -5,7 +5,8 @@
 body { margin: 0; background: radial-gradient(ellipse at 90% 0%, var(--accent-soft), transparent 45%), var(--page); color: var(--ink); font-family: var(--font); -webkit-font-smoothing: antialiased; }
 .shell { max-width: 1060px; margin: auto; padding: 0 48px; }
 .topbar { display: flex; justify-content: space-between; align-items: center; min-height: 100px; border-bottom: 1px solid var(--line); }
-.topbar-actions { display: flex; align-items: center; gap: 16px; }
+.topbar-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 4px 12px; }
+.topbar-actions .quiet { white-space: nowrap; }
 .brand { display: flex; align-items: center; color: var(--ink); font-size: 25px; font-weight: 650; letter-spacing: -1.2px; text-decoration: none; }
 .brand-mark { display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); height: 32px; width: 32px; border-radius: 11px; margin-right: 10px; font-family: var(--font-display); font-size: 28px; font-style: italic; }
 .brand-dot { color: var(--warm); }
@@ -72,6 +73,7 @@ footer summary { font-size: 10px; }
 .pomodoro > p:last-child { font-size: 9px; margin: 12px 0 0; }
 @media (max-width: 780px) {
   .shell { padding: 0 24px; max-width: 600px; }
+  .local-badge { display: none; }
   .workspace { grid-template-columns: 1fr; gap: 28px; }
   .focus-column { min-width: 0; }
   .timer-ring { width: 170px; height: 170px; }
@@ -93,6 +95,8 @@ footer summary { font-size: 10px; }
 }
 @media (max-width: 520px) {
   .topbar { min-height: 60px; }
+  .topbar-actions { max-width: 220px; gap: 0 2px; padding: 8px 0; }
+  .topbar-actions .quiet { padding: 6px; font-size: 11px; }
   .greeting { padding: 16px 0 20px; grid-template-columns: 1fr 88px; gap: 12px; }
   .hero-art img { height: 135px; border-radius: var(--radius-small); }
   .lore-question { font-size: 12px; margin-top: 14px; }

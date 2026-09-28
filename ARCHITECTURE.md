@@ -3,7 +3,9 @@
 For a practical modification guide covering all three interfaces, see
 [DEVELOPING.md](DEVELOPING.md). The browser dashboard uses `lib/dashboard.py`
 through the local server in `commands/ui.py`; its modular assets live in `web/`.
-The `vscode/` extension embeds that same dashboard and shares its backend.
+Markdown parsing, note storage, and saved-history statistics live in `lib/` and
+do not depend on the browser or HTTP server. The `vscode/` extension embeds the
+same dashboard and shares its backend.
 
 ## Module Layout
 
@@ -14,9 +16,7 @@ src/wyndle/
   default_config.yaml
   commands/
     morning.py                # Carryover, chores, new tasks
-    start.py                  # wyndle start + wyndle switch
-    restart.py                # wyndle restart [minutes]
-    next_cmd.py               # wyndle next (close current -> start next)
+    start.py                  # wyndle start + switch + next + restart
     break_cmd.py              # wyndle break
     stuck.py                  # wyndle stuck
     status.py                 # wyndle status (with remaining time + future counts)
@@ -27,6 +27,9 @@ src/wyndle/
     markdown_dom.py           # DOM-based markdown parser for plain Markdown
     daily_notes.py            # Daily note reading/writing via markdown_dom
     task_notes.py             # Persistent per-task note CRUD and sync
+    note_archive.py           # Read saved notes and summarize Markdown history
+    dashboard.py              # Non-interactive dashboard workflow and live state
+    daily_note_ops.py         # Markdown task edits, independent of HTTP
     models.py                 # Task, SubTask, TaskNote, WorkSummary dataclasses
     config.py                 # YAML config, generic dataclass hydration
     state.py                  # File-based key-value state, subtask timers

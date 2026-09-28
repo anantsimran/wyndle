@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Wyndle · A little forward</title>
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32">
   <link rel="stylesheet" href="/style.css">
   <script src="/app.js" type="module"></script>
 </head>
@@ -13,7 +13,7 @@
   <div class="shell">
     <header class="topbar">
       <a class="brand" href="/" aria-label="Wyndle home"><span class="brand-mark">w</span> wyndle<span class="brand-dot">.</span></a>
-      <div class="topbar-actions"><span class="local-badge"><span></span> YOUR SPACE, LOCALLY</span><button id="pomodoro-open" class="quiet" aria-controls="pomodoro" aria-expanded="false">Pomodoro</button><button id="help-open" class="quiet" aria-haspopup="dialog">? How to use</button></div>
+      <div class="topbar-actions"><span class="local-badge"><span></span> YOUR SPACE, LOCALLY</span><button id="pomodoro-open" class="quiet" aria-controls="pomodoro" aria-expanded="false">Pomodoro</button><button id="notes-open" class="quiet" aria-haspopup="dialog">Notes</button><button id="stats-open" class="quiet" aria-haspopup="dialog">Stats</button><button id="help-open" class="quiet" aria-haspopup="dialog">? How to use</button></div>
     </header>
     <div id="error" role="alert" hidden></div>
     <main>
@@ -77,5 +77,7 @@
   <dialog id="group-dialog" aria-labelledby="group-heading"><form id="group-form"><h2 id="group-heading">Give the journey a name.</h2><p class="muted small">A high-level task holds the smaller steps you’ll focus on.</p><label for="group-title">High-level task name</label><input id="group-title" required maxlength="200" placeholder="e.g. Ship the A2 ticket"><div class="dialog-actions"><button class="primary" type="submit">Create high-level task</button><button id="group-cancel" class="quiet" type="button">Cancel</button></div></form></dialog>
   <dialog id="delete-dialog" aria-labelledby="delete-title" aria-describedby="delete-description"><form id="delete-form"><h2 id="delete-title">Delete task?</h2><p id="delete-description" class="muted"></p><div class="dialog-actions"><button class="primary" type="submit">Delete</button><button id="delete-cancel" class="quiet" type="button" autofocus>Keep it</button></div></form></dialog>
   <dialog id="help-dialog" aria-labelledby="help-title"><div class="section-top"><h2 id="help-title">Your field guide</h2><button id="help-close" class="quiet" autofocus>Close guide</button></div><article id="help-content" class="user-guide" aria-live="polite"></article><details class="cli-reference"><summary>Terminal command reference · wyndle --help</summary><pre id="help-cli"></pre></details><a class="guide-download" href="/HOW_TO_USE.md" download="HOW_TO_USE.md">Download the Markdown guide ↓</a></dialog>
+  <dialog id="notes-dialog" class="history-dialog" aria-labelledby="notes-heading"><div class="section-top"><h2 id="notes-heading">Saved notes</h2><div class="history-actions"><button id="notes-refresh" class="quiet" type="button">Refresh</button><button id="notes-close" class="quiet" type="button">Close</button></div></div><p class="small muted">Read your daily, task, and review Markdown files here.</p><div id="notes-chooser"><label for="notes-select">Choose a note</label><select id="notes-select" disabled></select></div><p id="notes-status" class="history-status" role="status" aria-live="polite" hidden></p><h3 id="note-title" class="history-note-title" hidden></h3><pre id="note-markdown" class="note-markdown" hidden></pre></dialog>
+  <dialog id="stats-dialog" class="history-dialog" aria-labelledby="stats-heading"><div class="section-top"><h2 id="stats-heading">Recent progress</h2><button id="stats-close" class="quiet" type="button">Close</button></div><div class="history-actions history-periods" role="group" aria-label="Review period"><button id="stats-week" class="quiet" type="button" aria-pressed="true">Last 7 days</button><button id="stats-month" class="quiet" type="button" aria-pressed="false">Last 30 days</button><button id="stats-refresh" class="quiet" type="button">Refresh</button></div><p id="stats-status" class="history-status" role="status" aria-live="polite" hidden></p><div id="stats-content" hidden><div class="history-summary"><div><strong id="history-days">0 / 7</strong><span>days tracked</span></div><div><strong id="history-focus">0m</strong><span>time focused</span></div><div><strong id="history-tasks">0 / 0</strong><span>small steps finished</span></div></div><h3>Day by day</h3><ul id="history-daily" class="history-daily"></ul></div></dialog>
 </body>
 </html>

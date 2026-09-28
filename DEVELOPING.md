@@ -18,7 +18,11 @@ VS Code → local server manager → same browser dashboard ──┘
 
 The browser owns presentation, not the task database. Python parses and changes
 Markdown, tracks elapsed time, and synchronizes daily work to persistent task
-notes. VS Code embeds that same web app rather than maintaining another UI.
+notes. `lib/note_archive.py` reads saved notes and computes history from Markdown
+without importing HTTP or dashboard state; `lib/dashboard.py` adds today's live
+state for the web view. VS Code embeds the same web app rather than maintaining
+another UI. Keep this boundary when adding features: note format rules belong in
+the library, while `commands/ui.py` only maps HTTP requests to library calls.
 
 ## Repository map
 
@@ -48,9 +52,7 @@ opening the dashboard must not start or reset a day.
 | Module in `commands/` | Responsibility |
 |---|---|
 | `morning.py` | Initialize the day, carry unfinished work forward, seed chores, add tasks |
-| `start.py` | Pick a task/subtask and start or switch terminal focus |
-| `restart.py` | Resume the last subtask with an optional duration |
-| `next_cmd.py` | Complete/pause the current subtask and choose another |
+| `start.py` | Pick a task/subtask and start, switch, advance, or restart terminal focus |
 | `break_cmd.py` | Separate break timer and offer to resume focus |
 | `stuck.py` | Interactive prompts for getting unstuck |
 | `status.py` | Terminal progress, estimates, and backlog summary |
@@ -74,11 +76,13 @@ into a library module and leave presentation in commands.
 | `time_utils.py` | Clock, date/time formatting, and duration math. Use this clock so tests can control time. |
 | `markdown_dom.py` | Parse heading blocks, frontmatter, checkboxes, notes, and metadata. Preserve unrelated content when writing. |
 | `daily_notes.py` | Read/write daily Markdown notes. |
+| `daily_note_ops.py` | Add/remove task checkboxes and notes through the Markdown document model. |
 | `task_notes.py` | Persistent task history, note merging, status tags, and carryover generation. |
+| `note_archive.py` | Read saved Markdown files and aggregate day history without web state. |
 | `timer.py` | Blocking terminal countdown and overflow. The browser does not run this blocking loop. |
 | `display.py` | Rich terminal rendering and prompts; keep browser markup elsewhere. |
 | `notifier.py` | macOS notifications and scheduling checks. Browser check-ins are separate. |
-| `dashboard.py` | Non-interactive snapshot/actions for start-day, add, focus, pause, complete, notes, breaks, wrap. |
+| `dashboard.py` | Non-interactive snapshot/actions and a live-today overlay for saved-history stats. |
 
 ## Data and lifecycle
 
@@ -133,6 +137,7 @@ remote fonts, CDN, or framework is required.
 | `components/tasks.js` | Task grouping, completion/focus controls, saved notes |
 | `components/focus.js` | Duration choice, live countdown, focus/break controls, check-ins |
 | `components/dialogs.js` | Wrap and add-note forms |
+| `components/history.js` | Saved Markdown notes and 7/30-day progress |
 | `assets/` | Locally bundled character illustrations and their generation prompts |
 
 For a different aesthetic, change semantic tokens first; avoid hardcoding a new
@@ -159,10 +164,14 @@ progressive disclosure. Quick-add submits on Enter and `N` focuses it.
    Test a full lifecycle when the feature affects timers or day boundaries.
 6. Update the user instructions and run the checks below.
 
-The HTTP contract is `GET /api/status` and `POST /api/action` with
+The day workflow uses `GET /api/status` and `POST /api/action` with
 `{"action": "focus", "data": {"id": "...", "minutes": 15}}`. POST requires
 `Content-Type: application/json` and `X-Wyndle-Client: dashboard`. Successful
 actions return a complete snapshot; failures return an `error` string.
+The read-only history routes are `GET /api/notes` for the note index,
+`GET /api/note?kind=...&name=...` for one Markdown file, and
+`GET /api/stats?days=7|30` for a progress summary. Note paths are selected from
+the configured daily, task, and review directories, never from arbitrary paths.
 The server binds only to loopback, checks Host/Origin, and serves an explicit
 asset allowlist. Do not turn this local server into an internet-facing deployment
 without designing authentication, hosting, and concurrent storage first.

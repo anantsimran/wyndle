@@ -26,7 +26,11 @@ Prefix the commands below with `uv run`, or activate `.venv` first
 
 Your browser opens at **http://127.0.0.1:8765**. Click **Start my day**, type a
 task and press **Enter**, then click its **▶** button to focus. Complete tasks,
-add notes, take breaks, and wrap the day in the dashboard. Nofrontend build, account, or cloud service is needed.
+add notes, take breaks, and wrap the day in the dashboard. Browse saved daily,
+project, and review notes and check your progress over the last 7 or 30 days in
+the browser, even before starting today's work. Saved Markdown notes are
+viewable there; edit the files with your preferred Markdown editor.
+No frontend build, account, or cloud service is needed.
 
 The design draws on Dalinar’s next-step resolve and Kaladin’s care, with storm
 blue, warm gold, light/dark themes, and a responsive layout. The Stormlight
@@ -94,9 +98,10 @@ New parts are intentionally separate:
 | `src/wyndle/web/theme.css` | Colors, typography, radius tokens, light/dark palette |
 | `src/wyndle/web/components.css` | Shared controls and surfaces |
 | `src/wyndle/web/style.css` | Page layout and responsive behavior |
-| `src/wyndle/web/components/` | Task list, focus controls, and dialogs |
+| `src/wyndle/web/components/` | Task list, focus controls, notes, progress, and dialogs |
 | `src/wyndle/web/app.js` | UI state and component composition |
 | `src/wyndle/web/api.js` | HTTP transport |
+| `src/wyndle/lib/note_archive.py` | Saved Markdown notes and history, independent of the web UI |
 | `src/wyndle/lib/dashboard.py` | Non-interactive workflow using existing notes and timers |
 | `src/wyndle/commands/ui.py` | Local server and static assets |
 | `vscode/` | Thin VS Code host for the same dashboard |
@@ -714,9 +719,7 @@ src/wyndle/
   cli.py                      # Click command router, auto-wrap
   commands/
     morning.py                # Carryover, chores, new tasks
-    start.py                  # wyndle start + wyndle switch
-    restart.py                # wyndle restart [minutes]
-    next_cmd.py               # wyndle next (close + start)
+    start.py                  # wyndle start + switch + next + restart
     break_cmd.py              # wyndle break
     stuck.py                  # wyndle stuck
     status.py                 # wyndle status (remaining time + future counts)
@@ -726,7 +729,10 @@ src/wyndle/
   lib/
     markdown_dom.py           # DOM-based markdown parser
     daily_notes.py            # Daily note reading/writing via DOM
+    daily_note_ops.py         # Markdown task edits
     task_notes.py             # Per-task note CRUD and sync
+    note_archive.py           # Saved Markdown notes and history
+    dashboard.py              # Dashboard workflow and live state
     models.py                 # Dataclasses (Task, SubTask, TaskNote, etc.)
     config.py                 # YAML config
     state.py                  # File-based key-value state

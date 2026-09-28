@@ -27,6 +27,9 @@ export function createTaskList({ focus, complete, reopen, note, remove, removeGr
       previous = signature;
       const open = document.getElementById('tasks');
       const done = document.getElementById('completed-tasks');
+      const expandedNotes = new Set([...open.querySelectorAll('.task-row'), ...done.querySelectorAll('.task-row')]
+        .filter(item => item.querySelector('.task-notes[open]'))
+        .map(item => item.dataset.taskId));
       open.replaceChildren();
       done.replaceChildren();
       const groups = new Map();
@@ -38,6 +41,7 @@ export function createTaskList({ focus, complete, reopen, note, remove, removeGr
       highLevelTasks.filter(g => !g.done && !groups.has(g.title)).forEach(g => groups.set(g.title, []));
       const row = task => {
         const item = element('div', `task-row${task.active ? ' active' : ''}${task.done ? ' done' : ''}`);
+        item.dataset.taskId = task.id;
         const check = element('button', 'task-check', task.done ? '✓' : '');
         check.setAttribute('aria-label', task.done ? `Mark ${task.title} not done` : `Complete ${task.title}`);
         check.title = task.done ? 'Mark not done' : 'Complete';
@@ -49,23 +53,25 @@ export function createTaskList({ focus, complete, reopen, note, remove, removeGr
           task.elapsed ? `${duration(task.elapsed)} given` : '', task.active ? 'In focus' : ''].filter(Boolean).join(' · ')));
         if (task.notes?.length) {
           const notes = element('details', 'task-notes');
+          notes.open = expandedNotes.has(task.id);
           notes.append(element('summary', '', `${task.notes.length} ${task.notes.length === 1 ? 'note' : 'notes'}`));
           task.notes.forEach(text => notes.append(element('p', 'small muted', text)));
           body.append(notes);
         }
         item.append(check, body);
+        const noteButton = element('button', 'quiet', '+');
+        noteButton.setAttribute('aria-label', `Add note to ${task.title}`);
+        noteButton.title = 'Add a note';
+        noteButton.disabled = busy;
+        noteButton.addEventListener('click', () => note(task));
+        item.append(noteButton);
         if (!task.done) {
-          const noteButton = element('button', 'quiet', '+');
-          noteButton.setAttribute('aria-label', `Add note to ${task.title}`);
-          noteButton.title = 'Add a note';
-          noteButton.disabled = busy;
-          noteButton.addEventListener('click', () => note(task));
           const play = element('button', 'task-action', task.active ? 'Ⅱ' : '▶');
           play.setAttribute('aria-label', `${task.active ? 'Pause' : 'Focus on'} ${task.title}`);
           play.title = task.active ? 'Pause' : 'Start focus';
           play.disabled = busy;
           play.addEventListener('click', () => focus(task));
-          item.append(noteButton, play);
+          item.append(play);
         }
         item.append(iconButton('×', `Delete ${task.title}`, busy, () => remove(task)));
         return item;

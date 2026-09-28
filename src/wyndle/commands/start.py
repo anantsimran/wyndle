@@ -20,11 +20,14 @@ from wyndle.lib.daily_notes import (
     get_task_estimate,
     log_to_daily,
     mark_subtask_done,
+    parse_estimate,
     strip_estimate,
 )
 from wyndle.lib.models import SubTask
 from wyndle.lib.state import State
 from wyndle.lib.timer import start_focus_block
+
+_VALID_DURATIONS = {5, 15, 30}
 
 
 def run(cfg: WyndleConfig, state: State, task: str = "") -> None:
@@ -240,3 +243,76 @@ def switch_task(cfg: WyndleConfig, state: State) -> None:
     except ValueError:
         pass
     display.dim("No valid selection. Run 'wyndle switch' again.")
+
+
+def next_task(cfg: WyndleConfig, state: State) -> None:
+    """Close the current subtask and start another through the normal picker."""
+    if state.get("today_started", "false") != "true":
+        display.warn("Day not started yet.")
+        display.dim("Run 'wyndle morning' first.")
+        return
+
+    if not close_active_subtask(cfg, state):
+        display.dim("No active sub-task to close.")
+        display.console.print()
+
+    remaining = [s for s in get_all_subtasks(cfg.daily_dir) if not s.done]
+    if not remaining:
+        display.success("All sub-tasks complete. Run 'wyndle wrap' to end the day.")
+        return
+
+    display.dim(f"{len(remaining)} sub-tasks remaining.")
+    display.console.print()
+    run(cfg, state)
+
+
+def _resolve_subtask_text(state: State) -> str | None:
+    """Use the active subtask, or the most recently active one."""
+    return state.get_active_subtask_text() or state.get_last_subtask_text()
+
+
+def _parse_duration(raw: str) -> int:
+    """Return an allowed focus block length, or zero for the normal prompt."""
+    try:
+        mins = int(raw)
+    except (ValueError, TypeError):
+        return 0
+    return mins if mins in _VALID_DURATIONS else 0
+
+
+def restart_task(cfg: WyndleConfig, state: State, minutes: str = "") -> None:
+    """Restart the last focus block with an optional fixed duration."""
+    if state.get("today_started", "false") != "true":
+        display.warn("Day not started yet.")
+        display.dim("Run 'wyndle morning' first.")
+        return
+
+    subtask_text = _resolve_subtask_text(state)
+    if not subtask_text:
+        display.warn("No previous subtask found to restart.")
+        display.dim("Run 'wyndle start' to pick a subtask first.")
+        return
+
+    display_name = strip_estimate(subtask_text)
+    estimate_min = parse_estimate(subtask_text)
+    block_min = _parse_duration(minutes)
+
+    if block_min:
+        display.info(f"Restarting [bold]{display_name}[/bold] with {block_min}m block.")
+    else:
+        display.info(f"Restarting [bold]{display_name}[/bold].")
+
+    state.start_subtask_timer(subtask_text)
+
+    if cfg.features.notes:
+        log_to_daily(
+            cfg.daily_dir,
+            f"Restarted: **{display_name}** ({block_min}m)"
+            if block_min
+            else f"Restarted: **{display_name}**",
+        )
+
+    start_focus_block(
+        subtask_text, estimate_min, cfg, state,
+        block_min_override=block_min,
+    )
