@@ -19,15 +19,13 @@ from datetime import date, timedelta
 
 from wyndle.lib import display, time_utils
 from wyndle.lib.config import WyndleConfig
+from wyndle.lib.daily_notes import extract_day_times, extract_focused_minutes
 from wyndle.lib.markdown_dom import MarkdownDoc
 from wyndle.lib.state import State
 
 _EST_ACTUAL_RE = re.compile(r"~(\d+)m\s*->\s*(\d+)m")
 # Legacy format: "est: Xm  actual: Ym" or "est: —  actual: Ym"
 _LEGACY_EST_ACTUAL_RE = re.compile(r"est:\s*(?:~?(\d+)m|.)\s+actual:\s*(\d+)m")
-_STARTED_RE = re.compile(r"Day started")
-_SHUTDOWN_RE = re.compile(r"Shutdown at (\d{2}:\d{2} [AP]M)")
-_DAY_STARTED_TIME_RE = re.compile(r"\*\*(\d{2}:\d{2} [AP]M)\*\* .+ Day started")
 
 
 def run(cfg: WyndleConfig, state: State, monthly: bool = False) -> None:
@@ -83,45 +81,13 @@ def _scan_daily_notes(
             results.append(entry)
             continue
         doc = MarkdownDoc(note_path.read_text())
-        entry["start_time"], entry["end_time"] = _extract_times(doc)
-        entry["focused_min"] = _extract_focused(doc)
+        entry["start_time"], entry["end_time"] = extract_day_times(doc)
+        entry["focused_min"] = extract_focused_minutes(doc)
         done, total = _count_tasks(doc)
         entry["completed_count"] = done
         entry["task_count"] = total
         results.append(entry)
     return results
-
-
-def _extract_times(doc: MarkdownDoc) -> tuple[str, str]:
-    """Extract day start and shutdown times from the Log section."""
-    log = doc.find_section("Log", level=2)
-    start_time = ""
-    end_time = ""
-    if log is None:
-        return start_time, end_time
-    for line in log.content:
-        if not start_time:
-            m = _DAY_STARTED_TIME_RE.search(line)
-            if m:
-                start_time = m.group(1)
-        m = _SHUTDOWN_RE.search(line)
-        if m:
-            end_time = m.group(1)
-    return start_time, end_time
-
-
-def _extract_focused(doc: MarkdownDoc) -> int:
-    """Extract focused minutes from shutdown notes."""
-    shutdown = doc.find_section("Shutdown Notes", level=2)
-    if shutdown is None:
-        return 0
-    for line in shutdown.content:
-        stripped = line.strip().lstrip("> ").strip()
-        if stripped.startswith("Total focused:"):
-            m = re.search(r"(\d+)m", stripped)
-            if m:
-                return int(m.group(1))
-    return 0
 
 
 def _count_tasks(doc: MarkdownDoc) -> tuple[int, int]:

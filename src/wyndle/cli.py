@@ -106,8 +106,8 @@ def stuck() -> None:
 def next_cmd() -> None:
     """Close current sub-task and start the next one."""
     cfg, state = _setup()
-    from wyndle.commands.next_cmd import run
-    run(cfg, state)
+    from wyndle.commands.start import next_task
+    next_task(cfg, state)
 
 
 @main.command()
@@ -142,8 +142,8 @@ def wrap() -> None:
 def restart(minutes: str) -> None:
     """Restart the last focus block (optionally with 5, 15, or 30 min)."""
     cfg, state = _setup()
-    from wyndle.commands.restart import run
-    run(cfg, state, minutes)
+    from wyndle.commands.start import restart_task
+    restart_task(cfg, state, minutes)
 
 
 @main.command()
@@ -221,6 +221,8 @@ def _help_screen() -> None:
     accent("  [bold]Dashboard[/bold]")
     bold_print("[bold]wyndle ui[/bold]         Open the web UI (also available in VS Code)")
     bold_print("[bold]wyndle help --guide[/bold]  Read the dashboard's How to use guide")
+    dim("  Notes: browse saved daily, task, and review Markdown in the dashboard")
+    dim("  Stats: review 7 or 30 days of focus time and completed steps")
     console.print()
 
     accent("  [bold]Day Flow[/bold]")

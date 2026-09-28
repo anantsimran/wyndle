@@ -6,6 +6,7 @@ import { connectDialogs } from './components/dialogs.js';
 import { createDurationPicker } from './components/durations.js';
 import { connectHelp } from './components/help.js';
 import { createPomodoro } from './components/pomodoro.js';
+import { connectHistory } from './components/history.js';
 
 const $ = id => document.getElementById(id);
 let state;
@@ -41,6 +42,7 @@ async function act(action, data) {
 const focus = createFocus({ act, toast });
 const dialogs = connectDialogs(act);
 connectHelp();
+connectHistory();
 createPomodoro({ toast });
 const estimateInput = $('task-estimate');
 const estimatePicker = createDurationPicker($('estimate-presets'), {

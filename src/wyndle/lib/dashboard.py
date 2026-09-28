@@ -6,14 +6,20 @@ Markdown remains the source of truth; the UI never keeps a second task database.
 from __future__ import annotations
 
 import hashlib
-from pathlib import Path
 
 from wyndle.commands import morning, wrap
 from wyndle.lib import daily_notes, time_utils
 from wyndle.lib.config import WyndleConfig
-from wyndle.lib.dashboard_tasks import add_group, delete_group, delete_subtask
-from wyndle.lib.markdown_dom import MarkdownDoc
+from wyndle.lib.daily_note_ops import (
+    add_group,
+    add_subtask,
+    append_subtask_note,
+    delete_group,
+    delete_subtask,
+    set_parent_done,
+)
 from wyndle.lib.models import WorkSummary
+from wyndle.lib.note_archive import stats as note_stats
 from wyndle.lib.state import State, _subtask_key
 
 
@@ -88,6 +94,22 @@ def snapshot(cfg: WyndleConfig, state: State) -> dict:
     }
 
 
+def recent_stats(cfg: WyndleConfig, state: State, days: int = 7) -> dict:
+    """Add today's live timer and task state to the Markdown history."""
+    history = note_stats(cfg, days)
+    if state.is_new_day() or state.get("today_started") != "true":
+        return history
+    current = snapshot(cfg, state)
+    today = history["daily"][0]
+    live = {"focusedMinutes": current["focusedSeconds"] // 60,
+            "completedTasks": sum(task["done"] for task in current["tasks"]),
+            "totalTasks": len(current["tasks"])}
+    for key, value in live.items():
+        history[key] += value - today[key]
+        today[key] = value
+    return history
+
+
 def _pause(cfg: WyndleConfig, state: State) -> None:
     if state.get("today_ui_kind") == "break":
         elapsed = max(0, time_utils.epoch_now() - state.get_int("today_ui_started")) // 60
@@ -124,28 +146,7 @@ def _add_task(cfg: WyndleConfig, data: dict) -> None:
     if any(_subtask_key(s.text) == _subtask_key(title)
            for s in daily_notes.get_all_subtasks(cfg.daily_dir)):
         raise ValueError("That task name already exists today. Give this one a distinct name.")
-    daily = cfg.daily_dir
-    parent = add_group(cfg, parent)
-    path = daily_notes.daily_note_path(daily)
-    doc = MarkdownDoc(path.read_text())
-    details = doc.find_section("Task Details", level=2)
-    block = doc.find_subsection(details, parent) if details else None
-    content = "\n".join(block.content) if block else ""
-    line = f"- [ ] {title}" + (f" ~{estimate}m" if estimate else "")
-    daily_notes.write_task_details(daily, parent, content.rstrip() + "\n" + line + "\n")
-    _set_parent_done(daily, parent, False)
-
-
-def _set_parent_done(daily: Path, parent: str, done: bool) -> None:
-    path = daily_notes.daily_note_path(daily)
-    doc = MarkdownDoc(path.read_text())
-    high = doc.find_section("High Level Tasks", level=2)
-    if high:
-        for idx, checked, title in doc.get_checkboxes(high):
-            if title.casefold() == parent.casefold() and checked != done:
-                old, new = ("[ ]", "[x]") if done else ("[x]", "[ ]")
-                high.content[idx] = high.content[idx].replace("[X]", "[x]").replace(old, new, 1)
-        path.write_text(doc.serialize())
+    add_subtask(cfg, title, parent, estimate)
 
 
 def dispatch(cfg: WyndleConfig, state: State, action: str, data: dict) -> dict:
@@ -181,7 +182,7 @@ def dispatch(cfg: WyndleConfig, state: State, action: str, data: dict) -> dict:
         else:
             for sub in subs:
                 daily_notes.mark_subtask_done(cfg.daily_dir, sub.text, parent)
-            _set_parent_done(cfg.daily_dir, parent, True)
+            set_parent_done(cfg.daily_dir, parent, True)
     elif action in {"focus", "complete", "reopen", "note", "delete"}:
         subs = daily_notes.get_all_subtasks(cfg.daily_dir)
         sub = next((s for s in subs if _id(s) == data.get("id")), None)
@@ -205,28 +206,24 @@ def dispatch(cfg: WyndleConfig, state: State, action: str, data: dict) -> dict:
             if not sub.done:
                 daily_notes.mark_subtask_done(cfg.daily_dir, sub.text, sub.parent)
                 remaining = daily_notes.get_task_details(cfg.daily_dir, sub.parent)
-                _set_parent_done(cfg.daily_dir, sub.parent, all(s.done for s in remaining))
+                set_parent_done(cfg.daily_dir, sub.parent, all(s.done for s in remaining))
                 daily_notes.log_to_daily(cfg.daily_dir, f"Completed: **{sub.display_text}**")
         elif action == "reopen":
             if sub.done:
                 daily_notes.mark_subtask_done(cfg.daily_dir, sub.text, sub.parent, done=False)
-                _set_parent_done(cfg.daily_dir, sub.parent, False)
+                set_parent_done(cfg.daily_dir, sub.parent, False)
                 daily_notes.log_to_daily(cfg.daily_dir, f"Reopened: **{sub.display_text}**")
         elif action == "delete":
             if state.is_subtask_active(sub.text):
                 _pause(cfg, state)
             delete_subtask(cfg, sub)
             remaining = daily_notes.get_task_details(cfg.daily_dir, sub.parent)
-            _set_parent_done(cfg.daily_dir, sub.parent,
-                             bool(remaining) and all(s.done for s in remaining))
+            set_parent_done(cfg.daily_dir, sub.parent,
+                            bool(remaining) and all(s.done for s in remaining))
             daily_notes.log_to_daily(cfg.daily_dir, f"Deleted subtask: **{sub.display_text}**")
         else:
             note = _text(data, "note")
-            path = daily_notes.daily_note_path(cfg.daily_dir)
-            doc = MarkdownDoc(path.read_text())
-            block = doc.find_subsection(doc.find_section("Task Details", level=2), sub.parent)
-            block.content.insert(sub.line_num + 1, f"  - {note}")
-            path.write_text(doc.serialize())
+            append_subtask_note(cfg.daily_dir, sub, note)
     elif action == "pause":
         _pause(cfg, state)
     elif action == "break":

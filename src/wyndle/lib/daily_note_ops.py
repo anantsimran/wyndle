@@ -1,4 +1,6 @@
-"""Task hierarchy and removal operations for the dashboard."""
+"""Task edits in Markdown notes, independent of the browser and HTTP server."""
+
+from pathlib import Path
 
 from wyndle.lib import daily_notes, task_notes
 from wyndle.lib.config import WyndleConfig
@@ -23,6 +25,42 @@ def add_group(cfg: WyndleConfig, name: str) -> str:
     if block is None:
         daily_notes.write_task_details(daily, name, "")
     return name
+
+
+def add_subtask(cfg: WyndleConfig, title: str, parent: str, estimate: int) -> None:
+    """Add a subtask checkbox to today's daily note."""
+    daily = cfg.daily_dir
+    parent = add_group(cfg, parent)
+    path = daily_notes.daily_note_path(daily)
+    doc = MarkdownDoc(path.read_text())
+    details = doc.find_section("Task Details", level=2)
+    block = doc.find_subsection(details, parent) if details else None
+    content = "\n".join(block.content) if block else ""
+    line = f"- [ ] {title}" + (f" ~{estimate}m" if estimate else "")
+    daily_notes.write_task_details(daily, parent, content.rstrip() + "\n" + line + "\n")
+    set_parent_done(daily, parent, False)
+
+
+def set_parent_done(daily: Path, parent: str, done: bool) -> None:
+    """Update a high-level checkbox without changing sibling content."""
+    path = daily_notes.daily_note_path(daily)
+    doc = MarkdownDoc(path.read_text())
+    high = doc.find_section("High Level Tasks", level=2)
+    if high:
+        for idx, checked, title in doc.get_checkboxes(high):
+            if title.casefold() == parent.casefold() and checked != done:
+                old, new = ("[ ]", "[x]") if done else ("[x]", "[ ]")
+                high.content[idx] = high.content[idx].replace("[X]", "[x]").replace(old, new, 1)
+        path.write_text(doc.serialize())
+
+
+def append_subtask_note(daily: Path, sub: SubTask, note: str) -> None:
+    """Write an indented note beneath a subtask checkbox."""
+    path = daily_notes.daily_note_path(daily)
+    doc = MarkdownDoc(path.read_text())
+    block = doc.find_subsection(doc.find_section("Task Details", level=2), sub.parent)
+    block.content.insert(sub.line_num + 1, f"  - {note}")
+    path.write_text(doc.serialize())
 
 
 def _archive_subtasks(cfg: WyndleConfig, parent: str, names: set[str]) -> None:

@@ -8,5 +8,12 @@ build/
 *.egg
 .ruff_cache/
 .pytest_cache/
+.mypy_cache/
+.cache/
+.coverage*
+htmlcov/
+.tox/
 node_modules/
+*.tsbuildinfo
+.DS_Store
 *.vsix

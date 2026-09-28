@@ -8,22 +8,26 @@ import threading
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from importlib.resources import files
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 from wyndle.lib.config import WyndleConfig, init_default_config, load_config
-from wyndle.lib.dashboard import dispatch, snapshot
+from wyndle.lib.dashboard import dispatch, recent_stats, snapshot
+from wyndle.lib.note_archive import list_notes, read_note
 from wyndle.lib.state import State
 
 ASSETS = {"/": ("index.html", "text/html"),
           "/app.js": ("app.js", "text/javascript"),
           "/style.css": ("style.css", "text/css")}
 for _asset in ("api.js", "components/tasks.js", "components/focus.js", "components/dialogs.js",
-               "components/durations.js", "components/help.js", "components/pomodoro.js"):
+               "components/durations.js", "components/help.js", "components/pomodoro.js",
+               "components/history.js"):
     ASSETS[f"/{_asset}"] = (_asset, "text/javascript")
 ASSETS["/theme.css"] = ("theme.css", "text/css")
 ASSETS["/components.css"] = ("components.css", "text/css")
 ASSETS["/HOW_TO_USE.md"] = ("HOW_TO_USE.md", "text/markdown")
 ASSETS["/favicon.svg"] = ("favicon.svg", "image/svg+xml")
+ASSETS["/favicon.png"] = ("favicon.png", "image/png")
+ASSETS["/favicon.ico"] = ("favicon.ico", "image/x-icon")
 for _character in ("dalinar", "kaladin"):
     ASSETS[f"/assets/{_character}.jpg"] = (f"assets/{_character}.jpg", "image/jpeg")
 
@@ -81,10 +85,17 @@ def make_server(cfg: WyndleConfig, state: State, port: int = 8765) -> ThreadingH
                 return False
             return True
 
+        def _query(self, query: str, allowed: set[str]) -> dict[str, str]:
+            params = parse_qs(query, keep_blank_values=True)
+            if set(params) - allowed or any(len(values) != 1 for values in params.values()):
+                raise ValueError("Invalid query parameters.")
+            return {key: values[0] for key, values in params.items()}
+
         def do_GET(self) -> None:  # noqa: N802
             if not self._local_request():
                 return
-            path = urlsplit(self.path).path
+            request = urlsplit(self.path)
+            path = request.path
             if path == "/api/help":
                 from wyndle.lib.help import help_content
 
@@ -95,6 +106,31 @@ def make_server(cfg: WyndleConfig, state: State, port: int = 8765) -> ThreadingH
                         self._json(200, {"app": "wyndle", "protocol": 1, **snapshot(cfg, state)})
                 except (OSError, ValueError) as exc:
                     self._json(500, {"error": str(exc)})
+            elif path in ("/api/notes", "/api/note", "/api/stats"):
+                try:
+                    if path == "/api/notes":
+                        self._query(request.query, set())
+                        with lock:
+                            result = list_notes(cfg)
+                    elif path == "/api/note":
+                        params = self._query(request.query, {"kind", "name"})
+                        with lock:
+                            result = read_note(cfg, params.get("kind", ""),
+                                               params.get("name", ""))
+                    else:
+                        params = self._query(request.query, {"days"})
+                        days = params.get("days", "7")
+                        if days not in ("7", "30"):
+                            raise ValueError("days must be 7 or 30.")
+                        with lock:
+                            result = recent_stats(cfg, state, int(days))
+                    self._json(200, result)
+                except FileNotFoundError:
+                    self._json(404, {"error": "Note not found."})
+                except (ValueError, TypeError) as exc:
+                    self._json(400, {"error": str(exc)})
+                except OSError as exc:
+                    self._json(500, {"error": f"Could not read your notes: {exc}"})
             elif path in ASSETS:
                 filename, mime = ASSETS[path]
                 self._send(200, files("wyndle.web").joinpath(filename).read_bytes(), mime)
