@@ -11,6 +11,8 @@ Wyndle manages a daily loop: choose work to carry forward, add tasks, plan
 work blocks with buffers and breaks, track focus, and wrap up with planned and
 actual time.
 
+**New to Wyndle?** Follow the [visual how-to guide](https://anantsimran.github.io/wyndle/).
+
 ## How to run
 
 ### Web dashboard

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="A friendly guide to Wyndle: start your day, choose one small task, focus, take breaks, and carry your progress forward.">
+  <title>{{PAGE_TITLE}} · Wyndle</title>
+  <link rel="canonical" href="https://anantsimran.github.io/wyndle/">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#guide">Skip to the guide</a>
+  <div class="site-shell">
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Wyndle guide home"><span class="brand-mark" aria-hidden="true">w</span><span>wyndle<span class="brand-dot">.</span></span></a>
+      <nav class="header-links" aria-label="Main links">
+        <a href="#guide">The guide</a>
+        <a href="https://github.com/anantsimran/wyndle">GitHub <span aria-hidden="true">↗</span></a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="page-title">
+        <div class="hero-copy">
+          <span class="eyebrow"><span class="eyebrow-line"></span> YOUR FIELD GUIDE</span>
+          <h1 id="page-title">{{PAGE_TITLE}}</h1>
+          <div class="hero-intro">{{INTRO}}</div>
+          <p class="hero-detail">A calmer way to plan your day, give one thing your attention, and leave yourself an easy start tomorrow.</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#install-wyndle">Start with Wyndle <span aria-hidden="true">↗</span></a>
+            <a class="button button-quiet" href="#guide">Browse the guide <span aria-hidden="true">↓</span></a>
+          </div>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="visual-glow"></div>
+          <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+          <div class="mockup">
+            <div class="mockup-top"><span class="mockup-dots"><i></i><i></i><i></i></span><span>YOUR SPACE, LOCALLY</span></div>
+            <div class="mockup-body">
+              <span class="mockup-kicker">A MOMENT OF FOCUS</span>
+              <strong>What’s your next<br>small step?</strong>
+              <div class="mockup-timer"><span>15:00<small>MINUTES, JUST FOR THIS</small></span></div>
+              <span class="mockup-button">Let’s begin <span>▶</span></span>
+            </div>
+          </div>
+          <div class="floating-note"><span>✦</span> A small start counts.</div>
+        </div>
+      </section>
+
+      <section class="quick-path" aria-labelledby="quick-path-title">
+        <div class="quick-heading"><span class="eyebrow">THE DAILY RHYTHM</span><h2 id="quick-path-title">Your next step is enough.</h2></div>
+        <div class="quick-grid">
+          <a href="#start-your-day"><span class="quick-number">01</span><strong>Start your day</strong><span>Bring forward what matters today.</span><span class="quick-arrow" aria-hidden="true">↗</span></a>
+          <a href="#add-one-small-task"><span class="quick-number">02</span><strong>Make it small</strong><span>Choose a clear, doable next step.</span><span class="quick-arrow" aria-hidden="true">↗</span></a>
+          <a href="#give-one-thing-your-attention"><span class="quick-number">03</span><strong>Find your focus</strong><span>Pick a block and begin when ready.</span><span class="quick-arrow" aria-hidden="true">↗</span></a>
+          <a href="#leave-tomorrow-an-easy-start"><span class="quick-number">04</span><strong>Wrap gently</strong><span>Save your progress for tomorrow.</span><span class="quick-arrow" aria-hidden="true">↗</span></a>
+        </div>
+      </section>
+
+      <div class="guide-layout" id="guide">
+        <aside class="contents" aria-label="Guide contents">
+          <div class="contents-inner">
+            <p class="eyebrow">IN THIS GUIDE</p>
+            <nav aria-label="Guide sections"><ol>{{CONTENTS}}</ol></nav>
+            <a class="contents-github" href="https://github.com/anantsimran/wyndle">View the project on GitHub <span aria-hidden="true">↗</span></a>
+          </div>
+        </aside>
+        <article class="guide-content" aria-label="How to use Wyndle">{{GUIDE_CONTENT}}</article>
+      </div>
+    </main>
+    <footer class="site-footer"><span>One small task. One focus block. Then the next step.</span><a href="#top">Back to top ↑</a></footer>
+  </div>
+</body>
+</html>

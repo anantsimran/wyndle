@@ -86,6 +86,9 @@ dialog::backdrop { background: #15251ccc; backdrop-filter: blur(5px); }
 .dialog-actions { margin-top: 24px; display: flex; gap: 8px; }
 #help-dialog { max-width: 720px; max-height: 85vh; padding: 24px; }
 #help-dialog .section-top h2 { margin: 0; }
+.guide-online-wrap { margin: 16px 0 4px; }
+.guide-online { display: inline-flex; align-items: center; gap: 12px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-soft); color: var(--accent); font-size: 12px; font-weight: 650; text-decoration: none; }
+.guide-online:hover { background: var(--accent-soft); }
 .history-dialog { max-width: 760px; max-height: 85vh; overflow: auto; padding: 24px; }
 .history-dialog .section-top h2 { margin: 0; }
 .history-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }

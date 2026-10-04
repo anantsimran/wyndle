@@ -169,7 +169,17 @@ progressive disclosure. Quick-add submits on Enter and `N` focuses it.
    ensure `pyproject.toml` includes its file pattern in package data.
 5. Add behavior tests for persistence, invalid inputs, and repeated requests.
    Test a full lifecycle when the feature affects timers or day boundaries.
-6. Update the user instructions and run the checks below.
+6. Update `src/wyndle/web/HOW_TO_USE.md` for every user-facing feature or
+   behavior change, regenerate `docs/index.html` with
+   `uv run python scripts/build_guide.py`, and run the checks below. The same
+   Markdown appears in the dashboard and `wyndle help --guide`; the generated
+   page is published through GitHub Pages.
+
+The static guide's layout lives in `scripts/guide-template.html` and `docs/style.css`.
+Run `uv run python scripts/build_guide.py --check` to detect an out-of-date
+generated page. After a push to `main`, the Pages workflow checks and deploys
+the committed page. In GitHub repository settings, select **GitHub Actions** as
+the Pages build and deployment source before the first deployment.
 
 The day workflow uses `GET /api/status` and `POST /api/action` with
 `{"action": "focus", "data": {"id": "...", "minutes": 15}}`. POST requires

@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="A friendly guide to Wyndle: start your day, choose one small task, focus, take breaks, and carry your progress forward.">
+  <title>How to use Wyndle · Wyndle</title>
+  <link rel="canonical" href="https://anantsimran.github.io/wyndle/">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#guide">Skip to the guide</a>
+  <div class="site-shell">
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Wyndle guide home"><span class="brand-mark" aria-hidden="true">w</span><span>wyndle<span class="brand-dot">.</span></span></a>
+      <nav class="header-links" aria-label="Main links">
+        <a href="#guide">The guide</a>
+        <a href="https://github.com/anantsimran/wyndle">GitHub <span aria-hidden="true">↗</span></a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="page-title">
+        <div class="hero-copy">
+          <span class="eyebrow"><span class="eyebrow-line"></span> YOUR FIELD GUIDE</span>
+          <h1 id="page-title">How to use Wyndle</h1>
+          <div class="hero-intro"><p>One small task. One focus block. Then the next step.</p>
+</div>
+          <p class="hero-detail">A calmer way to plan your day, give one thing your attention, and leave yourself an easy start tomorrow.</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#install-wyndle">Start with Wyndle <span aria-hidden="true">↗</span></a>
+            <a class="button button-quiet" href="#guide">Browse the guide <span aria-hidden="true">↓</span></a>
+          </div>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="visual-glow"></div>
+          <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+          <div class="mockup">
+            <div class="mockup-top"><span class="mockup-dots"><i></i><i></i><i></i></span><span>YOUR SPACE, LOCALLY</span></div>
+            <div class="mockup-body">
+              <span class="mockup-kicker">A MOMENT OF FOCUS</span>
+              <strong>What’s your next<br>small step?</strong>
+              <div class="mockup-timer"><span>15:00<small>MINUTES, JUST FOR THIS</small></span></div>
+              <span class="mockup-button">Let’s begin <span>▶</span></span>
+            </div>
+          </div>
+          <div class="floating-note"><span>✦</span> A small start counts.</div>
+        </div>
+      </section>
+
+      <section class="quick-path" aria-labelledby="quick-path-title">
+        <div class="quick-heading"><span class="eyebrow">THE DAILY RHYTHM</span><h2 id="quick-path-title">Your next step is enough.</h2></div>
+        <div class="quick-grid">
+          <a href="#start-your-day"><span class="quick-number">01</span><strong>Start your day</strong><span>Bring forward what matters today.</span><span class="quick-arrow" aria-hidden="true">↗</span></a>
+          <a href="#add-one-small-task"><span class="quick-number">02</span><strong>Make it small</strong><span>Choose a clear, doable next step.</span><span class="quick-arrow" aria-hidden="true">↗</span></a>
+          <a href="#give-one-thing-your-attention"><span class="quick-number">03</span><strong>Find your focus</strong><span>Pick a block and begin when ready.</span><span class="quick-arrow" aria-hidden="true">↗</span></a>
+          <a href="#leave-tomorrow-an-easy-start"><span class="quick-number">04</span><strong>Wrap gently</strong><span>Save your progress for tomorrow.</span><span class="quick-arrow" aria-hidden="true">↗</span></a>
+        </div>
+      </section>
+
+      <div class="guide-layout" id="guide">
+        <aside class="contents" aria-label="Guide contents">
+          <div class="contents-inner">
+            <p class="eyebrow">IN THIS GUIDE</p>
+            <nav aria-label="Guide sections"><ol><li><a href="#install-wyndle">Install Wyndle</a></li>
+<li><a href="#open-your-space">Open your space</a></li>
+<li><a href="#start-your-day">Start your day</a></li>
+<li><a href="#add-one-small-task">Add one small task</a></li>
+<li><a href="#high-level-tasks-and-subtasks">High-level tasks and subtasks</a></li>
+<li><a href="#delete-a-task">Delete a task</a></li>
+<li><a href="#give-one-thing-your-attention">Give one thing your attention</a></li>
+<li><a href="#take-a-breath">Take a breath</a></li>
+<li><a href="#plan-today-s-blocks">Plan today&#x27;s blocks</a></li>
+<li><a href="#pomodoro-timer">Pomodoro timer</a></li>
+<li><a href="#keep-notes-and-finish-tasks">Keep notes and finish tasks</a></li>
+<li><a href="#leave-tomorrow-an-easy-start">Leave tomorrow an easy start</a></li>
+<li><a href="#keyboard-shortcuts">Keyboard shortcuts</a></li>
+<li><a href="#your-files-and-privacy">Your files and privacy</a></li>
+<li><a href="#if-something-feels-stuck">If something feels stuck</a></li>
+<li><a href="#terminal-companion">Terminal companion</a></li></ol></nav>
+            <a class="contents-github" href="https://github.com/anantsimran/wyndle">View the project on GitHub <span aria-hidden="true">↗</span></a>
+          </div>
+        </aside>
+        <article class="guide-content" aria-label="How to use Wyndle"><h2 id="install-wyndle">Install Wyndle</h2>
+<p>Wyndle needs Python 3.10 or newer. With <a href="https://docs.astral.sh/uv/">uv</a>
+installed, get the command from GitHub:</p>
+<pre><code class="language-bash">uv tool install git+https://github.com/anantsimran/wyndle.git
+wyndle ui
+</code></pre>
+<p>If you are working from a source checkout, run <code>uv sync</code> and then
+<code>uv run wyndle ui</code> instead. Wyndle is not published on PyPI.</p>
+<h2 id="open-your-space">Open your space</h2>
+<p>Run <code>wyndle ui</code> to open the dashboard in your browser. From a source checkout,
+use <code>uv run wyndle ui</code>. In VS Code, open the Wyndle activity-bar icon.
+Both interfaces share your tasks, notes, and timers.</p>
+<p>Use <strong>How to use</strong> in the top bar whenever you need this guide. The terminal
+version is <code>wyndle help --guide</code>. For command options, use <code>wyndle --help</code>
+or a command’s own help, such as <code>wyndle ui --help</code>.</p>
+<p>Use <strong>Notes</strong> or <strong>Stats</strong> in the top bar at any time, including before you
+start your day. <strong>Notes</strong> lets you read saved daily, task, and review Markdown
+files. Choose a file from the list; use <strong>Refresh</strong> after changing files in an
+editor. <strong>Stats</strong> shows the last 7 or 30 days of tracked time and completed
+steps, with a day-by-day breakdown.</p>
+<h2 id="start-your-day">Start your day</h2>
+<p>If you have unfinished work from a previous day, open <strong>Bring unfinished work
+forward</strong> and choose which high-level tasks to carry into today. All are selected
+at first; clear any you want to leave out. Then click <strong>Start my day</strong>. Your
+configured daily chores appear automatically.</p>
+<h2 id="add-one-small-task">Add one small task</h2>
+<p>Type a concrete next step in <strong>What’s one small step?</strong>, then press <strong>Enter</strong>
+or click <strong>Add to today</strong>. For example: “Read the A2 ticket and write three notes.”</p>
+<p>Open <strong>Group &amp; planned minutes</strong> to choose where the step belongs and its
+planned minutes:</p>
+<ul>
+<li><strong>High-level task</strong> groups related subtasks. The initial one is <strong>Today</strong>.
+The list includes every high-level task from the last 30 days; picking an
+older one adds it back to today.</li>
+<li><strong>Minutes</strong> estimates the whole task, rather than one focus block.</li>
+<li>Choose <strong>5, 10, 15, 30, 45, or 60 minutes</strong> with one click.</li>
+<li>The initial estimate is <strong>15 minutes</strong>. You can still type a custom whole
+number from <strong>0 to 480</strong>; <strong>0</strong> means no estimate.</li>
+<li>Your last estimate stays selected while you add more tasks in the same page.</li>
+</ul>
+<p>Choose a <strong>Task type</strong> beneath the form: <strong>P0</strong> for non-negotiable work,
+<strong>Regular</strong> for the usual list, or <strong>Optional</strong> for work you can leave for
+later. A task has one type at a time. The count card beside the timer shows
+how many unfinished tasks remain in each type.</p>
+<p>Use a distinct name for each task today. To rename a task, edit its daily
+Markdown note in your preferred editor.</p>
+<h2 id="high-level-tasks-and-subtasks">High-level tasks and subtasks</h2>
+<p>Work is organized in two levels: a <strong>high-level task</strong> (such as “Ship the A2
+ticket”) holds the <strong>subtasks</strong> you actually focus on.</p>
+<ul>
+<li>Click <strong>+ High-level task</strong> to create one. It appears in your list right away,
+even before it has any subtasks.</li>
+<li>Click <strong>+</strong> beside a high-level task’s name to add a subtask to it.</li>
+<li>Click <strong>✓</strong> beside its name to complete it and all of its subtasks at once.</li>
+<li>Use <strong>↑</strong> and <strong>↓</strong> under a task to move it within its high-level task. Its
+notes move with it, and the order is kept when the project carries forward.
+Use <strong>P0</strong> or <strong>Opt</strong> on a task card to change its type.</li>
+</ul>
+<h2 id="delete-a-task">Delete a task</h2>
+<p>Click <strong>×</strong> on a subtask, or <strong>×</strong> beside a high-level task’s name, then confirm
+with <strong>Delete</strong>. <strong>Keep it</strong> cancels. Deleting removes the task and its notes
+from today’s plan, so it will not carry into tomorrow. Focused time and saved
+history are kept. An active task pauses first.</p>
+<h2 id="give-one-thing-your-attention">Give one thing your attention</h2>
+<p>Choose <strong>5, 10, 15, 30, 45, or 60 minutes</strong> on the focus card. Then click a task’s
+<strong>▶</strong> button, or <strong>Take the next step</strong> to focus on the suggested task.</p>
+<p>The focus block and task estimate are independent. A 60-minute task can start
+with a 5-minute block. Choosing a new duration during a block applies to your
+next block; it does not reset the running timer.</p>
+<p>Click <strong>Pause focus</strong> or the active task’s <strong>Ⅱ</strong> button to stop counting time.
+Starting another task pauses the previous one automatically. To resume, click
+its <strong>▶</strong> button again; accumulated time is preserved.</p>
+<p>When a block ends, the timer shows overtime. Time continues until
+you pause, complete the task, switch tasks, take a break, or wrap the day.
+The timer and live indicator turn red in overtime. Tasks also turn red when
+their tracked time exceeds their estimate, including after completion.
+Refreshing or closing the page does not pause focus. Pause before stepping away.</p>
+<p>Click <strong>Enable timer alerts</strong> if you want quiet browser notifications and
+in-page reminders at the end of a focus block, every five minutes of overtime,
+and when a break ends. Browser notifications need permission and may be
+unavailable on some phones. Keep the dashboard open to receive page alerts.</p>
+<h2 id="take-a-breath">Take a breath</h2>
+<p>Click <strong>Take a 5 min break</strong>. This pauses focus and starts a separate break timer;
+break time never counts toward focused time.</p>
+<p>Click <strong>Back to the journey</strong> to resume your last unfinished task with the
+selected focus duration, or <strong>Pause</strong> to end the break without starting work.</p>
+<h2 id="plan-today-s-blocks">Plan today's blocks</h2>
+<p>Open <strong>Daily alarm</strong> in the top bar, or visit <code>/daily</code>. Start your day and add
+tasks in the dashboard first. On the Daily Alarm page:</p>
+<ol>
+<li>Set a start time, work mode, work-block length, buffer length, and break
+length. The buffer defaults to five minutes and can be set from 1 to 60
+minutes.</li>
+<li>Select unfinished tasks and use the arrows to put them in order.</li>
+<li>Click <strong>Save daily plan</strong> to see today's work, buffer, and break blocks.
+Change the choices and save again, or clear the plan.</li>
+</ol>
+<p>Choose one block per task's remaining estimate or fixed work chunks. Tasks
+without an estimate use the work-block length. Every block has
+its own buffer and break, including the final block; all three phases must fit
+before your configured hard stop. The plan resets with the next day.
+Scheduled blocks and reminders do not pause or start tracked sessions. Choose
+<strong>Start this focus block</strong> to track work or <strong>Start break</strong> to track rest. During
+the buffer, click <strong>Pause focus</strong> when you finish working.
+Starting late does not move the saved times.
+The start time uses the computer running Wyndle; the timeline uses this device's
+time zone. If a task changes or disappears, save the plan again.</p>
+<p>Click <strong>Enable page alerts</strong> for quiet reminders at block changes while the
+Daily Alarm page is open. Turn them on separately on each device. Notification
+banners need browser permission; in-page reminders remain available when banners
+are blocked. Closing the tab or locking a phone can stop these alerts.</p>
+<p>To use the page on a phone, run Wyndle on your computer and open its private
+Tailscale Serve HTTPS address on the phone. Add the Tailscale hostname to
+<code>WYNDLE_ALLOWED_HOSTS</code> before starting <code>wyndle ui</code>. Keep the Daily Alarm page
+open for page alerts. Wyndle does not set a phone system alarm or deliver
+background phone alerts. On the computer, run
+<code>tailscale serve --bg http://127.0.0.1:8765</code> after starting Wyndle.</p>
+<h2 id="pomodoro-timer">Pomodoro timer</h2>
+<p>Click <strong>Pomodoro</strong> in the top bar for a classic 25-minute focus timer with
+5-minute breaks and a 15-minute break after every fourth round. <strong>Skip</strong> moves
+to the next phase; <strong>Reset</strong> returns to round 1. A chime and a message mark
+each phase’s end; the next phase waits for you to click <strong>Start</strong>.</p>
+<p>The Pomodoro is only a timer. It does not start, pause, or track any task, and
+nothing is saved. Closing or refreshing the page resets it. Hide it with <strong>×</strong>;
+the top-bar button keeps showing the time while it runs.</p>
+<h2 id="keep-notes-and-finish-tasks">Keep notes and finish tasks</h2>
+<ul>
+<li>Click the <strong>+</strong> beside a task, including a completed task, to save a short
+note. Expand its note count to read it.</li>
+<li>Click the circle beside a task to mark it complete. An active task pauses first.
+Click the <strong>✓</strong> of a completed task to mark it not done again.</li>
+<li>Click <strong>✎</strong> to edit planned and tracked minutes or task type. Completed tasks show their
+total tracked time, first focus start, and completion time beneath the title.</li>
+<li>Open <strong>Completed</strong> to review what you finished.</li>
+</ul>
+<p>At the bottom, <strong>time given to focus</strong> shows today’s tracked time,
+<strong>small steps finished</strong> shows completed versus total tasks, and
+<strong>estimated work left</strong> subtracts tracked time from unfinished task estimates.</p>
+<h2 id="leave-tomorrow-an-easy-start">Leave tomorrow an easy start</h2>
+<p>Click <strong>Wrap up</strong>. Add tomorrow’s first small step and an optional reflection,
+then choose <strong>Finish my day</strong>.</p>
+<p>Wyndle stops the active timer, saves a shutdown summary, and syncs your work
+to persistent task notes. Today is then closed. On the next day, start a fresh
+day and carry unfinished work forward if you want to.</p>
+<h2 id="keyboard-shortcuts">Keyboard shortcuts</h2>
+<ul>
+<li><strong>Enter</strong> in the quick-add field adds a task.</li>
+<li><strong>N</strong>, while outside a form or button, focuses quick-add.</li>
+<li><strong>Tab</strong> moves between controls; <strong>Enter</strong> or <strong>Space</strong> activates a focused button.</li>
+<li><strong>Escape</strong> closes a dialog, including this guide.</li>
+</ul>
+<h2 id="your-files-and-privacy">Your files and privacy</h2>
+<p>Your work stays on this computer. Expand <strong>Your notes</strong> in the footer to find
+the notes folder. Daily notes are in <code>daily/YYYY-MM-DD.md</code>; persistent project
+notes are in <code>tasks/</code>, and saved reviews are in <code>weekly/</code>. Any Markdown editor
+can open them. The <strong>Notes</strong> viewer displays their Markdown as plain text.</p>
+<p>The browser and VS Code use the same local server. Keep the server running
+while using them. If VS Code started it, closing the extension stops that
+server. A server started separately with <code>wyndle ui</code> keeps running until Ctrl+C.
+Stopping the server does not erase the active timer; pause focus first.</p>
+<h2 id="if-something-feels-stuck">If something feels stuck</h2>
+<ul>
+<li><strong>Cannot reach Wyndle:</strong> restart <code>wyndle ui</code>, then refresh. In VS Code, use the
+reconnect button and check <strong>Settings → Wyndle → Executable</strong>.</li>
+<li><strong>Port already in use:</strong> open the existing dashboard at <code>http://127.0.0.1:8765</code>
+or run <code>wyndle ui --port 8766</code>. Match the extension’s port setting if using VS Code.</li>
+<li><strong>A new page says “Not found”:</strong> restart the running <code>wyndle ui</code> process after
+an update. A browser refresh does not reload Python routes, and VS Code may
+reconnect to the older server.</li>
+<li><strong>Task changed:</strong> refresh to load the latest Markdown before trying again.</li>
+<li><strong>Too much to start:</strong> choose a 5-minute block and one smaller step. Rest counts, too.</li>
+</ul>
+<h2 id="terminal-companion">Terminal companion</h2>
+<p>Use <code>wyndle --help</code> for the current command list. Use <code>wyndle help</code> for the
+longer terminal workflow reference, or <code>wyndle help --guide</code> for this guide.
+Examples include <code>wyndle status</code>, <code>wyndle morning</code>, and <code>wyndle wrap</code>.
+The command reference below in the dashboard is generated from the same CLI.</p>
+</article>
+      </div>
+    </main>
+    <footer class="site-footer"><span>One small task. One focus block. Then the next step.</span><a href="#top">Back to top ↑</a></footer>
+  </div>
+</body>
+</html>
