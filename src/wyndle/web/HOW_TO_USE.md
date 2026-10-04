@@ -2,6 +2,19 @@
 
 One small task. One focus block. Then the next step.
 
+## Install Wyndle
+
+Wyndle needs Python 3.10 or newer. With [uv](https://docs.astral.sh/uv/)
+installed, get the command from GitHub:
+
+```bash
+uv tool install git+https://github.com/anantsimran/wyndle.git
+wyndle ui
+```
+
+If you are working from a source checkout, run `uv sync` and then
+`uv run wyndle ui` instead. Wyndle is not published on PyPI.
+
 ## Open your space
 
 Run `wyndle ui` to open the dashboard in your browser. From a source checkout,
