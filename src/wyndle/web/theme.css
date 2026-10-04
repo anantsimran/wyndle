@@ -13,6 +13,8 @@
   --line: #d9e2e9;
   --warm: #a88043;
   --error: #a63737;
+  --overdue: #b83737;
+  --overdue-soft: #fce9e8;
   --shadow: 0 14px 48px #35492e08;
   --radius: 22px;
   --radius-small: 12px;
@@ -34,6 +36,8 @@
     --line: #31495e;
     --warm: #dbb67d;
     --error: #ffb4a5;
+    --overdue: #ff8d83;
+    --overdue-soft: #472b34;
     --shadow: 0 14px 48px #00000012;
   }
 }

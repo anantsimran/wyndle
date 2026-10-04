@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Daily alarm · Wyndle</title>
+  <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32">
+  <link rel="stylesheet" href="/daily.css">
+  <script src="/daily.js" type="module"></script>
+</head>
+<body>
+  <div class="alarm-shell">
+    <header class="alarm-nav">
+      <a class="alarm-brand" href="/" aria-label="Wyndle home"><span class="brand-mark">w</span> wyndle<span class="brand-dot">.</span></a>
+      <a class="nav-back" href="/">← Dashboard</a>
+    </header>
+
+    <main>
+      <div class="alarm-intro">
+        <p class="eyebrow">DAILY ALARM</p>
+        <h1>Make room for the work<span class="accent">.</span></h1>
+        <p>Give today's tasks a place in your day. Each work block gets a buffer to wrap up, then a break.</p>
+      </div>
+
+      <p id="loading" class="small muted">Loading your day…</p>
+      <p id="error" class="error" role="alert" hidden></p>
+      <section id="day-message" class="card day-message" hidden>
+        <h2 id="day-message-title"></h2>
+        <p id="day-message-copy"></p>
+        <a href="/" class="text-link">Open the dashboard →</a>
+      </section>
+
+      <div id="alarm-layout" class="alarm-layout" hidden>
+        <section id="plan-editor" class="card plan-editor" aria-labelledby="editor-title">
+          <div class="section-heading">
+            <div><p class="eyebrow">01 · SET THE RHYTHM</p><h2 id="editor-title">Build your day</h2></div>
+          </div>
+          <form id="plan-form">
+            <div class="work-mode-setting"><label for="plan-work-mode">Work timing</label><select id="plan-work-mode">
+              <option value="fixed">Fixed-length blocks</option>
+              <option value="estimate">One block per task</option>
+            </select></div>
+            <p id="work-mode-hint" class="field-hint"></p>
+            <div class="settings-grid">
+              <div><label for="plan-start">Start time</label><input id="plan-start" type="time" required></div>
+              <div><label id="work-minutes-label" for="plan-work">Work minutes</label><div class="minute-input"><input id="plan-work" type="number" min="5" max="120" value="25" required><span>min</span></div></div>
+              <div><label for="plan-buffer">Buffer</label><div class="minute-input"><input id="plan-buffer" type="number" min="1" max="60" value="5" required><span>min</span></div></div>
+              <div><label for="plan-break">Break</label><div class="minute-input"><input id="plan-break" type="number" min="1" max="60" value="5" required><span>min</span></div></div>
+            </div>
+            <p class="field-hint">Every work block includes a buffer and break, even the last. Start time follows the computer running Wyndle; timeline times follow this device.</p>
+            <div class="task-heading"><h3>Choose tasks in order</h3><span id="task-count" class="small muted"></span></div>
+            <p class="field-hint">Select up to 60 unfinished tasks, then use the arrows to change their order.</p>
+            <div id="task-picker" class="task-picker"></div>
+            <button id="save-plan" class="primary wide" type="submit">Save daily plan</button>
+          </form>
+        </section>
+
+        <section class="plan-side" aria-label="Today's plan">
+          <div id="no-plan" class="card no-plan">
+            <p class="eyebrow">02 · SEE THE DAY</p>
+            <h2>Your blocks will appear here.</h2>
+            <p>Pick a few tasks and save a plan to see your work, buffer, and break blocks.</p>
+          </div>
+          <div id="saved-plan" hidden>
+            <div id="now-card" class="card now-card">
+              <div class="now-top"><p id="now-label" class="eyebrow">UP NEXT</p><span class="live-mark" aria-hidden="true"></span></div>
+              <h2 id="now-title"></h2>
+              <p id="now-detail" class="muted"></p>
+              <strong id="now-countdown" class="now-clock">00:00</strong>
+              <p id="now-caption" class="small muted"></p>
+              <p id="now-guidance" class="small muted" hidden></p>
+              <button id="now-focus" class="primary" type="button" hidden>Start this focus block ▶</button>
+              <button id="now-pause" class="secondary" type="button" hidden>Pause focus</button>
+              <button id="now-break" class="primary" type="button" hidden>Start break</button>
+            </div>
+            <div class="timeline-heading"><div><p class="eyebrow">02 · FOLLOW THE DAY</p><h2>Today's blocks</h2></div><button id="clear-plan" class="quiet" type="button">Clear plan</button></div>
+            <p id="legacy-plan" class="field-hint" hidden>This plan was saved before buffers were added. Save it again to add a buffer and break after each work block.</p>
+            <ol id="timeline" class="timeline"></ol>
+            <p class="field-hint">The plan reminds you; it never pauses or starts a timer automatically. Use the buttons or dashboard controls to change your timer.</p>
+          </div>
+        </section>
+      </div>
+
+      <section class="card alert-card" aria-labelledby="alert-title">
+        <div><p class="eyebrow">ALERTS ON THIS DEVICE</p><h2 id="alert-title">See the next block arrive</h2>
+          <p>Enable quiet browser notifications and in-page reminders. Alerts stop when this tab closes; phone lock may pause them.</p>
+          <p id="alert-status" class="small muted" role="status">Page alerts are off.</p></div>
+        <button id="enable-alerts" class="secondary" type="button">Enable page alerts</button>
+      </section>
+
+      <details class="phone-help"><summary>Using this on your phone</summary><p>Run Wyndle on your computer and open its private Tailscale Serve HTTPS address on your phone. Set <code>WYNDLE_ALLOWED_HOSTS</code> to that Tailscale hostname. Keep this page open for alerts; Wyndle does not set a phone system alarm.</p></details>
+    </main>
+  </div>
+  <div id="toast" class="toast" role="status" hidden></div>
+</body>
+</html>

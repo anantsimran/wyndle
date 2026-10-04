@@ -13,6 +13,9 @@ Summary section (one-liner per subtask)::
     - Read docs ~45m ~open (added: 2026-04-01)
     - Future work ~30m ~future (added: 2026-04-02)
 
+Task tiers use ``~p0`` or ``~optional`` before the status tag. Untagged
+subtasks are regular.
+
 Detail sections::
 
     ## Create action plan
@@ -54,6 +57,8 @@ from wyndle.lib.markdown_dom import (
     MarkdownDoc,
     parse_added_date,
     parse_estimate,
+    parse_optional,
+    parse_priority,
     parse_status_tag,
     strip_all_metadata,
 )
@@ -126,6 +131,7 @@ def _parse_new_format(doc: MarkdownDoc, summary: HeadingBlock) -> list[TaskNoteS
         name = strip_all_metadata(name_clean)
         sub = TaskNoteSubtask(
             name=name, added=added, estimate_min=est,
+            priority=parse_priority(name_clean), optional=parse_optional(name_clean),
             status=status or "open",
         )
         # Exact match: a substring search would let a subtask named e.g.
@@ -224,8 +230,10 @@ def _serialize_summary(subtasks: list[TaskNoteSubtask]) -> list[str]:
     lines = ["## Subtasks"]
     for sub in subtasks:
         est = f" ~{sub.estimate_min}m" if sub.estimate_min else ""
+        priority = " ~p0" if sub.priority else ""
+        optional = " ~optional" if sub.optional and not sub.priority else ""
         added = f" (added: {sub.added})" if sub.added else ""
-        lines.append(f"- {sub.name}{est} ~{sub.status}{added}")
+        lines.append(f"- {sub.name}{est}{priority}{optional} ~{sub.status}{added}")
     return lines
 
 
@@ -269,6 +277,8 @@ def sync_subtask_from_daily(
     daily_notes: list[str],
     today: str,
     estimate_min: int = 0,
+    priority: bool = False,
+    optional: bool = False,
 ) -> None:
     """Update a subtask in *note* with today's data from the daily note.
 
@@ -280,6 +290,9 @@ def sync_subtask_from_daily(
     Does not overwrite ``deferred`` or ``future`` subtask status.
     """
     sub = _find_or_create_subtask(note, subtask_name, estimate_min)
+    sub.priority = priority
+    sub.optional = optional and not priority
+    sub.estimate_min = estimate_min
     sub.time_min += elapsed_min
     if done and sub.status not in ("deferred", "future"):
         sub.status = "done"
@@ -292,6 +305,17 @@ def sync_subtask_from_daily(
         note.days_worked.append(today)
     if note.subtasks and all(s.status == "done" for s in note.subtasks):
         note.status = "done"
+
+
+def order_subtasks_from_daily(note: TaskNote, names: list[str]) -> None:
+    """Keep today's subtask order for future carryover without moving other history."""
+    rank = {name.casefold(): index for index, name in enumerate(names)}
+    ordered = iter(sorted(
+        (sub for sub in note.subtasks if sub.name.casefold() in rank),
+        key=lambda sub: rank[sub.name.casefold()],
+    ))
+    note.subtasks = [next(ordered) if sub.name.casefold() in rank else sub
+                     for sub in note.subtasks]
 
 
 def _strict_merge_notes(sub: TaskNoteSubtask, daily_notes: list[str]) -> None:
@@ -348,7 +372,9 @@ def generate_daily_subtasks(cfg: WyndleConfig, task_name: str) -> str:
         if sub.status not in ("open",):
             continue
         est = f" ~{sub.estimate_min}m" if sub.estimate_min else ""
-        lines.append(f"- [ ] {sub.name}{est}")
+        priority = " ~p0" if sub.priority else ""
+        optional = " ~optional" if sub.optional and not sub.priority else ""
+        lines.append(f"- [ ] {sub.name}{est}{priority}{optional}")
         for text, tag in sub.notes:
             if tag == "open":
                 lines.append(f"  - {text}")

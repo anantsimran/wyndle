@@ -3,6 +3,8 @@ from wyndle.lib.markdown_dom import (
     MarkdownDoc,
     parse_added_date,
     parse_estimate,
+    parse_optional,
+    parse_priority,
     parse_status_tag,
     strip_all_metadata,
     strip_estimate,
@@ -34,6 +36,11 @@ def test_inline_metadata_helpers():
     assert parse_status_tag("plain") == ("plain", "")
     assert parse_added_date("X (added: 2026-04-01)") == ("X", "2026-04-01")
     assert strip_all_metadata("X ~15m ~done (added: 2026-04-01)") == "X"
+    assert strip_estimate("Read docs ~30m ~optional") == "Read docs"
+    assert parse_optional("Read docs ~optional")
+    assert not parse_optional("Read docs ~p0 ~optional")
+    assert parse_priority("Read docs ~p0")
+    assert strip_all_metadata("Read docs ~30m ~optional ~open") == "Read docs"
 
 
 def test_roundtrip_is_lossless():

@@ -47,6 +47,7 @@ def main():
             with sync_playwright() as playwright:
                 browser = playwright.chromium.launch(channel="chrome", headless=True)
                 page = browser.new_page(viewport={"width": 1440, "height": 1150})
+                page.context.grant_permissions(["notifications"])
                 page.on("pageerror", lambda error: errors.append(str(error)))
                 page.goto(f"http://127.0.0.1:{server.server_port}")
                 expect(page.locator(".hero-art img")).to_be_visible()
@@ -86,24 +87,72 @@ def main():
                 expect(page.locator("#stats-month")).to_have_attribute("aria-pressed", "true")
                 page.locator("#stats-close").click()
 
-                page.locator("#carry").uncheck()
                 page.get_by_role("button", name="Start my day").click()
                 expect(page.locator("#workspace")).to_be_visible()
                 titles = ["Sketch the first screen", "Write one small test", "Read the tricky bit"]
-                for title in titles:
+                for title, tier in zip(titles, ("p0", "regular", "optional")):
+                    page.locator(f'input[name="task-tier"][value="{tier}"]').check()
                     page.locator("#task-title").fill(title)
                     page.locator("#task-title").press("Enter")
-                    expect(page.get_by_text(title, exact=True).first).to_be_visible()
+                    expect(page.get_by_role("button", name=f"Complete {title}")).to_be_visible()
+                expect(page.locator("#remaining-p0")).to_have_text("1")
+                expect(page.locator("#remaining-regular")).to_have_text("1")
+                expect(page.locator("#remaining-optional")).to_have_text("1")
+                page.get_by_role("button", name="Move Read the tricky bit up in Today").click()
+                second_title = page.locator("#tasks .task-row").nth(1).locator(".task-title")
+                expect(second_title).to_contain_text(
+                    "Read the tricky bit"
+                )
+                expect(page.get_by_role(
+                    "button", name="Move Read the tricky bit up in Today"
+                )).to_be_focused()
+                assert page.locator("#tasks .task-row").evaluate_all(
+                    "rows => rows.map(row => "
+                    "row.querySelector('.task-title').firstChild.textContent)"
+                ) == ["Sketch the first screen", "Read the tricky bit", "Write one small test"]
+                page.get_by_role("button", name="Mark P0 Read the tricky bit").click()
+                expect(page.locator("#remaining-p0")).to_have_text("2")
+                expect(page.locator("#remaining-optional")).to_have_text("0")
+                page.get_by_role("button", name="Mark optional Read the tricky bit").click()
+                expect(page.locator("#remaining-p0")).to_have_text("1")
+                expect(page.locator("#remaining-optional")).to_have_text("1")
+                page.get_by_role("link", name="Daily alarm").click()
+                expect(page.get_by_role("heading", name="Build your day")).to_be_visible()
+                page.locator("#plan-start").fill("10:00")
+                page.get_by_role("button", name="Save daily plan").click()
+                expect(page.locator("#timeline .block")).to_have_count(9)
+                page.get_by_role("button", name="Enable page alerts").click()
+                expect(page.locator("#enable-alerts")).to_have_text("Disable page alerts")
+                page.get_by_role("link", name="Dashboard").click()
+                page.get_by_role("button", name="Edit Read the tricky bit").click()
+                page.locator("#edit-estimate").fill("7")
+                page.locator("#edit-elapsed").fill("9")
+                page.get_by_role("button", name="Save changes").click()
+                expect(page.locator("#tasks .task-row.overdue")).to_have_count(1)
+                page.get_by_role("button", name="Complete Read the tricky bit").click()
+                expect(page.locator("#remaining-optional")).to_have_text("0")
+                page.locator("#completed-label").click()
+                expect(page.locator("#completed-tasks .task-meta")).to_contain_text("Total 9m")
+                page.get_by_role("button", name="Mark Read the tricky bit not done").click()
+                expect(page.locator("#remaining-optional")).to_have_text("1")
                 page.get_by_role("button", name="Focus on Sketch the first screen").click()
                 expect(page.locator("#live-dot")).to_be_visible()
                 page.reload()
                 expect(page.locator("#live-dot")).to_be_visible()
+                expect(page.locator("#stat-focus")).to_have_text("9m")
                 page.screenshot(path="/tmp/wyndle-desktop.png", full_page=True)
                 page.set_viewport_size({"width": 340, "height": 1000})
                 page.emulate_media(color_scheme="dark")
                 page.wait_for_timeout(250)  # Let the theme transition settle for the screenshot.
+                expect(page.locator("#stat-focus")).to_have_text("9m")
                 page.screenshot(path="/tmp/wyndle-sidebar.png", full_page=True)
                 assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+                for width in (320, 375, 768, 1024):
+                    page.set_viewport_size({"width": width, "height": 1000})
+                    expect(page.locator("#task-tiers")).to_be_visible()
+                    assert page.evaluate(
+                        "document.documentElement.scrollWidth <= innerWidth"
+                    ), width
                 page.get_by_role("button", name="Pause focus").click()
                 expect(page.locator("#live-dot")).to_be_hidden()
                 page.get_by_role("button", name="Take a 5 min break").click()
@@ -118,7 +167,7 @@ def main():
                 page.get_by_role("button", name="Complete Sketch the first screen").click()
                 expect(page.locator("#stat-done")).to_have_text("1 / 3")
                 page.get_by_role("button", name="Stats", exact=True).click()
-                expect(page.locator("#history-days")).to_have_text("2 / 30")
+                expect(page.locator("#history-days")).to_have_text("2 / 7")
                 expect(page.locator("#history-tasks")).to_have_text("2 / 5")
                 page.locator("#stats-close").click()
                 page.locator("#wrap-toggle").click()

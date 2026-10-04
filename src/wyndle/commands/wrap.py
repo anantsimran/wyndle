@@ -26,6 +26,7 @@ from wyndle.lib.daily_notes import (
 from wyndle.lib.models import WorkSummary
 from wyndle.lib.state import State
 from wyndle.lib.task_notes import (
+    order_subtasks_from_daily,
     read_task_note,
     sync_subtask_from_daily,
     write_task_note,
@@ -265,12 +266,16 @@ def sync_task_notes(cfg: WyndleConfig, state: State, date_str: str) -> None:
     for t in get_high_level_tasks(daily_dir, date_str):
         note = read_task_note(cfg, t.text)
         subtask_notes = read_subtask_notes(daily_dir, t.text, date_str)
-        for s in get_task_details(daily_dir, t.text, date_str):
+        subtasks = get_task_details(daily_dir, t.text, date_str)
+        for s in subtasks:
             sync_subtask_from_daily(
                 note, s.display_text, state.get_subtask_elapsed_min(s.text), s.done,
                 subtask_notes.get(s.display_text, []), date_str, s.estimate_min,
+                s.priority,
+                s.optional,
             )
         if note.subtasks:
+            order_subtasks_from_daily(note, [s.display_text for s in subtasks])
             write_task_note(cfg, note)
 
 

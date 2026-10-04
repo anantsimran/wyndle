@@ -12,6 +12,9 @@ Append ``~Xm`` to any subtask checkbox line::
 
     - [ ] Read OAuth docs ~30m
 
+Optional ``~p0`` and ``~optional`` markers make the three task types
+explicit in plain Markdown. Untagged tasks are regular.
+
 Note format
 -----------
 Indented bullets under a subtask are notes::
@@ -33,6 +36,9 @@ from wyndle.lib.markdown_dom import (
     HeadingBlock,
     MarkdownDoc,
     parse_estimate,
+    parse_optional,
+    parse_priority,
+    parse_task_stats,
     strip_estimate,
 )
 from wyndle.lib.models import RemainingWork, SubTask, Task
@@ -265,12 +271,16 @@ def get_task_details(
         return []
     subtasks: list[SubTask] = []
     for idx, done, text in doc.get_checkboxes(sub_block):
+        started_at, ended_at, saved_elapsed = parse_task_stats(text)
         subtasks.append(SubTask(
             text=text,
             display_text=strip_estimate(text),
             done=done,
             line_num=idx,
             estimate_min=parse_estimate(text),
+            priority=parse_priority(text), optional=parse_optional(text),
+            started_at=started_at,
+            ended_at=ended_at, saved_elapsed=saved_elapsed,
         ))
     return subtasks
 

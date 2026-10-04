@@ -23,17 +23,17 @@ Each subtask is keyed by a 10-char MD5 prefix of its normalised text:
 from __future__ import annotations
 
 import hashlib
-import re
 from pathlib import Path
 
 from wyndle.lib import time_utils
+from wyndle.lib.markdown_dom import strip_estimate
 
 
 def _subtask_key(text: str) -> str:
     """Derive a short deterministic key from subtask text.
 
-    The ``~Xm`` estimate is stripped so that changing an estimate does
-    not create a new timer entry.
+    The estimate and task-tier markers are stripped so that editing them
+    does not create a new timer entry.
 
     Args:
         text: Raw subtask text, may include ``~30m`` etc.
@@ -41,7 +41,7 @@ def _subtask_key(text: str) -> str:
     Returns:
         10-character hex string.
     """
-    clean = re.sub(r"~\d+m", "", text).strip().lower()
+    clean = strip_estimate(text).lower()
     return hashlib.md5(clean.encode()).hexdigest()[:10]
 
 
@@ -108,6 +108,8 @@ class State:
         """
         self.pause_active_subtask()
         key = _subtask_key(subtask_text)
+        if not self.get_int(f"st_{key}_started"):
+            self.set(f"st_{key}_started", str(time_utils.epoch_now()))
         self.set(f"st_{key}_active_since", str(time_utils.epoch_now()))
         self.set("today_active_subtask", key)
         self.set("today_active_subtask_text", subtask_text)
@@ -161,6 +163,17 @@ class State:
     def get_subtask_elapsed_min(self, subtask_text: str) -> int:
         """Total elapsed **minutes** for *subtask_text* (truncated)."""
         return self.get_subtask_elapsed(subtask_text) // 60
+
+    def get_subtask_started(self, subtask_text: str) -> int:
+        """First time this subtask's timer was started today."""
+        return self.get_int(f"st_{_subtask_key(subtask_text)}_started")
+
+    def set_subtask_elapsed(self, subtask_text: str, seconds: int) -> None:
+        """Replace accumulated time without interrupting a running interval."""
+        key = _subtask_key(subtask_text)
+        self.set(f"st_{key}_elapsed", str(seconds))
+        if self.is_subtask_active(subtask_text):
+            self.set(f"st_{key}_active_since", str(time_utils.epoch_now()))
 
     def is_subtask_active(self, subtask_text: str) -> bool:
         """Return ``True`` if *subtask_text* is the currently timed subtask."""
