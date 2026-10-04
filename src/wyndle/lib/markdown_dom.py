@@ -28,6 +28,9 @@ from typing import Any
 # ---------------------------------------------------------------------------
 
 _ESTIMATE_RE = re.compile(r"~(\d+)m")
+_PRIORITY_RE = re.compile(r"(?<!\S)~p0\b", re.IGNORECASE)
+_OPTIONAL_RE = re.compile(r"(?<!\S)~optional\b", re.IGNORECASE)
+_TASK_STATS_RE = re.compile(r"\s*<!-- wyndle:start=(\d+);end=(\d+);elapsed=(\d+) -->")
 _STATUS_RE = re.compile(r"~(open|done|deferred|future)\b")
 _ADDED_RE = re.compile(r"\(added:\s*(\d{4}-\d{2}-\d{2})\)")
 _HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)")
@@ -45,8 +48,40 @@ def parse_estimate(text: str) -> int:
 
 
 def strip_estimate(text: str) -> str:
-    """Remove the ``~Xm`` estimate and trailing whitespace from *text*."""
-    return _ESTIMATE_RE.sub("", text).strip()
+    """Return a daily subtask's display name without Wyndle metadata."""
+    text = _ESTIMATE_RE.sub("", text)
+    text = _PRIORITY_RE.sub("", text)
+    text = _OPTIONAL_RE.sub("", text)
+    return _TASK_STATS_RE.sub("", text).strip()
+
+
+def parse_priority(text: str) -> bool:
+    """Whether a subtask has the non-negotiable ``~p0`` marker."""
+    return bool(_PRIORITY_RE.search(text))
+
+
+def parse_optional(text: str) -> bool:
+    """Whether a subtask has the ``~optional`` marker, unless it is P0."""
+    return bool(_OPTIONAL_RE.search(text)) and not parse_priority(text)
+
+
+def parse_task_stats(text: str) -> tuple[int, int, int]:
+    """Return (first start, completion, tracked seconds) from a checkbox."""
+    match = _TASK_STATS_RE.search(text)
+    return tuple(map(int, match.groups())) if match else (0, 0, 0)
+
+
+def format_task_text(text: str, estimate: int, priority: bool,
+                     optional: bool = False,
+                     started: int = 0, ended: int = 0, elapsed: int = 0) -> str:
+    """Build a subtask checkbox label while keeping its plain Markdown title."""
+    title = strip_estimate(text)
+    suffix = f" ~{estimate}m" if estimate else ""
+    suffix += " ~p0" if priority else ""
+    suffix += " ~optional" if optional and not priority else ""
+    if started or ended or elapsed:
+        suffix += f" <!-- wyndle:start={started};end={ended};elapsed={elapsed} -->"
+    return title + suffix
 
 
 def parse_status_tag(text: str) -> tuple[str, str]:
@@ -78,10 +113,13 @@ def parse_added_date(text: str) -> tuple[str, str]:
 
 
 def strip_all_metadata(text: str) -> str:
-    """Remove estimate, status tag, and added-date from *text*."""
+    """Remove Wyndle's inline estimate, status, tier, and date metadata."""
     text = _ESTIMATE_RE.sub("", text)
     text = _STATUS_RE.sub("", text)
     text = _ADDED_RE.sub("", text)
+    text = _PRIORITY_RE.sub("", text)
+    text = _OPTIONAL_RE.sub("", text)
+    text = _TASK_STATS_RE.sub("", text)
     return text.strip()
 
 

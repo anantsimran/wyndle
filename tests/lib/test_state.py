@@ -13,6 +13,7 @@ def test_primitives(state):
 
 def test_subtask_key_ignores_estimate_and_case():
     assert _subtask_key("Read docs ~30m") == _subtask_key("read DOCS ~45m")
+    assert _subtask_key("Read docs ~30m ~optional") == _subtask_key("read DOCS ~45m ~p0")
 
 
 def test_subtask_timer_accumulates_across_pauses(state, clock):

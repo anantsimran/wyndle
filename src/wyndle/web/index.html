@@ -13,7 +13,7 @@
   <div class="shell">
     <header class="topbar">
       <a class="brand" href="/" aria-label="Wyndle home"><span class="brand-mark">w</span> wyndle<span class="brand-dot">.</span></a>
-      <div class="topbar-actions"><span class="local-badge"><span></span> YOUR SPACE, LOCALLY</span><button id="pomodoro-open" class="quiet" aria-controls="pomodoro" aria-expanded="false">Pomodoro</button><button id="notes-open" class="quiet" aria-haspopup="dialog">Notes</button><button id="stats-open" class="quiet" aria-haspopup="dialog">Stats</button><button id="help-open" class="quiet" aria-haspopup="dialog">? How to use</button></div>
+      <div class="topbar-actions"><span class="local-badge"><span></span> YOUR SPACE, LOCALLY</span><a href="/daily" class="quiet daily-link">Daily alarm</a><button id="pomodoro-open" class="quiet" aria-controls="pomodoro" aria-expanded="false">Pomodoro</button><button id="notes-open" class="quiet" aria-haspopup="dialog">Notes</button><button id="stats-open" class="quiet" aria-haspopup="dialog">Stats</button><button id="help-open" class="quiet" aria-haspopup="dialog">? How to use</button></div>
     </header>
     <div id="error" role="alert" hidden></div>
     <main>
@@ -29,7 +29,10 @@
       <section id="welcome" class="card welcome" hidden>
         <span class="eyebrow">A FRESH PAGE</span><h2>Start where you are.</h2>
         <p>Bring a few things into today. You don’t need to plan the whole day to begin.</p>
-        <label id="carry-label" class="check-label"><input id="carry" type="checkbox" checked> Bring unfinished work forward</label>
+        <details id="carry-picker" class="carry-picker" hidden>
+          <summary>Bring unfinished work forward <span id="carry-count"></span></summary>
+          <div id="carry-options" class="carry-options" role="group" aria-label="Unfinished high-level tasks"></div>
+        </details>
         <button id="morning" class="primary">Start my day <span aria-hidden="true">↗</span></button>
       </section>
       <section id="finished" class="card welcome" hidden>
@@ -46,8 +49,16 @@
             <div id="focus-durations" class="durations duration-presets" role="group" aria-label="Focus duration"></div>
             <button id="focus" class="primary wide">Let’s begin <span aria-hidden="true">▶</span></button>
             <div class="focus-secondary"><button id="pause" class="quiet" disabled>Pause</button><button id="break" class="quiet">Take a 5 min break</button></div>
+            <button id="focus-alerts" class="quiet alert-toggle" type="button" aria-pressed="false">Enable timer alerts</button>
             <p id="timer-hint" class="small muted">A small start counts. You can pause whenever you need.</p>
           </div>
+          <aside id="task-tiers" class="card task-tiers" aria-labelledby="task-tiers-title">
+            <div class="section-top"><span class="eyebrow">YOUR OPEN TASKS</span><strong id="remaining-total">0 left</strong></div>
+            <h3 id="task-tiers-title">What’s still on the list</h3>
+            <div class="tier-count tier-count-p0"><span><i aria-hidden="true"></i> Non-negotiable</span><strong id="remaining-p0">0</strong></div>
+            <div class="tier-count tier-count-regular"><span><i aria-hidden="true"></i> Regular</span><strong id="remaining-regular">0</strong></div>
+            <div class="tier-count tier-count-optional"><span><i aria-hidden="true"></i> Optional</span><strong id="remaining-optional">0</strong></div>
+          </aside>
           <aside class="companion-card"><img src="/assets/kaladin.jpg" width="1000" height="667" alt="Kaladin with his spear and a ribbon of blue spren light"><div><span class="eyebrow">KALADIN · ROOM TO BREATHE</span><p>You don’t have to carry everything.<br>There is strength in taking a breath.</p></div></aside>
         </section>
         <section class="tasks-column">
@@ -55,7 +66,8 @@
           <div class="hierarchy-intro"><span>High-level tasks → small subtasks</span><button id="group-toggle" class="quiet">+ High-level task</button></div>
           <form id="add-form" class="card quick-add">
             <label for="task-title">What’s one small step?</label><input id="task-title" required maxlength="200" placeholder="e.g. Sketch the first screen" autocomplete="off">
-            <details><summary>High-level task & estimate <span class="small">optional · starts at 15 min</span></summary><div class="form-row"><div><label for="task-parent">High-level task</label><select id="task-parent"><option>Today</option></select></div><div class="estimate-field"><label for="task-estimate">Minutes</label><input id="task-estimate" type="number" min="0" max="480" value="15" required></div></div><div id="estimate-presets" class="duration-presets" role="group" aria-label="Task estimate presets"></div></details>
+            <details><summary>Group & planned minutes <span class="small">defaults to Today · 15 min</span></summary><div class="form-row"><div><label for="task-parent">High-level task</label><select id="task-parent"><option>Today</option></select></div><div class="estimate-field"><label for="task-estimate">Minutes</label><input id="task-estimate" type="number" min="0" max="480" value="15" required></div></div><div id="estimate-presets" class="duration-presets" role="group" aria-label="Task estimate presets"></div></details>
+            <fieldset class="tier-options"><legend>Task type</legend><label><input type="radio" name="task-tier" value="regular" checked> Regular</label><label><input type="radio" name="task-tier" value="p0"> P0</label><label><input type="radio" name="task-tier" value="optional"> Optional</label></fieldset>
             <button class="primary" type="submit">Add to today <span class="small">↵</span></button>
           </form>
           <div id="tasks"></div>
@@ -72,6 +84,7 @@
   </div>
   <dialog id="wrap-dialog"><form id="wrap-form"><span class="eyebrow">LEAVE WORK AT WORK</span><h2>Let today be enough.</h2><p class="muted">Your time and completed work will be saved.</p><label for="tomorrow">Tomorrow’s first small step</label><input id="tomorrow" maxlength="300" placeholder="Make it easy to begin again"><label for="reflection">Anything to remember?</label><input id="reflection" maxlength="1000" placeholder="A win, a thought, or a loose end"><div class="dialog-actions"><button class="primary" type="submit">Finish my day</button><button id="wrap-cancel" type="button" class="quiet">Keep going</button></div></form></dialog>
   <dialog id="note-dialog"><form id="note-form"><h2>A thought to keep</h2><label for="note-input">Task note</label><input id="note-input" required maxlength="1000" placeholder="What will help future you?"><div class="dialog-actions"><button class="primary" type="submit">Save note</button><button id="note-cancel" class="quiet" type="button">Cancel</button></div></form></dialog>
+  <dialog id="edit-dialog"><form id="edit-form"><h2 id="edit-title">Edit task</h2><label for="edit-estimate">Planned minutes</label><input id="edit-estimate" type="number" min="0" max="480" required><label for="edit-elapsed">Tracked minutes</label><input id="edit-elapsed" type="number" min="0" max="10080" required><fieldset class="tier-options"><legend>Task type</legend><label><input type="radio" name="edit-tier" value="regular"> Regular</label><label><input type="radio" name="edit-tier" value="p0"> P0</label><label><input type="radio" name="edit-tier" value="optional"> Optional</label></fieldset><div class="dialog-actions"><button class="primary" type="submit">Save changes</button><button id="edit-cancel" class="quiet" type="button">Cancel</button></div></form></dialog>
   <div id="toast" role="status" hidden></div>
   <section id="pomodoro" class="card pomodoro" aria-label="Pomodoro timer" hidden><div class="section-top"><span id="pomodoro-phase" class="eyebrow">POMODORO · FOCUS</span><button id="pomodoro-close" class="quiet" aria-label="Hide pomodoro">×</button></div><span id="pomodoro-clock">25:00</span><p id="pomodoro-round" class="small muted">Round 1 of 4</p><div class="pomodoro-actions"><button id="pomodoro-toggle" class="primary">Start</button><button id="pomodoro-skip" class="quiet">Skip</button><button id="pomodoro-reset" class="quiet">Reset</button></div><p class="small muted">Just a timer. Nothing is tracked or saved.</p></section>
   <dialog id="group-dialog" aria-labelledby="group-heading"><form id="group-form"><h2 id="group-heading">Give the journey a name.</h2><p class="muted small">A high-level task holds the smaller steps you’ll focus on.</p><label for="group-title">High-level task name</label><input id="group-title" required maxlength="200" placeholder="e.g. Ship the A2 ticket"><div class="dialog-actions"><button class="primary" type="submit">Create high-level task</button><button id="group-cancel" class="quiet" type="button">Cancel</button></div></form></dialog>

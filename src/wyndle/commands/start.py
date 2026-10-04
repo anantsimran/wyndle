@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from wyndle.lib import display, time_utils
 from wyndle.lib.config import WyndleConfig
+from wyndle.lib.daily_note_ops import update_subtask
 from wyndle.lib.daily_notes import (
     get_all_subtasks,
     get_high_level_tasks,
@@ -176,6 +177,11 @@ def close_active_subtask(cfg: WyndleConfig, state: State) -> bool:
     display.info(f"Paused: [bold]{name}[/bold] ({elapsed}m elapsed)")
     if display.confirm("Mark this sub-task as done?"):
         if mark_subtask_done(cfg.daily_dir, paused):
+            sub = next((s for s in get_all_subtasks(cfg.daily_dir) if s.text == paused), None)
+            if sub:
+                update_subtask(cfg.daily_dir, sub, started=state.get_subtask_started(paused),
+                               ended=time_utils.epoch_now(),
+                               elapsed=state.get_subtask_elapsed(paused))
             display.success(f"Marked done: {name}")
             if cfg.features.notes:
                 log_to_daily(cfg.daily_dir, f"Completed: **{name}** ({elapsed}m)")

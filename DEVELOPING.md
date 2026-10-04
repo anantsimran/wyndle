@@ -78,6 +78,7 @@ into a library module and leave presentation in commands.
 | `daily_notes.py` | Read/write daily Markdown notes. |
 | `daily_note_ops.py` | Add/remove task checkboxes and notes through the Markdown document model. |
 | `task_notes.py` | Persistent task history, note merging, status tags, and carryover generation. |
+| `daily_alarm.py` | Validate selected tasks and build a one-day work/buffer/break schedule using remaining estimates or fixed chunks. |
 | `note_archive.py` | Read saved Markdown files and aggregate day history without web state. |
 | `timer.py` | Blocking terminal countdown and overflow. The browser does not run this blocking loop. |
 | `display.py` | Rich terminal rendering and prompts; keep browser markup elsewhere. |
@@ -105,6 +106,11 @@ Important rules:
   and active task. Pausing through the CLI invalidates those graphical keys.
 - A focus deadline signals a check-in, not completion. Elapsed time continues
   until pause/completion; reloading a page must not reset it.
+- `today_alarm_plan` stores only today's selected task IDs and absolute block
+  times. `daily_alarm.py` resolves task names and completion from Markdown on
+  each read; saving a plan replaces it, and a new day clears it. Planned blocks
+  and alerts never pause or start tracked focus or breaks. The user starts them
+  explicitly from the page.
 - `snapshot()` is read-only. Crossing midnight makes it show a fresh-day state;
   explicit start-day performs carryover and state reset.
 - Wrap sync adds daily minutes into task history. Repeated wrap must be a no-op.
@@ -136,6 +142,7 @@ remote fonts, CDN, or framework is required.
 | `app.js` | Application state, polling, action orchestration, component composition |
 | `components/tasks.js` | Task grouping, completion/focus controls, saved notes |
 | `components/focus.js` | Duration choice, live countdown, focus/break controls, check-ins |
+| `daily.html`, `daily.css`, `daily.js` | Separate `/daily` planner, timeline, and opt-in page alerts |
 | `components/dialogs.js` | Wrap and add-note forms |
 | `components/history.js` | Saved Markdown notes and 7/30-day progress |
 | `assets/` | Locally bundled character illustrations and their generation prompts |
@@ -168,13 +175,19 @@ The day workflow uses `GET /api/status` and `POST /api/action` with
 `{"action": "focus", "data": {"id": "...", "minutes": 15}}`. POST requires
 `Content-Type: application/json` and `X-Wyndle-Client: dashboard`. Successful
 actions return a complete snapshot; failures return an `error` string.
+The `/daily` page uses the same API. Its `alarm_plan` action accepts a start
+time, work mode, work, buffer, and break minutes, and ordered task IDs; `alarm_clear`
+removes the saved plan. Scheduling rules stay in `lib/daily_alarm.py`, while `daily.js`
+renders the timeline and page alerts. The dashboard's focus alerts are also
+browser-side and only run while that page is open.
 The read-only history routes are `GET /api/notes` for the note index,
 `GET /api/note?kind=...&name=...` for one Markdown file, and
 `GET /api/stats?days=7|30` for a progress summary. Note paths are selected from
 the configured daily, task, and review directories, never from arbitrary paths.
 The server binds only to loopback, checks Host/Origin, and serves an explicit
-asset allowlist. Do not turn this local server into an internet-facing deployment
-without designing authentication, hosting, and concurrent storage first.
+asset allowlist. Private phone access uses an HTTPS Tailscale Serve proxy and
+an explicit `WYNDLE_ALLOWED_HOSTS` entry. Do not expose it publicly without
+designing authentication, hosting, and concurrent storage first.
 
 ## Changing VS Code integration
 

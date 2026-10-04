@@ -1,6 +1,7 @@
 export function connectDialogs(act) {
   const $ = id => document.getElementById(id);
   let noteTask;
+  let editTask;
   let deletion;
   $('group-toggle').addEventListener('click', () => $('group-dialog').showModal());
   $('group-cancel').addEventListener('click', () => $('group-dialog').close());
@@ -48,8 +49,29 @@ export function connectDialogs(act) {
       $('note-input').value = '';
     }
   });
+  $('edit-cancel').addEventListener('click', () => $('edit-dialog').close());
+  $('edit-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    const tier = $('edit-form').querySelector('input[name="edit-tier"]:checked').value;
+    const data = { id: editTask.id,
+      estimate: Number($('edit-estimate').value),
+      priority: tier === 'p0', optional: tier === 'optional' };
+    if (Number($('edit-elapsed').value) !== Math.round(editTask.elapsed / 60)) {
+      data.elapsedMinutes = Number($('edit-elapsed').value);
+    }
+    if (await act('edit_task', data)) $('edit-dialog').close();
+  });
   return {
     note(task) { noteTask = task; $('note-dialog').showModal(); },
+    edit(task) {
+      editTask = task;
+      $('edit-title').textContent = `Edit ${task.title}`;
+      $('edit-estimate').value = task.estimate;
+      $('edit-elapsed').value = Math.round(task.elapsed / 60);
+      const tier = task.priority ? 'p0' : task.optional ? 'optional' : 'regular';
+      $('edit-form').querySelector(`input[name="edit-tier"][value="${tier}"]`).checked = true;
+      $('edit-dialog').showModal();
+    },
     remove(task) { remove(task.title, 'delete', { id: task.id },
       'This removes the subtask and its notes from today’s plan. Saved history and focused time stay. It will not carry into tomorrow.'); },
     removeGroup(parent) { remove(parent, 'delete_group', { parent },

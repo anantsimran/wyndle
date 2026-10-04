@@ -15,7 +15,7 @@ def test_write_read_roundtrip(cfg):
                 time_min=40, status="done", jira_link="PROJ-1",
                 notes=[("good link", "open"), ("parked", "deferred")],
             ),
-            TaskNoteSubtask(name="Later", estimate_min=15, status="future"),
+            TaskNoteSubtask(name="Later", estimate_min=15, status="future", optional=True),
         ],
     )
     task_notes.write_task_note(cfg, note)
@@ -69,6 +69,13 @@ def test_generate_daily_subtasks_only_open(cfg):
         TaskNoteSubtask(name="C", status="future"),
     ]))
     assert task_notes.generate_daily_subtasks(cfg, "T") == "- [ ] A ~30m\n  - o"
+
+
+def test_optional_marker_carries_to_next_daily_note(cfg):
+    task_notes.write_task_note(cfg, TaskNote(name="T", subtasks=[
+        TaskNoteSubtask(name="Nice to have", estimate_min=20, optional=True),
+    ]))
+    assert task_notes.generate_daily_subtasks(cfg, "T") == "- [ ] Nice to have ~20m ~optional"
 
 
 def test_remaining_counts_treat_untagged_as_open(cfg):

@@ -53,6 +53,17 @@ estimateInput.addEventListener('input', () => estimatePicker.setValue(estimateIn
 const tasks = createTaskList({ focus: task => focus.focus(task),
   complete: task => act('complete', { id: task.id }), reopen: task => act('reopen', { id: task.id }),
   note: dialogs.note,
+  edit: dialogs.edit,
+  priority: task => act('priority', { id: task.id, priority: !task.priority }),
+  optional: task => act('optional', { id: task.id, optional: !task.optional }),
+  move: async (task, direction) => {
+    if (!await act('move_task', { id: task.id, direction })) return;
+    const row = [...document.querySelectorAll('.task-row')]
+      .find(item => item.dataset.taskId === task.id);
+    const control = row?.querySelector(`[data-direction="${direction}"]:not(:disabled)`)
+      || row?.querySelector('.task-order-controls button:not(:disabled)');
+    control?.focus();
+  },
   remove: task => dialogs.remove(task), removeGroup: group => dialogs.removeGroup(group),
   completeGroup: group => act('complete_group', { parent: group }),
   addSubtask: parent => {
@@ -61,6 +72,37 @@ const tasks = createTaskList({ focus: task => focus.focus(task),
     addFocus();
   },
 });
+
+function updateCarryCount() {
+  const count = $('carry-options').querySelectorAll('input:checked').length;
+  $('carry-count').textContent = `${count} selected`;
+}
+
+function renderCarryover(names, date) {
+  const picker = $('carry-picker');
+  picker.hidden = names.length === 0;
+  const key = JSON.stringify([date, names]);
+  if (picker.dataset.items === key) return;
+  const previous = new Map((picker.dataset.date === date
+    ? [...$('carry-options').querySelectorAll('input')] : [])
+    .map(input => [input.value, input.checked]));
+  const choices = names.map(name => {
+    const label = document.createElement('label');
+    label.className = 'check-label';
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.value = name;
+    input.checked = previous.get(name) ?? true;
+    const title = document.createElement('span');
+    title.textContent = name;
+    label.append(input, title);
+    return label;
+  });
+  $('carry-options').replaceChildren(...choices);
+  picker.dataset.items = key;
+  picker.dataset.date = date;
+  updateCarryCount();
+}
 
 function render() {
   if (!state) return;
@@ -72,7 +114,7 @@ function render() {
   $('finished').hidden = !state.wrapped;
   $('stats').hidden = !state.started;
   $('tomorrow-text').textContent = state.tomorrow ? `Tomorrow’s first step: ${state.tomorrow}` : 'You showed up. That matters.';
-  $('carry-label').hidden = state.carryover.length === 0;
+  renderCarryover(state.carryover, state.date);
   $('morning').disabled = busy;
   $('subtitle').textContent = state.wrapped ? 'Rest is part of the journey, too.'
     : 'You don’t need to see the whole path. Just the next step.';
@@ -107,14 +149,20 @@ function render() {
 }
 
 function addFocus() { $('task-title').focus(); $('task-title').scrollIntoView({ block: 'center' }); }
-$('morning').addEventListener('click', () => act('morning', { carryover: $('carry').checked }));
+$('carry-options').addEventListener('change', updateCarryCount);
+$('morning').addEventListener('click', () => act('morning', {
+  carryover: [...$('carry-options').querySelectorAll('input:checked')].map(input => input.value),
+}));
 $('add-toggle').addEventListener('click', addFocus);
 $('empty-add').addEventListener('click', addFocus);
 $('add-form').addEventListener('submit', async event => {
   event.preventDefault();
+  const tier = document.querySelector('input[name="task-tier"]:checked').value;
   if (await act('add', { title: $('task-title').value, parent: $('task-parent').value,
-    estimate: Number($('task-estimate').value) })) {
+    estimate: Number($('task-estimate').value), priority: tier === 'p0',
+    optional: tier === 'optional' })) {
     $('task-title').value = '';
+    document.querySelector('input[name="task-tier"][value="regular"]').checked = true;
     $('task-title').focus();
   }
 });

@@ -16,8 +16,11 @@ from wyndle.lib.note_archive import list_notes, read_note
 from wyndle.lib.state import State
 
 ASSETS = {"/": ("index.html", "text/html"),
+          "/daily": ("daily.html", "text/html"),
           "/app.js": ("app.js", "text/javascript"),
-          "/style.css": ("style.css", "text/css")}
+          "/daily.js": ("daily.js", "text/javascript"),
+          "/style.css": ("style.css", "text/css"),
+          "/daily.css": ("daily.css", "text/css")}
 for _asset in ("api.js", "components/tasks.js", "components/focus.js", "components/dialogs.js",
                "components/durations.js", "components/help.js", "components/pomodoro.js",
                "components/history.js"):

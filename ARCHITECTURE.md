@@ -3,6 +3,8 @@
 For a practical modification guide covering all three interfaces, see
 [DEVELOPING.md](DEVELOPING.md). The browser dashboard uses `lib/dashboard.py`
 through the local server in `commands/ui.py`; its modular assets live in `web/`.
+The separate `/daily` page uses the same API and current tasks to build a
+one-day schedule.
 Markdown parsing, note storage, and saved-history statistics live in `lib/` and
 do not depend on the browser or HTTP server. The `vscode/` extension embeds the
 same dashboard and shares its backend.
@@ -23,12 +25,14 @@ src/wyndle/
     wrap.py                   # wyndle wrap + auto-wrap (work summary, task note sync)
     reflect.py                # wyndle reflect (weekly review)
     daemon.py                 # wyndle daemon (launchd management)
+    ui.py                     # Loopback HTTP adapter and static assets
   lib/
     markdown_dom.py           # DOM-based markdown parser for plain Markdown
     daily_notes.py            # Daily note reading/writing via markdown_dom
     task_notes.py             # Persistent per-task note CRUD and sync
     note_archive.py           # Read saved notes and summarize Markdown history
     dashboard.py              # Non-interactive dashboard workflow and live state
+    daily_alarm.py            # Validate and save today's work/buffer/break plan
     daily_note_ops.py         # Markdown task edits, independent of HTTP
     models.py                 # Task, SubTask, TaskNote, WorkSummary dataclasses
     config.py                 # YAML config, generic dataclass hydration
@@ -37,6 +41,10 @@ src/wyndle/
     timer.py                  # Focus block countdown, overflow loop
     display.py                # Rich terminal UI helpers
     notifier.py               # Background macOS notifications (launchd)
+  web/
+    index.html, app.js        # Dashboard page and browser orchestration
+    daily.html, daily.js      # Separate Daily Alarm page and open-page alerts
+    daily.css                 # Daily Alarm presentation
 ```
 
 ## Markdown DOM (markdown_dom.py)
@@ -246,6 +254,21 @@ _Auto-logged by Wyndle_
 Daily Chores are NOT in High Level Tasks.  They are always the first
 subsection in Task Details.  They reset daily (no persistent task note).
 
+### Daily Alarm plan
+
+The `/daily` page selects unfinished subtasks from today's Markdown note.
+`lib/daily_alarm.py` builds one block per task's remaining estimate or divides
+it into fixed work chunks, in the chosen order. Unestimated tasks use the
+work-block length. Each work block gets a buffer and break, including the
+last; the hard-stop check includes all three phases. It validates the plan
+before `lib/dashboard.py` saves it as `today_alarm_plan` in state. The plan
+stores task IDs and block boundaries; names and completion are resolved from
+the daily note when read. Saving again replaces the plan, and a new day clears
+it. No schedule is written into Markdown, and planned blocks do not start
+or pause tracked focus or breaks; the user chooses each start. Browser alerts
+are optional and run only while the relevant page is open; the macOS launchd
+notifier is separate.
+
 ## State Management
 
 File-based key-value store in `~/.wyndle/state/`.
@@ -261,6 +284,7 @@ File-based key-value store in `~/.wyndle/state/`.
 | `today_wrapped` | `true` | wrap, auto-wrap |
 | `today_block_active` | `true` | timer, break |
 | `today_block_end` | unix epoch | timer |
+| `today_alarm_plan` | JSON with selected task IDs and block times | Daily Alarm |
 | `today_active_subtask` | hash key | start/switch/restart |
 | `today_active_subtask_text` | raw text | start/switch/restart |
 | `today_last_subtask_text` | raw text | start/switch/restart |

@@ -37,6 +37,8 @@ class SubTask:
         line_num:      Zero-based line number in the note file.
         estimate_min:  Parsed time estimate in minutes (0 if absent).
         parent:        Name of the parent high-level task.
+        priority:      Whether this task is non-negotiable (P0).
+        optional:      Whether this task can be left for later.
     """
     text: str
     display_text: str = ""
@@ -44,6 +46,11 @@ class SubTask:
     line_num: int = 0
     estimate_min: int = 0
     parent: str = ""
+    priority: bool = False
+    optional: bool = False
+    started_at: int = 0
+    ended_at: int = 0
+    saved_elapsed: int = 0
 
 
 @dataclass
@@ -76,6 +83,8 @@ class TaskNoteSubtask:
         notes:         Bullet-point notes.  Each note is a tuple of
                        ``(text, status_tag)`` where status_tag is
                        ``open``/``deferred``/``future``.
+        priority:      Non-negotiable (P0) task marker.
+        optional:      Optional task marker.
     """
     name: str
     added: str = ""
@@ -85,6 +94,8 @@ class TaskNoteSubtask:
     status: str = "open"
     jira_link: str = ""
     notes: list[tuple[str, str]] = field(default_factory=list)
+    priority: bool = False
+    optional: bool = False
 
 
 @dataclass

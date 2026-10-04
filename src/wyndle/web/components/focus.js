@@ -4,10 +4,15 @@ export function createFocus({ act, toast }) {
   let minutes = 15;
   let state;
   let received = 0;
-  let lastBoundary = '';
+  let timerKey = '';
+  let lastBoundaryIndex = -1;
+  let alertsOn = false;
+  try { alertsOn = localStorage.getItem('wyndle.focusAlerts') === 'on'; } catch { /* storage may be blocked */ }
   const $ = id => document.getElementById(id);
   const nextTask = () => state?.tasks.find(t => t.active)
     || state?.tasks.find(t => t.id === state.lastTaskId && !t.done)
+    || state?.tasks.find(t => !t.done && t.priority)
+    || state?.tasks.find(t => !t.done && !t.optional)
     || state?.tasks.find(t => !t.done);
   createDurationPicker($('focus-durations'), {
     value: minutes, onChange(value) { minutes = value; tick(); },
@@ -19,6 +24,40 @@ export function createFocus({ act, toast }) {
   });
   $('pause').addEventListener('click', () => act('pause'));
   $('break').addEventListener('click', () => act('break', { minutes: 5 }));
+  function renderAlertButton() {
+    $('focus-alerts').textContent = alertsOn ? 'Disable timer alerts' : 'Enable timer alerts';
+    $('focus-alerts').setAttribute('aria-pressed', String(alertsOn));
+  }
+  $('focus-alerts').addEventListener('click', async () => {
+    alertsOn = !alertsOn;
+    try { localStorage.setItem('wyndle.focusAlerts', alertsOn ? 'on' : 'off'); } catch { /* in-memory preference */ }
+    renderAlertButton();
+    if (!alertsOn) { toast('Timer alerts off.'); return; }
+    if ('Notification' in window && Notification.permission === 'default') {
+      try { await Notification.requestPermission(); }
+      catch { /* in-page alerts remain available */ }
+    }
+    toast('Timer alerts on. Browser banners appear when permission is allowed.');
+  });
+  renderAlertButton();
+
+  function alertBoundary(timer, index) {
+    if (!alertsOn) return;
+    const elapsed = index === 0 ? Math.round(timer.duration / 60) : 5;
+    const title = timer.kind === 'break' ? 'Break finished' : `${elapsed}m block finished`;
+    const body = timer.kind === 'break' ? 'Ready for the next step?' :
+      `${timer.title || 'Focus'} · ${index === 0 ? '5m overflow started' : 'another 5m overflow started'}`;
+    const key = `${timerKey}:${index}`;
+    try {
+      if (localStorage.getItem('wyndle.lastTimerAlert') === key) return;
+      localStorage.setItem('wyndle.lastTimerAlert', key);
+    } catch { /* this tab still deduplicates with lastBoundaryIndex */ }
+    toast(`${title}. ${body}`);
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try { new Notification(`Wyndle · ${title}`, { body, silent: true, tag: 'wyndle-focus-timer' }); }
+      catch { /* the in-page notice is still visible */ }
+    }
+  }
 
   function tick() {
     if (!state) return;
@@ -29,12 +68,21 @@ export function createFocus({ act, toast }) {
     const seconds = Math.abs(remaining);
     const clock = `${remaining < 0 ? '+' : ''}${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
     $('countdown').textContent = clock;
+    const overtime = running && remaining < 0;
+    document.querySelector('.timer-ring').classList.toggle('overtime', overtime);
+    $('live-dot').classList.toggle('overtime', overtime);
     $('timer-caption').textContent = remaining < 0 ? 'A MOMENT TO CHECK IN' : timer.kind === 'break' ? 'ROOM TO BREATHE' : 'MINUTES, JUST FOR THIS';
     document.title = running ? `${clock} · Wyndle` : 'Wyndle · Journey before destination';
-    const boundary = `${state.date}:${timer.kind}:${timer.end}`;
-    if (running && remaining <= 0 && boundary !== lastBoundary) {
-      lastBoundary = boundary;
-      toast(timer.kind === 'break' ? 'A little restored. Ready for the next step?' : 'A small promise kept. Keep going, or take a breath.');
+    const key = running ? `${state.date}:${timer.kind}:${timer.end}:${timer.title}` : '';
+    const index = !running || now < timer.end ? -1 :
+      timer.kind === 'focus' ? Math.floor((now - timer.end) / 300) : 0;
+    if (key !== timerKey) {
+      timerKey = key;
+      lastBoundaryIndex = index; // A newly opened page does not replay old alarms.
+    } else if (index > lastBoundaryIndex) {
+      lastBoundaryIndex = index;
+      const boundaryTime = timer.end + (timer.kind === 'focus' ? index * 300 : 0);
+      if (now - boundaryTime <= 60) alertBoundary(timer, index);
     }
   }
   setInterval(tick, 1000);

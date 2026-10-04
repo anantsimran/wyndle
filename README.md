@@ -7,7 +7,9 @@
 Local productivity system built for ADHD, with a web dashboard, VS Code companion,
 and terminal CLI. File-based state survives restarts. Works with any Markdown editor.
 
-Wyndle manages a single daily loop: morning planning, timed focus blocks, break tracking, and a shutdown ritual that shows exactly how your planned time compared to actual time spent.
+Wyndle manages a daily loop: choose work to carry forward, add tasks, plan
+work blocks with buffers and breaks, track focus, and wrap up with planned and
+actual time.
 
 ## How to run
 
@@ -24,12 +26,14 @@ uv run wyndle ui
 Prefix the commands below with `uv run`, or activate `.venv` first
 (`source .venv/bin/activate`, or `.venv\Scripts\Activate.ps1` in PowerShell).
 
-Your browser opens at **http://127.0.0.1:8765**. Click **Start my day**, type a
-task and press **Enter**, then click its **▶** button to focus. Complete tasks,
-add notes, take breaks, and wrap the day in the dashboard. Browse saved daily,
-project, and review notes and check your progress over the last 7 or 30 days in
-the browser, even before starting today's work. Saved Markdown notes are
-viewable there; edit the files with your preferred Markdown editor.
+Your browser opens at **http://127.0.0.1:8765**. Choose any unfinished high-level
+tasks to carry forward, click **Start my day**, then add a small task. Use its
+**▶** button to focus, or open **Daily alarm** at `/daily` to arrange work,
+buffer, and break blocks. Complete tasks, add notes, take breaks, and wrap
+the day in the dashboard. Browse saved daily, project, and review notes, and check
+your progress over the last 7 or 30 days in the browser, even before starting
+today's work. Saved Markdown notes are viewable there; edit the files with your
+preferred Markdown editor.
 No frontend build, account, or cloud service is needed.
 
 The design draws on Dalinar’s next-step resolve and Kaladin’s care, with storm
@@ -41,15 +45,25 @@ wyndle ui --no-browser        # serve without opening a tab
 wyndle ui --port 8766         # choose another port if 8765 is occupied
 ```
 
-To use the dashboard from another device (e.g. your phone over Tailscale), add
-`export WYNDLE_ALLOWED_HOSTS="your-mac.tailXXXX.ts.net"` to `~/.zshrc` and run
-`tailscale serve --bg http://127.0.0.1:8765`. Use `serve`, not `funnel`, which is public.
+To use Wyndle on your phone, connect it and your computer to the same Tailscale
+network. Use your computer's Tailscale hostname in the first command:
 
-Keep the command running while using the dashboard. Ctrl+C stops the web server.
+```bash
+export WYNDLE_ALLOWED_HOSTS="your-mac.tailXXXX.ts.net"
+wyndle ui --no-browser
+```
+
+In another terminal, run `tailscale serve --bg http://127.0.0.1:8765` and open
+the private HTTPS address it shows on your phone. Keep Wyndle running while you
+use it. Tailscale Funnel makes the site public; use Serve for private access.
+
+Ctrl+C stops the web server.
 Focus time continues until you pause or complete the task, including after a
 refresh, closing the tab, or restarting the server. At the end of a block, the
-page shows a check-in and overtime; breaks never add to focused time. Browser
-check-ins require an open page. Pause before stepping away for the night.
+timer shows overtime; breaks never add to focused time. Optional
+quiet browser alerts work while the relevant page stays open. A locked phone
+can pause them; Wyndle does not set a phone system alarm. Pause before stepping
+away for the night.
 
 Existing `~/.wyndle/config.yaml`, state, and Markdown notes are reused. The
 `notes_dir` config key sets the notes folder for both the CLI and the dashboard,
@@ -87,27 +101,9 @@ and has not been published to the Marketplace. It has no runtime npm dependencie
 
 ### UI development and checks
 
-See [DEVELOPING.md](DEVELOPING.md) for a component-by-component guide to modifying
-the whole project, adding features, and changing the visual design.
-
-The existing `src/wyndle/commands`, `src/wyndle/lib`, and `tests` layout remains.
-New parts are intentionally separate:
-
-| Location | Responsibility |
-|---|---|
-| `src/wyndle/web/theme.css` | Colors, typography, radius tokens, light/dark palette |
-| `src/wyndle/web/components.css` | Shared controls and surfaces |
-| `src/wyndle/web/style.css` | Page layout and responsive behavior |
-| `src/wyndle/web/components/` | Task list, focus controls, notes, progress, and dialogs |
-| `src/wyndle/web/app.js` | UI state and component composition |
-| `src/wyndle/web/api.js` | HTTP transport |
-| `src/wyndle/lib/note_archive.py` | Saved Markdown notes and history, independent of the web UI |
-| `src/wyndle/lib/dashboard.py` | Non-interactive workflow using existing notes and timers |
-| `src/wyndle/commands/ui.py` | Local server and static assets |
-| `vscode/` | Thin VS Code host for the same dashboard |
-
-Change aesthetics in the CSS files; add features through a workflow action and
-a component. There is no duplicate task store or separate VS Code frontend.
+See [DEVELOPING.md](DEVELOPING.md) for the browser, library, and server module
+map and guidance on changing behavior or visual design. The browser consumes
+library-backed API data, and VS Code embeds that same browser app.
 
 ```bash
 uv sync --extra dev        # test and lint tools
@@ -132,6 +128,7 @@ uv run --with playwright python tests/browser/smoke.py
 - [Post-Install Setup](#post-install-setup)
 - [Commands Reference](#commands-reference)
 - [Daily Workflow](#daily-workflow)
+- [Daily Alarm](#daily-alarm)
 - [Use Cases](#use-cases)
 - [Daily Note Format](#daily-note-format)
 - [Task Notes](#task-notes)
@@ -357,6 +354,43 @@ Full help screen with usage guide.
 ...
 19:45  wyndle wrap             # shutdown, syncs task notes
 ```
+
+Start-day carryover is selective in the web dashboard: open **Bring unfinished
+work forward**, leave checked only the high-level tasks you want today, and
+click **Start my day**. All eligible tasks start checked. The terminal workflow
+above remains available.
+
+---
+
+## Daily Alarm
+
+Open **Daily alarm** in the dashboard or visit `http://127.0.0.1:8765/daily`.
+Start the day and add tasks first. Choose a start time, work mode, work-block
+length, buffer length, break length, and unfinished tasks in the order you want.
+The buffer defaults to five minutes and can be set from 1 to 60 minutes.
+**Save daily plan** gives each task one block for its remaining estimate, or
+divides that time into fixed work chunks. Tasks without an estimate use the
+work-block length.
+Every work block is followed by its buffer and break, including the last one.
+The full sequence must fit before your configured hard stop. Save again to
+replace the plan, or clear it. The schedule lasts for that day; it does not
+create another task list or change the Markdown format. The start time uses
+the computer running Wyndle; displayed block times use your
+current device's time zone.
+
+The page shows the current or next block. Click **Start this focus block**
+to track work, or **Start break** to track a break. During the buffer, click
+**Pause focus** when you finish working. Scheduled transitions and reminders
+do not pause or start tracked sessions. Starting late does not shift the saved
+schedule. Save the plan again if tasks change.
+
+**Enable page alerts** opts into quiet reminders at block changes while the
+Daily Alarm page is open. The dashboard's separate **Enable timer alerts**
+gives an end-of-block reminder, then another every five minutes of focus
+overtime, plus a break-end reminder. Browser banners need notification
+permission and may not work on every phone; in-page reminders need the page
+open. These alerts do not run as background phone alarms. For phone access,
+use the private Tailscale Serve setup in [How to run](#how-to-run).
 
 ---
 
@@ -617,7 +651,8 @@ Only `~open` notes are carried to the daily note during morning carryover. Wrap 
 
 ## Background Notifications
 
-macOS only. Uses launchd, checks every 60 seconds.
+The optional macOS launchd daemon checks every 60 seconds. It is separate
+from the browser page alerts described in [Daily Alarm](#daily-alarm).
 
 | Type | Trigger | Cooldown |
 |------|---------|----------|
@@ -733,6 +768,7 @@ src/wyndle/
     task_notes.py             # Per-task note CRUD and sync
     note_archive.py           # Saved Markdown notes and history
     dashboard.py              # Dashboard workflow and live state
+    daily_alarm.py            # One-day work/buffer/break plan from current tasks
     models.py                 # Dataclasses (Task, SubTask, TaskNote, etc.)
     config.py                 # YAML config
     state.py                  # File-based key-value state
