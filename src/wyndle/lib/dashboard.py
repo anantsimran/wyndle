@@ -91,7 +91,7 @@ def snapshot(cfg: WyndleConfig, state: State) -> dict:
     # A CLI switch invalidates the browser's old focus countdown.
     if kind == "focus" and active != state.get("today_ui_task"):
         kind = ""
-    return {
+    result = {
         "date": time_utils.now_date_str(), "now": time_utils.epoch_now(),
         "serverTime": time_utils.now_time_str(),
         "name": cfg.user_name, "notesPath": str(cfg.notes_path),
@@ -114,6 +114,10 @@ def snapshot(cfg: WyndleConfig, state: State) -> dict:
         "tomorrow": state.get("tomorrow_first_task"),
         "carryover": _carryover_names(cfg),
     }
+    from wyndle.lib.reminders import events
+
+    result["reminders"] = events(result)
+    return result
 
 
 def recent_stats(cfg: WyndleConfig, state: State, days: int = 7) -> dict:
@@ -189,6 +193,25 @@ def _add_task(cfg: WyndleConfig, data: dict) -> None:
     if priority and optional:
         raise ValueError("A task cannot be both P0 and optional.")
     add_subtask(cfg, title, parent, estimate, priority, optional)
+
+
+def capture_task(cfg: WyndleConfig, state: State, data: dict) -> dict:
+    """Add one task from a simple phone automation payload."""
+    allowed = {"title", "group", "estimateMinutes", "taskType"}
+    if set(data) - allowed:
+        raise ValueError("Unknown capture fields.")
+    task_type = data.get("taskType", "regular")
+    if task_type not in ("regular", "p0", "optional"):
+        raise ValueError("taskType must be regular, p0, or optional.")
+    before = {task["id"] for task in snapshot(cfg, state)["tasks"]}
+    result = dispatch(cfg, state, "add", {
+        "title": data.get("title"), "parent": data.get("group", "Today"),
+        "estimate": data.get("estimateMinutes", 15),
+        "priority": task_type == "p0", "optional": task_type == "optional",
+    })
+    task = next(task for task in result["tasks"] if task["id"] not in before)
+    return {"added": {"title": task["title"], "group": task["parent"],
+                      "estimateMinutes": task["estimate"], "taskType": task_type}}
 
 
 def _complete_subtask(cfg: WyndleConfig, state: State, sub) -> None:

@@ -27,6 +27,7 @@ disable all macOS banners.  The daemon will still run but do nothing.
 
 from __future__ import annotations
 
+import logging
 import subprocess
 import sys
 from string import Formatter
@@ -34,6 +35,8 @@ from string import Formatter
 from wyndle.lib import time_utils
 from wyndle.lib.config import WyndleConfig, load_config
 from wyndle.lib.state import State
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Notification catalogue
@@ -180,10 +183,11 @@ def _safe_format(template: str, **kwargs: object) -> str:
     return result
 
 
-def notify(title: str, message: str, sound: str = "Funk") -> None:
+def notify(title: str, message: str, sound: str = "Funk") -> bool:
     """Fire a native macOS notification banner.
 
-    No-op on non-macOS platforms.
+    Return whether macOS accepted the request; banner visibility also depends
+    on notification settings and Focus mode. Log delivery failures.
 
     Args:
         title:   Notification title.
@@ -191,26 +195,31 @@ def notify(title: str, message: str, sound: str = "Funk") -> None:
         sound:   macOS system sound name (e.g. ``Morse``, ``Funk``).
     """
     if sys.platform != "darwin":
-        return
-    title = title.replace('"', '\\"')
-    message = message.replace('"', '\\"')
-    script = (
-        f'display notification "{message}" '
-        f'with title "{title}" sound name "{sound}"'
-    )
+        logger.warning("Native notifications require macOS.")
+        return False
+    # Pass user text as arguments, never as AppleScript source.
+    script = ("on run argv\n"
+              "display notification (item 2 of argv) with title (item 1 of argv) "
+              "sound name (item 3 of argv)\nend run")
     try:
-        subprocess.run(
-            ["osascript", "-e", script],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5,
+        result = subprocess.run(
+            ["/usr/bin/osascript", "-e", script, title, message, sound],
+            capture_output=True, text=True, timeout=5,
         )
-    except (OSError, subprocess.TimeoutExpired):
-        pass
+    except (OSError, subprocess.TimeoutExpired) as error:
+        logger.warning("Notification failed: %s", error)
+        return False
+    if result.returncode:
+        logger.warning("Notification failed: %s", result.stderr.strip())
+        return False
+    return True
 
 
-def _should_notify(state: State, key: str, cooldown_min: int = 5) -> bool:
+def _should_notify(state: State, key: str, cooldown_min: int = 5, *, record: bool = True) -> bool:
     """Return ``True`` if enough time has passed since the last fire of *key*.
 
-    Also updates the cooldown timestamp when returning ``True``.
+    Updates the cooldown timestamp when returning ``True`` unless ``record``
+    is false; delivery callers record it only after a successful send.
 
     Args:
         state:        Current :class:`State` instance.
@@ -222,7 +231,8 @@ def _should_notify(state: State, key: str, cooldown_min: int = 5) -> bool:
     now = time_utils.epoch_now()
     if now - last < cooldown_min * 60:
         return False
-    state.set(lock_key, str(now))
+    if record:
+        state.set(lock_key, str(now))
     return True
 
 
@@ -240,13 +250,15 @@ def _fire(state: State, key: str, **kwargs: object) -> bool:
     entry = NOTIFICATION_CONFIG.get(key)
     if entry is None:
         return False
-    if not _should_notify(state, key, cooldown_min=entry.get("cooldown_min", 5)):
+    if not _should_notify(state, key, cooldown_min=entry.get("cooldown_min", 5), record=False):
         return False
-    notify(
+    if not notify(
         _safe_format(entry["title"], **kwargs),
         _safe_format(entry["message"], **kwargs),
         entry.get("sound", "Funk"),
-    )
+    ):
+        return False
+    state.set(f"_notify_{key}", str(time_utils.epoch_now()))
     return True
 
 
@@ -295,6 +307,8 @@ def _check_idle_nothing_active(cfg: WyndleConfig, state: State) -> None:
     # Block is live (main or overflow) — do nothing
     if state.is_block_active():
         return
+    if state.get("today_ui_kind") in ("focus", "break"):
+        return  # Dashboard boundaries are delivered by _check_dashboard_reminders.
 
     active = state.get("today_active_subtask", "")
     if active:
@@ -432,31 +446,45 @@ def _check_scheduled_notifications(cfg: WyndleConfig, state: State) -> None:
         if not (0 <= delta_sec <= 120):
             continue
         cooldown_key = f"sched_{sched_time.replace(':', '')}"
-        if not _should_notify(state, cooldown_key, cooldown_min=720):
+        if not _should_notify(state, cooldown_key, cooldown_min=720, record=False):
             continue
         notif_type = entry.get("type", "")
         if notif_type == "remaining_work":
-            _fire_remaining_work(cfg)
+            delivered = _fire_remaining_work(cfg)
         else:
             message = entry.get("message", "")
-            if message:
-                notify("Wyndle", message, sound="Morse")
+            delivered = bool(message) and notify("Wyndle", message, sound="Morse")
+        if delivered:
+            state.set(f"_notify_{cooldown_key}", str(time_utils.epoch_now()))
 
 
-def _fire_remaining_work(cfg: WyndleConfig) -> None:
+def _fire_remaining_work(cfg: WyndleConfig) -> bool:
     """Send a notification with the total estimated minutes remaining."""
     from wyndle.lib.daily_notes import get_remaining_estimate_min
     remaining = get_remaining_estimate_min(cfg.daily_dir)
     if remaining > 0:
         msg = f"~{time_utils.hours_minutes(remaining)} of estimated work remaining"
-        notify("Wyndle", msg, sound="Morse")
+        return notify("Wyndle", msg, sound="Morse")
     else:
-        notify("Wyndle", "No estimated work remaining. Nice!", sound="Morse")
+        return notify("Wyndle", "No estimated work remaining. Nice!", sound="Morse")
 
 
 # ---------------------------------------------------------------------------
 # Main entry point (called by launchd every 60s)
 # ---------------------------------------------------------------------------
+
+def _check_dashboard_reminders(cfg: WyndleConfig, state: State) -> None:
+    from wyndle.lib.dashboard import snapshot
+    from wyndle.lib.reminders import due
+
+    data = snapshot(cfg, state)
+    for event in due(data["reminders"], data["now"], data["now"] - 120):
+        marker = f"today_notifier_{event['channel']}"
+        if state.get(marker) == event["id"]:
+            continue
+        if notify(event["title"], event["body"]):
+            state.set(marker, event["id"])
+
 
 def check_and_notify() -> None:
     """Run all notification checks in priority order.
@@ -474,6 +502,7 @@ def check_and_notify() -> None:
     if state.get("today_wrapped", "false") == "true":
         _check_post_wrap(cfg, state)
         return
+    _check_dashboard_reminders(cfg, state)
     if _check_hard_stop(cfg, state):
         return
     _check_idle_nothing_active(cfg, state)
@@ -486,7 +515,8 @@ def main() -> None:
     try:
         check_and_notify()
     except Exception:
-        pass
+        logger.exception("Background notification check failed")
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

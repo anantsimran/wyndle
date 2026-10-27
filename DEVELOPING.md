@@ -36,6 +36,8 @@ the library, while `commands/ui.py` only maps HTTP requests to library calls.
 | `src/wyndle/lib/` | Models, persistence, parsing, timers, configuration, and dashboard workflow |
 | `src/wyndle/web/` | Browser app shipped inside the Python package |
 | `vscode/` | VS Code integration; no task persistence or copied browser assets |
+| `vscode-timers/` | Standalone Full Focus Timers extension, tests, and standard-library VSIX packager; separate installation |
+| `docs/adr/` | Architecture decision records, including the timer relocation and behavior guarantees |
 | `.vscode/launch.json` | F5 extension development host configuration |
 | `tests/` | Isolated Python regression tests and optional browser smoke script |
 | `.pre-commit-config.yaml` | Formatting hygiene, Ruff, and pytest hooks |
@@ -194,6 +196,12 @@ The read-only history routes are `GET /api/notes` for the note index,
 `GET /api/note?kind=...&name=...` for one Markdown file, and
 `GET /api/stats?days=7|30` for a progress summary. Note paths are selected from
 the configured daily, task, and review directories, never from arbitrary paths.
+`POST /api/capture` is a small, flat task-creation payload for private phone
+automations. It requires the same Host/Origin rules as the dashboard plus the
+`X-Wyndle-Client: shortcuts` header. Validation and writes go through
+`dashboard.capture_task()` and `dashboard.dispatch()`. The optional
+`wyndle mcp` stdio server calls the running dashboard API on loopback, keeping
+one HTTP lock over browser and MCP changes.
 The server binds only to loopback, checks Host/Origin, and serves an explicit
 asset allowlist. Private phone access uses an HTTPS Tailscale Serve proxy and
 an explicit `WYNDLE_ALLOWED_HOSTS` entry. Do not expose it publicly without
@@ -213,6 +221,27 @@ Use F5 from the repository root to test in an Extension Development Host. Set
 `wyndle.executable` to the full executable path if VS Code cannot resolve PATH.
 The extension currently targets local desktop VS Code. Keep secrets and runtime
 state out of extension settings and the source checkout.
+
+## Changing Full Focus Timers
+
+`vscode-timers/` is a separate VS Code extension with its own `package.json`,
+installation, and release lifecycle. It does not use the Python backend or the
+dashboard extension. See [its README](vscode-timers/README.md) for install and
+development commands and [ADR 0001](docs/adr/0001-standalone-vscode-timers.md)
+for the decision and behavior guarantees.
+
+- `countdown.js`: countdown state and duration formatting; accepts an explicit clock.
+- `extension.js`: status bar items, CodeLens, toolbar commands, notifications,
+  and workspace state. Keep these controls and the `fullFocus.*` commands intact.
+- `test/`: countdown and extension behavior tests using Node's built-in runner.
+- `package.py`: builds this extension's VSIX using only Python's standard library.
+
+Use Node.js 20+ to run `node --test vscode-timers/test/*.test.js` from the repo
+root. Lint the packager with `uv run ruff check vscode-timers`. Build with
+`python3 vscode-timers/package.py`. Keep generated files under `vscode-timers/dist/`
+(already ignored); do not add timers to the dashboard extension's VSIX or Python
+package. Python's `time_utils.now()` convention applies to the Python backend;
+the standalone extension uses the VS Code host clock, controlled by its JS tests.
 
 ## Verification and packaging
 

@@ -21,6 +21,8 @@ import sys
 from pathlib import Path
 from textwrap import dedent
 
+import click
+
 from wyndle.lib import display
 from wyndle.lib.config import WyndleConfig
 
@@ -187,7 +189,9 @@ def start() -> None:
     if not plist.exists():
         display.error("Not installed yet. Run: wyndle daemon install")
         return
-    subprocess.run(["launchctl", "load", str(plist)], capture_output=True)
+    result = subprocess.run(["launchctl", "load", str(plist)], capture_output=True, text=True)
+    if result.returncode:
+        raise click.ClickException(f"Could not start notifier: {result.stderr.strip()}")
     display.success("Background notifier started.")
 
 
@@ -197,7 +201,9 @@ def stop() -> None:
     if not plist.exists():
         display.dim("Not installed.")
         return
-    subprocess.run(["launchctl", "unload", str(plist)], capture_output=True)
+    result = subprocess.run(["launchctl", "unload", str(plist)], capture_output=True, text=True)
+    if result.returncode:
+        raise click.ClickException(f"Could not stop notifier: {result.stderr.strip()}")
     display.success("Background notifier stopped. Run 'wyndle daemon start' to resume.")
 
 
@@ -233,5 +239,9 @@ def status() -> None:
 def test_notify() -> None:
     """Fire a single test notification to verify the setup works."""
     from wyndle.lib.notifier import notify
-    notify("Wyndle Test", "If you see this, background notifications are working!", sound="Morse")
-    display.success("Test notification sent. Check your notification center.")
+    if not notify("Wyndle Test", "If you see this, background notifications are working!",
+                  sound="Morse"):
+        raise click.ClickException("Test notification failed. See the delivery error above.")
+    display.success("macOS accepted the test notification.")
+    display.dim("If no banner appears, allow Script Editor notifications in System Settings "
+                "→ Notifications and check Focus / Do Not Disturb.")

@@ -6,6 +6,8 @@
   <meta name="color-scheme" content="light dark">
   <title>Daily alarm · Wyndle</title>
   <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/favicon.png">
   <link rel="stylesheet" href="/daily.css">
   <script src="/daily.js" type="module"></script>
 </head>
@@ -87,6 +89,7 @@
           <p>Enable quiet browser notifications and in-page reminders. Alerts stop when this tab closes; phone lock may pause them.</p>
           <p id="alert-status" class="small muted" role="status">Page alerts are off.</p></div>
         <button id="enable-alerts" class="secondary" type="button">Enable page alerts</button>
+        <button id="daily-alert-test" class="quiet" type="button">Test alert</button>
       </section>
 
       <details class="phone-help"><summary>Using this on your phone</summary><p>Run Wyndle on your computer and open its private Tailscale Serve HTTPS address on your phone. Set <code>WYNDLE_ALLOWED_HOSTS</code> to that Tailscale hostname. Keep this page open for alerts; Wyndle does not set a phone system alarm.</p></details>

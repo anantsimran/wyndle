@@ -59,6 +59,16 @@ In another terminal, run `tailscale serve --bg http://127.0.0.1:8765` and open
 the private HTTPS address it shows on your phone. Keep Wyndle running while you
 use it. Tailscale Funnel makes the site public; use Serve for private access.
 
+On iPhone, a Shortcut can use Claude's **Ask Claude** action and post the
+result to Wyndle's private `/api/capture` endpoint. See
+[Add a task with Claude on iPhone](src/wyndle/web/HOW_TO_USE.md#add-a-task-with-claude-on-iphone)
+for the exact Shortcut actions. Claude's regular mobile chat cannot reach a
+tailnet-only MCP server directly.
+
+For local MCP clients, install `uv sync --extra mcp`, keep `wyndle ui` running,
+and configure the client to launch `uv run wyndle mcp` over stdio. The local
+tools use Wyndle's dashboard API for task and note changes.
+
 Ctrl+C stops the web server.
 Focus time continues until you pause or complete the task, including after a
 refresh, closing the tab, or restarting the server. At the end of a block, the
@@ -100,6 +110,24 @@ code --install-extension wyndle-0.1.0.vsix
 
 You can also use **Extensions → … → Install from VSIX**. The extension is local
 and has not been published to the Marketplace. It has no runtime npm dependencies.
+
+### Full Focus Timers (separate VS Code extension)
+
+[Full Focus Timers](vscode-timers/README.md) provides independent countdowns in
+VS Code's bottom status bar, controls above the first line, and editor toolbar
+buttons. Choose a preset or custom duration, or start five-minute **Full focus**.
+Install it separately from the Wyndle dashboard extension and Python package:
+
+```bash
+python3 vscode-timers/package.py
+code --install-extension vscode-timers/dist/full-focus-timers-0.1.2.vsix --force
+```
+
+Building needs Python 3; running the installed timer needs only VS Code 1.85+.
+Wyndle installation and updates do not install or update the timer extension.
+Its extension ID and workspace state are preserved from `interview-prep`.
+See [ADR 0001](docs/adr/0001-standalone-vscode-timers.md) for the ownership and
+behavior guarantees.
 
 ### UI development and checks
 
@@ -896,6 +924,9 @@ tests/               # mirrors src/wyndle/
   commands/          # command flows (morning, wrap, break, start)
   lib/               # unit tests per lib module
   test_cli.py        # CLI smoke tests
+vscode/              # dashboard extension; installed separately
+vscode-timers/       # standalone Full Focus Timers extension and tests
+docs/adr/            # architecture decision records
 ```
 
 Conventions:

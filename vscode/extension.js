@@ -1,6 +1,8 @@
 'use strict';
 const vscode = require('vscode');
 const { DashboardServer, status } = require('./server');
+const { Alerts } = require('./alerts');
+const { randomBytes } = require('node:crypto');
 
 function escapeHtml(text) {
   return String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -9,6 +11,8 @@ function escapeHtml(text) {
 function activate(context) {
   const output = vscode.window.createOutputChannel('Wyndle');
   const server = new DashboardServer(output);
+  const alerts = new Alerts(message => vscode.window.showInformationMessage(message),
+    context.globalState.get('wyndle.alerts', {}));
   const badge = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 10);
   badge.command = 'wyndle.open';
   badge.text = '$(sparkle) Wyndle';
@@ -31,12 +35,23 @@ function activate(context) {
       const address = await connect();
       if (view !== currentView) return;
       currentView.webview.options = { enableScripts: true, localResourceRoots: [] };
+      const nonce = randomBytes(16).toString('hex');
       // The exact same app runs in the browser and the sidebar: no duplicated UI.
       currentView.webview.html = `<!doctype html><html lang="en"><head>
         <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; frame-src ${address}; style-src 'unsafe-inline';">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; frame-src ${address}; style-src 'unsafe-inline'; script-src 'nonce-${nonce}';">
         <style>html,body,iframe{margin:0;width:100%;height:100%;border:0;overflow:hidden}body{background:var(--vscode-sideBar-background)}</style>
-        </head><body><iframe title="Wyndle focus dashboard" src="${address}" allow="clipboard-write"></iframe></body></html>`;
+        </head><body><iframe title="Wyndle focus dashboard" src="${address}" allow="clipboard-write"></iframe>
+        <script nonce="${nonce}">
+          const api = acquireVsCodeApi();
+          const frame = document.querySelector('iframe');
+          window.addEventListener('message', event => {
+            if (event.source !== frame.contentWindow || event.origin !== ${JSON.stringify(new URL(address).origin)}) return;
+            if (event.data?.type === 'wyndle.host.request') {
+              frame.contentWindow.postMessage({ type: 'wyndle.host.ready' }, event.origin);
+            } else if (['wyndle.alert', 'wyndle.alertPreferences'].includes(event.data?.type)) api.postMessage(event.data);
+          });
+        </script></body></html>`;
     } catch (error) {
       if (view !== currentView) return;
       currentView.webview.html = `<!doctype html><html><body><h3>Let’s get Wyndle ready.</h3>
@@ -49,6 +64,13 @@ function activate(context) {
       resolveWebviewView(nextView) {
         view = nextView;
         nextView.onDidDispose(() => { if (view === nextView) view = undefined; });
+        nextView.webview.onDidReceiveMessage(message => {
+          if (message?.type === 'wyndle.alert') alerts.deliver(message.event);
+          if (message?.type === 'wyndle.alertPreferences') {
+            alerts.enabled = { timer: message.enabled?.timer === true, daily: message.enabled?.daily === true };
+            context.globalState.update('wyndle.alerts', alerts.enabled);
+          }
+        });
         render();
       },
     }),
@@ -65,6 +87,7 @@ function activate(context) {
     polling = true;
     try {
       const data = await status(Number(new URL(url).port));
+      alerts.update(data);
       const remaining = Math.ceil((data.timer.end - Date.now() / 1000) / 60);
       badge.text = data.timer.kind ? `$(watch) ${remaining > 0 ? `${remaining}m` : 'Check in'} · ${data.timer.kind === 'break' ? 'Rest' : 'Focus'}` : '$(sparkle) Wyndle';
     } catch { badge.text = '$(debug-disconnect) Wyndle'; }

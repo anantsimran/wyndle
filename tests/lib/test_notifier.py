@@ -1,3 +1,5 @@
+from subprocess import CompletedProcess, TimeoutExpired
+
 import pytest
 
 from wyndle.lib import notifier
@@ -6,7 +8,12 @@ from wyndle.lib import notifier
 @pytest.fixture
 def sent(monkeypatch):
     calls: list[tuple[str, str]] = []
-    monkeypatch.setattr(notifier, "notify", lambda t, m, sound="Funk": calls.append((t, m)))
+
+    def deliver(t, m, sound="Funk"):
+        calls.append((t, m))
+        return True
+
+    monkeypatch.setattr(notifier, "notify", deliver)
     return calls
 
 
@@ -69,3 +76,43 @@ def test_idle_is_silent_during_block(state, clock, sent):
     state.set_block_active(False)
     notifier._check_idle_nothing_active(None, state)
     assert [t for t, _ in sent] == ["Frozen?"]
+
+
+def test_native_delivery_passes_text_as_arguments(monkeypatch):
+    monkeypatch.setattr(notifier.sys, "platform", "darwin")
+    calls = []
+
+    def run(args, **kwargs):
+        calls.append(args)
+        return CompletedProcess(args, 0, "", "")
+
+    monkeypatch.setattr(notifier.subprocess, "run", run)
+    title, body = 'Title "quoted"', "C:\\notes\\task\nNext line"
+    assert notifier.notify(title, body)
+    assert calls[0][-3:] == [title, body, "Funk"]
+    assert body not in calls[0][2]
+
+
+@pytest.mark.parametrize("failure", ["exit", "timeout", "missing"])
+def test_delivery_failure_is_reported(monkeypatch, caplog, failure):
+    monkeypatch.setattr(notifier.sys, "platform", "darwin")
+
+    def run(args, **kwargs):
+        if failure == "timeout":
+            raise TimeoutExpired(args, 5)
+        if failure == "missing":
+            raise FileNotFoundError("osascript missing")
+        return CompletedProcess(args, 1, "", "not allowed")
+
+    monkeypatch.setattr(notifier.subprocess, "run", run)
+    assert notifier.notify("Title", "Body") is False
+    assert "Notification failed" in caplog.text
+
+
+def test_failed_notification_does_not_consume_cooldown(monkeypatch, state):
+    monkeypatch.setattr(notifier, "notify", lambda *a, **k: False)
+    assert not notifier._fire(state, "idle_frozen")
+    assert not state.exists("_notify_idle_frozen")
+    monkeypatch.setattr(notifier, "notify", lambda *a, **k: True)
+    assert notifier._fire(state, "idle_frozen")
+    assert not notifier._fire(state, "idle_frozen")

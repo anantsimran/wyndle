@@ -9,6 +9,13 @@ Markdown parsing, note storage, and saved-history statistics live in `lib/` and
 do not depend on the browser or HTTP server. The `vscode/` extension embeds the
 same dashboard and shares its backend.
 
+`vscode-timers/` contains the separately installed Full Focus Timers extension.
+Its countdown model, editor controls, and workspace state are self-contained;
+it does not read Markdown or track dashboard task time. The dashboard extension
+in `vscode/` and the Python package keep their existing installation paths.
+See [ADR 0001](docs/adr/0001-standalone-vscode-timers.md) for the decision and
+the bottom bar and top control behavior guarantees.
+
 ## Module Layout
 
 ```

@@ -7,6 +7,7 @@ import { createDurationPicker } from './components/durations.js';
 import { connectHelp } from './components/help.js';
 import { createPomodoro } from './components/pomodoro.js';
 import { connectHistory } from './components/history.js';
+import { createAlerts } from './alerts.js';
 
 const $ = id => document.getElementById(id);
 let state;
@@ -40,6 +41,7 @@ async function act(action, data) {
 }
 
 const focus = createFocus({ act, toast });
+const alerts = createAlerts({ channel: 'timer', toast });
 const dialogs = connectDialogs(act);
 connectHelp();
 connectHistory();
@@ -145,6 +147,7 @@ function render() {
   }
   document.querySelectorAll('form button[type="submit"]').forEach(button => { button.disabled = busy; });
   focus.render(state, busy);
+  alerts.update(state);
   tasks.render(state.tasks, busy, state.highLevelTasks);
 }
 
@@ -186,5 +189,5 @@ async function refresh() {
   finally { refreshing = false; }
 }
 refresh();
-setInterval(() => { if (!document.hidden) refresh(); }, 5000);
+setInterval(refresh, 5000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });

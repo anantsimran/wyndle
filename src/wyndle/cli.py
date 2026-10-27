@@ -62,6 +62,19 @@ def ui(port: int, browser: bool) -> None:
 
 
 @main.command()
+@click.option("--ui-port", type=click.IntRange(1, 65535), default=8765, show_default=True,
+              help="Port of the running local Wyndle dashboard.")
+def mcp(ui_port: int) -> None:
+    """Serve local MCP tools over stdio for desktop AI clients."""
+    try:
+        from wyndle.commands.mcp import create_server
+        server = create_server(ui_port)
+    except ImportError as exc:
+        raise click.ClickException("Install the MCP extra with `uv sync --extra mcp`.") from exc
+    server.run(transport="stdio")
+
+
+@main.command()
 def morning() -> None:
     """Start your day: yesterday recap -> add tasks -> open your notes."""
     cfg, state = _setup()
