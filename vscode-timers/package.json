@@ -1,0 +1,46 @@
+{
+  "name": "full-focus-timers",
+  "displayName": "Full Focus Timers",
+  "description": "Visible countdowns in the bottom status bar, editor controls, and a five-minute Full focus timer.",
+  "version": "0.1.2",
+  "publisher": "anantsimran",
+  "private": true,
+  "license": "MIT",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other"],
+  "main": "./extension.js",
+  "activationEvents": ["onStartupFinished"],
+  "extensionKind": ["ui"],
+  "capabilities": {
+    "untrustedWorkspaces": { "supported": true },
+    "virtualWorkspaces": true
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "package": "python3 package.py"
+  },
+  "contributes": {
+    "commands": [
+      { "command": "fullFocus.toggleTimer", "title": "Start / Resume Timer", "category": "Full Focus", "icon": "$(watch)" },
+      { "command": "fullFocus.pauseTimer", "title": "Pause Timer", "category": "Full Focus", "icon": "$(debug-pause)" },
+      { "command": "fullFocus.chooseDuration", "title": "Set Timer Duration", "category": "Full Focus", "icon": "$(settings-gear)" },
+      { "command": "fullFocus.resetTimer", "title": "Reset Timer", "category": "Full Focus", "icon": "$(discard)" },
+      { "command": "fullFocus.toggleFocus", "title": "Full focus (5 minutes): Start / Resume", "category": "Full Focus", "icon": "$(target)" },
+      { "command": "fullFocus.pauseFocus", "title": "Pause Full focus", "category": "Full Focus", "icon": "$(debug-pause)" },
+      { "command": "fullFocus.resetFocus", "title": "Reset Full focus", "category": "Full Focus", "icon": "$(discard)" },
+      { "command": "fullFocus.showTimers", "title": "Show Timers at Top of Editor", "category": "Full Focus", "icon": "$(arrow-up)" }
+    ],
+    "menus": {
+      "editor/title": [
+        { "command": "fullFocus.toggleTimer", "when": "!fullFocus.timerRunning", "group": "navigation@90" },
+        { "command": "fullFocus.pauseTimer", "when": "fullFocus.timerRunning", "group": "navigation@90" },
+        { "command": "fullFocus.toggleFocus", "when": "!fullFocus.focusRunning", "group": "navigation@91" },
+        { "command": "fullFocus.pauseFocus", "when": "fullFocus.focusRunning", "group": "navigation@91" },
+        { "command": "fullFocus.showTimers", "group": "navigation@92" },
+        { "command": "fullFocus.chooseDuration", "group": "fullFocus@1" },
+        { "command": "fullFocus.resetTimer", "group": "fullFocus@2" },
+        { "command": "fullFocus.resetFocus", "group": "fullFocus@3" }
+      ]
+    }
+  }
+}

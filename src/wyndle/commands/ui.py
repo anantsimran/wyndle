@@ -11,7 +11,7 @@ from importlib.resources import files
 from urllib.parse import parse_qs, urlsplit
 
 from wyndle.lib.config import WyndleConfig, init_default_config, load_config
-from wyndle.lib.dashboard import dispatch, recent_stats, snapshot
+from wyndle.lib.dashboard import capture_task, dispatch, recent_stats, snapshot
 from wyndle.lib.note_archive import list_notes, read_note
 from wyndle.lib.state import State
 
@@ -23,10 +23,11 @@ ASSETS = {"/": ("index.html", "text/html"),
           "/daily.css": ("daily.css", "text/css")}
 for _asset in ("api.js", "components/tasks.js", "components/focus.js", "components/dialogs.js",
                "components/durations.js", "components/help.js", "components/pomodoro.js",
-               "components/history.js"):
+               "components/history.js", "alerts.js", "notification-worker.js"):
     ASSETS[f"/{_asset}"] = (_asset, "text/javascript")
 ASSETS["/theme.css"] = ("theme.css", "text/css")
 ASSETS["/components.css"] = ("components.css", "text/css")
+ASSETS["/manifest.webmanifest"] = ("manifest.webmanifest", "application/manifest+json")
 ASSETS["/HOW_TO_USE.md"] = ("HOW_TO_USE.md", "text/markdown")
 ASSETS["/favicon.svg"] = ("favicon.svg", "image/svg+xml")
 ASSETS["/favicon.png"] = ("favicon.png", "image/png")
@@ -143,25 +144,33 @@ def make_server(cfg: WyndleConfig, state: State, port: int = 8765) -> ThreadingH
         def do_POST(self) -> None:  # noqa: N802
             if not self._local_request():
                 return
-            if self.path != "/api/action":
+            if self.path not in ("/api/action", "/api/capture"):
                 self._json(404, {"error": "Not found."})
                 return
-            if (self.headers.get("Content-Type") != "application/json"
-                    or self.headers.get("X-Wyndle-Client") != "dashboard"):
-                self._json(403, {"error": "Use the Wyndle dashboard to make changes."})
+            content_type = self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
+            expected_client = "dashboard" if self.path == "/api/action" else "shortcuts"
+            if (content_type != "application/json"
+                    or self.headers.get("X-Wyndle-Client") != expected_client):
+                self._json(403, {"error": "Use an approved Wyndle client to make changes."})
                 return
             try:
                 length = int(self.headers.get("Content-Length", "0"))
                 if not 0 < length <= 16384:
                     raise ValueError("Invalid request size.")
                 payload = json.loads(self.rfile.read(length))
-                if not isinstance(payload, dict) or not isinstance(payload.get("action"), str):
-                    raise ValueError("Expected an action object.")
-                data = payload.get("data", {})
-                if not isinstance(data, dict):
-                    raise ValueError("Expected action data to be an object.")
+                if self.path == "/api/action":
+                    if not isinstance(payload, dict) or not isinstance(payload.get("action"), str):
+                        raise ValueError("Expected an action object.")
+                elif not isinstance(payload, dict):
+                    raise ValueError("Expected a capture object.")
                 with lock:
-                    result = dispatch(cfg, state, payload["action"], data)
+                    if self.path == "/api/capture":
+                        result = capture_task(cfg, state, payload)
+                    else:
+                        data = payload.get("data", {})
+                        if not isinstance(data, dict):
+                            raise ValueError("Expected action data to be an object.")
+                        result = dispatch(cfg, state, payload["action"], data)
                 self._json(200, result)
             except (ValueError, TypeError) as exc:
                 self._json(400, {"error": str(exc)})

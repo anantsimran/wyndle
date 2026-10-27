@@ -6,6 +6,8 @@
   <meta name="color-scheme" content="light dark">
   <title>Wyndle · A little forward</title>
   <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/favicon.png">
   <link rel="stylesheet" href="/style.css">
   <script src="/app.js" type="module"></script>
 </head>
@@ -50,6 +52,8 @@
             <button id="focus" class="primary wide">Let’s begin <span aria-hidden="true">▶</span></button>
             <div class="focus-secondary"><button id="pause" class="quiet" disabled>Pause</button><button id="break" class="quiet">Take a 5 min break</button></div>
             <button id="focus-alerts" class="quiet alert-toggle" type="button" aria-pressed="false">Enable timer alerts</button>
+            <button id="focus-alert-test" class="quiet" type="button">Test alert</button>
+            <p id="focus-alert-status" class="small muted" role="status">Alerts are off on this device.</p>
             <p id="timer-hint" class="small muted">A small start counts. You can pause whenever you need.</p>
           </div>
           <aside id="task-tiers" class="card task-tiers" aria-labelledby="task-tiers-title">

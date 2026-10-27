@@ -64,6 +64,30 @@ def test_actions_require_local_origin_and_json_header(server):
     assert send(server, "POST", "/api/action", "not-json", headers)[0] == 400
 
 
+def test_private_capture_adds_task_with_shortcuts_header(server):
+    shortcut = {"Content-Type": "application/json; charset=utf-8",
+                "X-Wyndle-Client": "shortcuts"}
+    task = json.dumps({"title": "Email Sam about the budget", "group": "Admin",
+                       "estimateMinutes": 10, "taskType": "p0"})
+    assert send(server, "POST", "/api/capture", task, shortcut)[0] == 400
+    assert send(server, "POST", "/api/action", json.dumps({"action": "morning"}),
+                {"Content-Type": "application/json", "X-Wyndle-Client": "dashboard"})[0] == 200
+    assert send(server, "POST", "/api/capture", task)[0] == 403
+    assert send(server, "POST", "/api/capture", task,
+                {**shortcut, "Origin": "https://example.com"})[0] == 403
+    code, body, _ = send(server, "POST", "/api/capture", task, shortcut)
+    assert code == 200
+    assert json.loads(body) == {"added": {"title": "Email Sam about the budget",
+                                          "group": "Admin", "estimateMinutes": 10,
+                                          "taskType": "p0"}}
+    status = json.loads(send(server, "GET", "/api/status")[1])
+    assert any(task["title"] == "Email Sam about the budget" and task["priority"]
+               for task in status["tasks"])
+    assert send(server, "POST", "/api/capture", task, shortcut)[0] == 400
+    assert send(server, "POST", "/api/capture",
+                json.dumps({"title": "A step", "taskType": "urgent"}), shortcut)[0] == 400
+
+
 def test_allowed_hosts_accept_only_listed_https_host(cfg, state, clock, monkeypatch):
     monkeypatch.setenv("WYNDLE_ALLOWED_HOSTS", " mac.tail1234.ts.net, ")
     instance = make_server(cfg, state, 0)
@@ -76,6 +100,11 @@ def test_allowed_hosts_accept_only_listed_https_host(cfg, state, clock, monkeypa
         assert send(instance, "GET", "/api/status", headers=remote)[0] == 200
         assert send(instance, "POST", "/api/action", body,
                     {**action, "Origin": "https://mac.tail1234.ts.net"})[0] == 200
+        capture = {**remote, "Content-Type": "application/json; charset=utf-8",
+                   "X-Wyndle-Client": "shortcuts",
+                   "Origin": "https://mac.tail1234.ts.net"}
+        assert send(instance, "POST", "/api/capture",
+                    json.dumps({"title": "A phone task"}), capture)[0] == 200
         assert send(instance, "POST", "/api/action", body,
                     {**action, "Origin": "http://mac.tail1234.ts.net"})[0] == 403
         assert send(instance, "GET", "/api/status", headers={"Host": "other.ts.net"})[0] == 403

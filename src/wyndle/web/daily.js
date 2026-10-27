@@ -1,4 +1,5 @@
 import { request } from './api.js';
+import { createAlerts } from './alerts.js';
 
 const $ = id => document.getElementById(id);
 const make = (tag, className, value) => {
@@ -17,34 +18,12 @@ let draftPlanId;
 let selectedIds = [];
 let pickerSignature = '';
 let timelineSignature = '';
-let viewedPlanId;
-let lastTickAt;
-const alertStorageKey = 'wyndle-daily-alerts';
-const lastEventStorageKey = 'wyndle-daily-last-event';
-let alertsEnabled = readAlertsEnabled();
 let toastTimeout;
 let currentWorkBlock;
 let currentBufferBlock;
 let currentBreakBlock;
 
-function readAlertsEnabled() {
-  try { return localStorage.getItem(alertStorageKey) === 'true'; }
-  catch { return false; }
-}
-
-function saveAlertsEnabled(value) {
-  try { localStorage.setItem(alertStorageKey, String(value)); }
-  catch { /* The toggle still works for this page. */ }
-}
-
-function claimEvent(planId, timestamp) {
-  const key = `${planId}:${timestamp}`;
-  try {
-    if (localStorage.getItem(lastEventStorageKey) === key) return false;
-    localStorage.setItem(lastEventStorageKey, key);
-  } catch { /* Alerts still work when storage is unavailable. */ }
-  return true;
-}
+const alerts = createAlerts({ channel: 'daily', toast });
 
 function serverNow() {
   return state ? state.now + (Date.now() - receivedAt) / 1000 : Date.now() / 1000;
@@ -295,52 +274,7 @@ function renderClock() {
   document.title = current ? `${$('now-countdown').textContent} · Daily alarm · Wyndle` : 'Daily alarm · Wyndle';
 }
 
-function alertAtBoundary(previous, now, alarm) {
-  if (!alertsEnabled || !state.started || state.wrapped || previous === undefined || now <= previous) return;
-  const blocks = alarm.blocks;
-  const events = blocks.filter(block => block.kind !== 'work' || (!block.done && !block.missing))
-    .map(block => ({ at: block.start,
-      message: block.kind === 'buffer' ? 'Buffer time. Wrap up this block; pause focus.'
-        : block.kind === 'break' ? 'Break time.' : `Time for ${blockName(block)}.` }));
-  if (blocks.length) events.push({ at: blocks[blocks.length - 1].end, message: "Today's planned blocks are complete." });
-  const crossed = events.filter(item => previous < item.at && item.at <= now);
-  const event = crossed[crossed.length - 1];
-  if (document.hidden && (!('Notification' in window) || Notification.permission !== 'granted')) return;
-  if (!event || now - event.at > 60 || !claimEvent(alarm.id, event.at)) return;
-  toast(event.message);
-  if ('Notification' in window && Notification.permission === 'granted') {
-    try { new Notification('Wyndle · Daily alarm', { body: event.message, tag: 'wyndle-daily-alarm', silent: true }); }
-    catch { /* The in-page notice is still available. */ }
-  }
-}
-
-function tick() {
-  const alarm = state?.dailyAlarm;
-  if (!alarm || !state.started || state.wrapped) {
-    lastTickAt = undefined;
-    viewedPlanId = alarm?.id;
-    renderClock();
-    return;
-  }
-  const now = serverNow();
-  if (viewedPlanId !== alarm.id) {
-    viewedPlanId = alarm.id;
-    lastTickAt = now;
-  } else {
-    alertAtBoundary(lastTickAt, now, alarm);
-    lastTickAt = now;
-  }
-  renderClock();
-}
-
-function renderAlerts() {
-  $('enable-alerts').textContent = alertsEnabled ? 'Disable page alerts' : 'Enable page alerts';
-  $('enable-alerts').setAttribute('aria-pressed', String(alertsEnabled));
-  if (!alertsEnabled) $('alert-status').textContent = 'Page alerts are off.';
-  else if ('Notification' in window && Notification.permission === 'granted')
-    $('alert-status').textContent = 'Browser notifications and in-page reminders are on while this page is open.';
-  else $('alert-status').textContent = 'In-page reminders are on. Browser notifications are unavailable or blocked here.';
-}
+function tick() { renderClock(); }
 
 function render() {
   if (!state) return;
@@ -365,7 +299,7 @@ function render() {
   if (alarm) renderTimeline(alarm);
   else timelineSignature = '';
   tick();
-  renderAlerts();
+  alerts.update(state);
 }
 
 async function refresh() {
@@ -409,24 +343,8 @@ $('now-pause').addEventListener('click', async () => {
   if (currentBufferBlock && await act('pause')) toast('Focus paused.');
 });
 $('now-break').addEventListener('click', () => { if (currentBreakBlock) startBreak(currentBreakBlock); });
-$('enable-alerts').addEventListener('click', async () => {
-  if (alertsEnabled) { alertsEnabled = false; saveAlertsEnabled(false); renderAlerts(); return; }
-  alertsEnabled = true;
-  saveAlertsEnabled(true);
-  if ('Notification' in window && Notification.permission === 'default') {
-    try { await Notification.requestPermission(); }
-    catch { /* In-page reminders remain available. */ }
-  }
-  renderAlerts();
-});
 
 refresh();
 setInterval(tick, 1000);
 setInterval(refresh, 10000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
-window.addEventListener('storage', event => {
-  if (event.key === alertStorageKey) {
-    alertsEnabled = event.newValue === 'true';
-    renderAlerts();
-  }
-});

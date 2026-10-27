@@ -31,6 +31,38 @@ files. Choose a file from the list; use **Refresh** after changing files in an
 editor. **Stats** shows the last 7 or 30 days of tracked time and completed
 steps, with a day-by-day breakdown.
 
+## Standalone VS Code timers
+
+For countdowns while editing any file, install **Full Focus Timers** separately
+from Wyndle. From the Wyndle repository root:
+
+```bash
+python3 vscode-timers/package.py
+code --install-extension vscode-timers/dist/full-focus-timers-0.1.2.vsix --force
+```
+
+Building needs Python 3; running the installed extension needs only VS Code
+1.85 or newer. No dashboard, Python backend, or Wyndle installation is needed.
+If `code` is unavailable, use **Extensions: Install from VSIX…** and select the
+generated file. Run **Developer: Reload Window** if the controls do not appear.
+
+- The bottom status bar shows **Timer** and five-minute **Full focus**, updating
+  every second. Click either to start, pause, or resume it.
+- Above the first line of every text file, live countdowns offer Start, Pause,
+  Resume, and Reset. Keep **Editor: Code Lens** enabled.
+- The editor toolbar has watch and target controls, plus an up arrow to reveal
+  the top controls. Its **…** menu includes duration and reset commands.
+- Timer offers 5, 15, 25, 45, 60 minutes, or a custom whole number from 1 to 1440.
+  Full focus starts five minutes immediately. Completion offers **Restart**.
+
+The two countdowns run independently, including when you switch files. State
+is saved per workspace and survives reloads; running timers include time spent
+with VS Code closed or the computer asleep. Pause to stop the clock. These
+countdowns have their own state and do not record time against Wyndle tasks.
+Installing or updating Wyndle does not install or update Full Focus Timers.
+An existing Full Focus Timers installation keeps its identity and saved state
+when updated from this repository; reopen the same workspace to use that state.
+
 ## Start your day
 
 If you have unfinished work from a previous day, open **Bring unfinished work
@@ -104,8 +136,18 @@ Refreshing or closing the page does not pause focus. Pause before stepping away.
 
 Click **Enable timer alerts** if you want quiet browser notifications and
 in-page reminders at the end of a focus block, every five minutes of overtime,
-and when a break ends. Browser notifications need permission and may be
-unavailable on some phones. Keep the dashboard open to receive page alerts.
+and when a break ends. Click **Test alert** to check delivery immediately. The
+status beneath the controls explains whether browser banners are allowed or
+only in-page reminders are available. If permission is blocked, allow
+notifications in the site's browser settings and test again. If the test is
+submitted but no banner appears, check your device's notification settings and
+Focus / Do Not Disturb.
+
+Enabled timer and Daily Alarm alerts continue on either Wyndle page. Keep
+Wyndle open; a new page does not replay old alarms. When a background tab is
+delayed, it shows the latest crossed boundary instead of a burst of old alerts.
+The VS Code sidebar uses VS Code notifications, including while its view is
+hidden and the extension stays connected.
 
 ## Take a breath
 
@@ -139,16 +181,54 @@ The start time uses the computer running Wyndle; the timeline uses this device's
 time zone. If a task changes or disappears, save the plan again.
 
 Click **Enable page alerts** for quiet reminders at block changes while the
-Daily Alarm page is open. Turn them on separately on each device. Notification
-banners need browser permission; in-page reminders remain available when banners
-are blocked. Closing the tab or locking a phone can stop these alerts.
+Daily Alarm page or dashboard is open. Turn them on separately on each device,
+and use **Test alert** to check delivery. Notification banners need browser
+permission; in-page reminders remain available when banners are blocked.
+Closing the tab or locking a phone can stop these alerts.
 
 To use the page on a phone, run Wyndle on your computer and open its private
 Tailscale Serve HTTPS address on the phone. Add the Tailscale hostname to
-`WYNDLE_ALLOWED_HOSTS` before starting `wyndle ui`. Keep the Daily Alarm page
-open for page alerts. Wyndle does not set a phone system alarm or deliver
+`WYNDLE_ALLOWED_HOSTS` before starting `wyndle ui`. On iPhone or iPad, use Safari's
+**Share → Add to Home Screen**, open Wyndle from that icon, then enable alerts
+and allow notifications (iOS/iPadOS 16.4 or later). On Android, open the HTTPS
+address in a browser that supports notifications and allow the permission
+prompt. Use **Test alert** on each phone. Keep Wyndle open and the phone awake
+for page alerts. Wyndle does not set a phone system alarm or deliver
 background phone alerts. On the computer, run
 `tailscale serve --bg http://127.0.0.1:8765` after starting Wyndle.
+
+For native macOS alerts from the terminal or while browser pages are closed,
+run `wyndle daemon install`, then `wyndle daemon test`. The installed daemon
+also checks dashboard focus/break deadlines and Daily Alarm blocks every minute.
+`wyndle daemon status` shows whether it is loaded and reports recent errors.
+Allow **Script Editor** in **System Settings → Notifications** and check Focus
+mode if macOS accepts the test but no banner appears. Delivery errors are
+reported rather than counted as successful notifications; failed requests can
+retry. `features.notifications: false` disables these native macOS alerts.
+
+## Add a task with Claude on iPhone
+
+Keep Wyndle running on your computer and your iPhone connected to the same
+tailnet. Use the private Tailscale Serve address described above. Start your
+day in the dashboard first.
+
+On iPhone, create a Shortcut with these actions:
+
+1. **Ask for Input** (Text), or **Dictate Text** for voice capture.
+2. **Ask Claude** with this prompt, inserting the input variable at the end:
+   “Turn this into one concrete next-step task. Return only the title on one
+   line, at most 200 characters, with no quotes or list formatting: [input]”.
+3. **URL**: `https://your-mac.your-tailnet.ts.net/api/capture`.
+4. **Get Contents of URL**: set Method to **POST**, add the header
+   `X-Wyndle-Client: shortcuts`, and set Request Body to **JSON** with one
+   field: `title` = the **Ask Claude** result.
+5. **Show Result** to see the saved task or an error.
+
+The task goes into **Today** with a 15-minute estimate. The API also accepts
+optional JSON fields `group`, `estimateMinutes` (0–480), and `taskType`
+(`regular`, `p0`, or `optional`). If the day has not started or is already
+wrapped, Wyndle asks you to use the dashboard first. Claude runs inside the
+Shortcut; a regular Claude mobile chat cannot directly call this private API.
 
 ## Pomodoro timer
 
@@ -221,3 +301,10 @@ Use `wyndle --help` for the current command list. Use `wyndle help` for the
 longer terminal workflow reference, or `wyndle help --guide` for this guide.
 Examples include `wyndle status`, `wyndle morning`, and `wyndle wrap`.
 The command reference below in the dashboard is generated from the same CLI.
+
+For local MCP clients such as Claude Desktop or Claude Code, install the
+optional MCP support with `uv sync --extra mcp` in a source checkout. Keep
+`uv run wyndle ui --no-browser` running, then configure the client to launch
+`uv run wyndle mcp` from this checkout over stdio. The tools can read today's
+plan, start the day, add groups and tasks, and attach task notes. The MCP
+server uses the local dashboard API, so the dashboard must be running.
