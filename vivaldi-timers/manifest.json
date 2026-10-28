@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Full Focus Timers",
+  "version": "0.1.0",
+  "description": "Two independent, persistent countdowns in your browser toolbar.",
+  "permissions": ["alarms", "notifications", "storage"],
+  "background": { "service_worker": "background.js" },
+  "action": {
+    "default_title": "Full Focus Timers",
+    "default_popup": "popup.html",
+    "default_icon": "icon.png"
+  },
+  "icons": { "16": "icon.png", "32": "icon.png" }
+}

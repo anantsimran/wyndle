@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Full Focus Timers</title>
+  <link rel="stylesheet" href="popup.css">
+  <script defer src="popup.js"></script>
+</head>
+<body>
+  <header>
+    <span class="eyebrow">A little time for one thing</span>
+    <h1>Full Focus Timers</h1>
+  </header>
+  <main>
+    <section class="timer" aria-labelledby="main-title">
+      <div class="timer-heading"><h2 id="main-title">Timer</h2><span id="main-status" class="status">Ready</span></div>
+      <div id="main-clock" class="clock" role="timer" aria-label="Timer remaining">25:00</div>
+      <div class="duration-row">
+        <label for="duration">Minutes</label>
+        <select id="duration">
+          <option value="5">5</option><option value="15">15</option>
+          <option value="25" selected>25</option><option value="45">45</option>
+          <option value="60">60</option><option value="custom">Custom</option>
+        </select>
+        <input id="custom-duration" type="number" min="1" max="1440" step="1" value="25" aria-label="Custom minutes" hidden>
+      </div>
+      <div class="actions">
+        <button id="main-toggle" class="primary" type="button">Start</button>
+        <button id="main-reset" type="button">Reset</button>
+      </div>
+      <button id="apply-duration" class="text-button" type="button">Start with selected duration</button>
+    </section>
+    <section class="timer" aria-labelledby="focus-title">
+      <div class="timer-heading"><h2 id="focus-title">Full focus</h2><span id="focus-status" class="status">Ready</span></div>
+      <div id="focus-clock" class="clock" role="timer" aria-label="Full focus remaining">05:00</div>
+      <p class="hint">Five minutes. Just this one thing.</p>
+      <div class="actions">
+        <button id="focus-toggle" class="primary" type="button">Start</button>
+        <button id="focus-reset" type="button">Reset</button>
+      </div>
+    </section>
+  </main>
+  <p id="error" role="alert" hidden></p>
+  <footer>Each countdown runs on its own, even while this popup is closed.</footer>
+</body>
+</html>

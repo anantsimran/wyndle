@@ -63,6 +63,30 @@ Installing or updating Wyndle does not install or update Full Focus Timers.
 An existing Full Focus Timers installation keeps its identity and saved state
 when updated from this repository; reopen the same workspace to use that state.
 
+## Standalone Chrome and Vivaldi timers
+
+To use the same two countdowns in Chrome, open `chrome://extensions`, turn on
+**Developer mode**, click **Load unpacked**, and select the repository's
+`vivaldi-timers/` folder. Pin **Full Focus Timers** from Chrome's Extensions menu
+to keep its badge visible. In Vivaldi, open **Vivaldi menu → Tools → Extensions**
+and load the same folder with **Developer mode → Load unpacked**. This browser
+extension works separately from Wyndle and the VS Code timer extension, and
+does not need a local server.
+
+Open the toolbar popup for **Timer** and five-minute **Full focus**. Each has
+Start, Pause, Resume, and Reset. For Timer, choose 5, 15, 25, 45, or 60 minutes,
+or enter a custom whole number from 1 to 1440. Choose before starting, or click
+**Start with selected duration** to replace a running or paused Timer. The badge
+shows the nearest running deadline in minutes; `!` means a timer is done. A
+completion notification offers **Restart**.
+
+Both countdowns keep running when the popup closes and their state survives a
+browser restart. Time spent with Chrome or Vivaldi closed or the computer asleep counts;
+pause first to stop counting. Notifications can arrive late while the browser is
+closed or background alarms are delayed. These timers do not track Wyndle tasks,
+and their saved state is separate from the VS Code timers. Chrome and Vivaldi
+each keep their own timer state.
+
 ## Start your day
 
 If you have unfinished work from a previous day, open **Bring unfinished work
