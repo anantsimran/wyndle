@@ -83,14 +83,27 @@ and defaults to `~/Documents/Wyndle`. It can point to any folder.
 Use distinct task names within a day; the existing CLI timer identifies tasks
 by their text. Advanced edits such as renaming tasks still use the Markdown file.
 
-### VS Code
+## Install extensions
 
-1. Install the Python package using the commands above.
-2. Open this repository in VS Code. Press **F5** and select **Run Wyndle Extension**.
-3. In the new Extension Development Host, open **Settings → Wyndle → Executable**
-   and set the full executable path, for example
-   `/path/to/wyndle/.venv/bin/wyndle` (Windows: `.venv\Scripts\wyndle.exe`).
-4. Click the **Wyndle** activity-bar icon. Use the reconnect button if needed.
+Run these commands from the repository root. The Wyndle VS Code dashboard needs
+the Python package from **Web dashboard** above. The standalone timers install
+separately and do not need the Wyndle server.
+
+### Wyndle dashboard for VS Code
+
+Build and install the VSIX with Node.js 20+ and npm:
+
+```bash
+cd vscode
+npm run package
+code --install-extension wyndle-0.1.0.vsix --force
+cd ..
+```
+
+In VS Code, set **Settings → Wyndle → Executable** to the full path of the
+installed command, for example `/path/to/wyndle/.venv/bin/wyndle` (Windows:
+`.venv\Scripts\wyndle.exe`). Click the **Wyndle** activity-bar icon; use its
+reconnect button if needed.
 
 The sidebar loads the same responsive dashboard as the browser. It starts the
 local Python server when needed, or attaches to a Wyndle server already running
@@ -100,16 +113,12 @@ the server, it stops that server when the extension shuts down. A server started
 separately with `wyndle ui` keeps running. This first extension targets local
 desktop VS Code; remote workspaces and browser-hosted VS Code are not supported.
 
-To install it in your normal VS Code window (Node.js 20+ and npm required):
-
-```bash
-cd vscode
-npm run package
-code --install-extension wyndle-0.1.0.vsix
-```
-
-You can also use **Extensions → … → Install from VSIX**. The extension is local
-and has not been published to the Marketplace. It has no runtime npm dependencies.
+If `code` is not on your PATH, run **Extensions: Install from VSIX…** in VS Code
+and select `vscode/wyndle-0.1.0.vsix`. For development without installing, open
+this repository in VS Code, press **F5**, and select **Run Wyndle Extension**.
+Set the executable path in that Extension Development Host too. The extension
+is local and has not been published to the Marketplace. It has no runtime npm
+dependencies.
 
 ### Full Focus Timers (separate VS Code extension)
 
@@ -124,12 +133,28 @@ code --install-extension vscode-timers/dist/full-focus-timers-0.1.2.vsix --force
 ```
 
 Building needs Python 3; running the installed timer needs only VS Code 1.85+.
+If `code` is not on your PATH, use **Extensions: Install from VSIX…** and choose
+`vscode-timers/dist/full-focus-timers-0.1.2.vsix`.
 Wyndle installation and updates do not install or update the timer extension.
 Its extension ID and workspace state are preserved from `interview-prep`.
 See [ADR 0001](docs/adr/0001-standalone-vscode-timers.md) for the ownership and
 behavior guarantees.
 
-### UI development and checks
+### Full Focus Timers for Chrome and Vivaldi
+
+The same two standalone countdowns are available as a
+[browser toolbar extension](vivaldi-timers/README.md):
+
+1. In Chrome, open `chrome://extensions`. In Vivaldi, open **Vivaldi menu →
+   Tools → Extensions**.
+2. Enable **Developer mode**, choose **Load unpacked**, and select the
+   `vivaldi-timers/` folder in this checkout. The same folder works in both browsers.
+3. Pin **Full Focus Timers** from the browser's Extensions menu to keep the
+   nearest running deadline visible on its badge.
+
+Each browser saves its own timer state, separate from VS Code and Wyndle tasks.
+
+## UI development and checks
 
 See [DEVELOPING.md](DEVELOPING.md) for the browser, library, and server module
 map and guidance on changing behavior or visual design. The browser consumes
@@ -155,6 +180,7 @@ uv run --with playwright python tests/browser/smoke.py
 
 - [Installation](#installation)
 - [How to run](#how-to-run)
+- [Install extensions](#install-extensions)
 - [Post-Install Setup](#post-install-setup)
 - [Commands Reference](#commands-reference)
 - [Daily Workflow](#daily-workflow)
@@ -926,6 +952,7 @@ tests/               # mirrors src/wyndle/
   test_cli.py        # CLI smoke tests
 vscode/              # dashboard extension; installed separately
 vscode-timers/       # standalone Full Focus Timers extension and tests
+vivaldi-timers/      # standalone Chrome and Vivaldi toolbar timers
 docs/adr/            # architecture decision records
 ```
 

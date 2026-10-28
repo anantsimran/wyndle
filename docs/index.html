@@ -67,6 +67,7 @@
             <nav aria-label="Guide sections"><ol><li><a href="#install-wyndle">Install Wyndle</a></li>
 <li><a href="#open-your-space">Open your space</a></li>
 <li><a href="#standalone-vs-code-timers">Standalone VS Code timers</a></li>
+<li><a href="#standalone-chrome-and-vivaldi-timers">Standalone Chrome and Vivaldi timers</a></li>
 <li><a href="#start-your-day">Start your day</a></li>
 <li><a href="#add-one-small-task">Add one small task</a></li>
 <li><a href="#high-level-tasks-and-subtasks">High-level tasks and subtasks</a></li>
@@ -132,6 +133,26 @@ countdowns have their own state and do not record time against Wyndle tasks.
 Installing or updating Wyndle does not install or update Full Focus Timers.
 An existing Full Focus Timers installation keeps its identity and saved state
 when updated from this repository; reopen the same workspace to use that state.</p>
+<h2 id="standalone-chrome-and-vivaldi-timers">Standalone Chrome and Vivaldi timers</h2>
+<p>To use the same two countdowns in Chrome, open <code>chrome://extensions</code>, turn on
+<strong>Developer mode</strong>, click <strong>Load unpacked</strong>, and select the repository's
+<code>vivaldi-timers/</code> folder. Pin <strong>Full Focus Timers</strong> from Chrome's Extensions menu
+to keep its badge visible. In Vivaldi, open <strong>Vivaldi menu → Tools → Extensions</strong>
+and load the same folder with <strong>Developer mode → Load unpacked</strong>. This browser
+extension works separately from Wyndle and the VS Code timer extension, and
+does not need a local server.</p>
+<p>Open the toolbar popup for <strong>Timer</strong> and five-minute <strong>Full focus</strong>. Each has
+Start, Pause, Resume, and Reset. For Timer, choose 5, 15, 25, 45, or 60 minutes,
+or enter a custom whole number from 1 to 1440. Choose before starting, or click
+<strong>Start with selected duration</strong> to replace a running or paused Timer. The badge
+shows the nearest running deadline in minutes; <code>!</code> means a timer is done. A
+completion notification offers <strong>Restart</strong>.</p>
+<p>Both countdowns keep running when the popup closes and their state survives a
+browser restart. Time spent with Chrome or Vivaldi closed or the computer asleep counts;
+pause first to stop counting. Notifications can arrive late while the browser is
+closed or background alarms are delayed. These timers do not track Wyndle tasks,
+and their saved state is separate from the VS Code timers. Chrome and Vivaldi
+each keep their own timer state.</p>
 <h2 id="start-your-day">Start your day</h2>
 <p>If you have unfinished work from a previous day, open <strong>Bring unfinished work
 forward</strong> and choose which high-level tasks to carry into today. All are selected
