@@ -83,7 +83,7 @@ editing those files. Build its VSIX from the repository root:
 
 ```sh
 python3 vscode-reader/package.py
-code --install-extension vscode-reader/dist/reading-desk-0.1.3.vsix --force
+code --install-extension vscode-reader/dist/reading-desk-0.1.4.vsix --force
 ```
 
 Open an `.md` or `.py` file and run **Reading Desk: Open Reading Desk**. Use

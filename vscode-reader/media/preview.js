@@ -59,7 +59,7 @@
     before.setEnd(range.startContainer, range.startOffset);
     const start = before.toString().length;
     const quote = range.toString();
-    if (!quote || quote.length > 2000) return null;
+    if (!quote || quote.length > 6000) return null;
     const text = article.textContent || "";
     const end = start + quote.length;
     const block = range.startContainer.parentElement?.closest("[data-line]");
@@ -69,7 +69,7 @@
 
   function updateSelection() {
     const current = getSelectionAnchor();
-    tooLong = (window.getSelection()?.toString().length || 0) > 2000;
+    tooLong = (window.getSelection()?.toString().length || 0) > 6000;
     if (current) selected = current;
     else if (!toolbar?.contains(document.activeElement) && !dialog?.contains(document.activeElement)) selected = null;
     updateControls();
@@ -144,7 +144,7 @@
     });
     addButton.addEventListener("click", event => {
       event.stopPropagation();
-      if (tooLong || !selected?.quote) { notify(tooLong ? "Select at most 2,000 characters." : "Select a passage first."); return; }
+      if (tooLong || !selected?.quote) { notify(tooLong ? "Select at most 6,000 characters." : "Select a passage first."); return; }
       const selection = window.getSelection();
       const bounds = selection?.rangeCount ? selection.getRangeAt(0).getBoundingClientRect() : null;
       editDialog(newMark(), "create", bounds);

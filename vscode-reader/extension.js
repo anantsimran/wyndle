@@ -49,7 +49,7 @@ function sendPanelState(uri) {
 
 function validatedAnchor(raw) {
   if (!raw || typeof raw !== "object") return null;
-  const quote = typeof raw.quote === "string" ? raw.quote.slice(0, 4000) : "";
+  const quote = typeof raw.quote === "string" ? raw.quote.slice(0, 12000) : "";
   return {
     quote,
     prefix: typeof raw.prefix === "string" ? raw.prefix.slice(0, 48) : "",
@@ -122,8 +122,8 @@ async function markSelection(kind, preset) {
     return;
   }
   const anchor = sourceAnchor(editor);
-  if (anchor.quote.length > 4000) {
-    vscode.window.showInformationMessage("Select at most 4,000 characters for a mark.");
+  if (anchor.quote.length > 12000) {
+    vscode.window.showInformationMessage("Select at most 12,000 characters for a mark.");
     return;
   }
   const textOnly = kind === "highlight" || kind === "done";
