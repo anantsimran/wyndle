@@ -1,0 +1,60 @@
+{
+  "name": "reading-desk",
+  "displayName": "Reading Desk",
+  "description": "Rich Markdown and Python review with highlights, comments, and revisit queues.",
+  "version": "0.1.2",
+  "publisher": "anantsimran",
+  "private": true,
+  "license": "MIT",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other"],
+  "main": "./extension.js",
+  "extensionKind": ["workspace"],
+  "activationEvents": ["onStartupFinished"],
+  "capabilities": { "untrustedWorkspaces": { "supported": false }, "virtualWorkspaces": false },
+  "contributes": {
+    "commands": [
+      { "command": "readingDesk.open", "title": "Open Reading Desk", "category": "Reading Desk", "icon": "$(book)" },
+      { "command": "readingDesk.highlight", "title": "Highlight Selection", "category": "Reading Desk" },
+      { "command": "readingDesk.importantHighlight", "title": "Important Highlight", "category": "Reading Desk" },
+      { "command": "readingDesk.later", "title": "Return Later", "category": "Reading Desk" },
+      { "command": "readingDesk.review", "title": "Mark for Review", "category": "Reading Desk" },
+      { "command": "readingDesk.showMarks", "title": "Show Review Marks", "category": "Reading Desk", "icon": "$(comment-discussion)" },
+      { "command": "readingDesk.search", "title": "Search Comments", "category": "Reading Desk", "icon": "$(search)" },
+      { "command": "readingDesk.filter", "title": "Filter Comment Type", "category": "Reading Desk", "icon": "$(filter)" },
+      { "command": "readingDesk.jump", "title": "Open Mark", "category": "Reading Desk" },
+      { "command": "readingDesk.editNote", "title": "Edit Comment", "category": "Reading Desk", "icon": "$(edit)" },
+      { "command": "readingDesk.toggleImportant", "title": "Toggle Important", "category": "Reading Desk", "icon": "$(star-full)" },
+      { "command": "readingDesk.resolve", "title": "Resolve", "category": "Reading Desk", "icon": "$(check)" },
+      { "command": "readingDesk.resolveWithComment", "title": "Resolve with Comment", "category": "Reading Desk", "icon": "$(comment)" },
+      { "command": "readingDesk.reopen", "title": "Reopen", "category": "Reading Desk", "icon": "$(debug-restart)" },
+      { "command": "readingDesk.delete", "title": "Delete Mark", "category": "Reading Desk", "icon": "$(trash)" }
+    ],
+    "viewsContainers": { "activitybar": [{ "id": "readingDesk", "title": "Reading Desk", "icon": "media/book.svg" }] },
+    "views": { "readingDesk": [{ "id": "readingDesk.marks", "name": "Review marks" }] },
+    "menus": {
+      "editor/title": [{ "command": "readingDesk.open", "when": "resourceExtname == .md || resourceExtname == .py", "group": "navigation@90" }],
+      "explorer/context": [{ "command": "readingDesk.open", "when": "resourceExtname == .md || resourceExtname == .py", "group": "navigation@10" }],
+      "editor/context": [
+        { "command": "readingDesk.highlight", "when": "resourceExtname == .md || resourceExtname == .py", "group": "readingDesk@1" },
+        { "command": "readingDesk.importantHighlight", "when": "resourceExtname == .md || resourceExtname == .py", "group": "readingDesk@2" },
+        { "command": "readingDesk.later", "when": "resourceExtname == .md || resourceExtname == .py", "group": "readingDesk@3" },
+        { "command": "readingDesk.review", "when": "resourceExtname == .md || resourceExtname == .py", "group": "readingDesk@4" },
+        { "command": "readingDesk.showMarks", "when": "resourceExtname == .md || resourceExtname == .py", "group": "readingDesk@5" }
+      ],
+      "view/title": [
+        { "command": "readingDesk.search", "when": "view == readingDesk.marks", "group": "navigation@1" },
+        { "command": "readingDesk.filter", "when": "view == readingDesk.marks", "group": "navigation@2" }
+      ],
+      "view/item/context": [
+        { "command": "readingDesk.editNote", "when": "view == readingDesk.marks", "group": "inline@1" },
+        { "command": "readingDesk.toggleImportant", "when": "view == readingDesk.marks && viewItem == readingDesk.highlight", "group": "2_review@1" },
+        { "command": "readingDesk.resolve", "when": "view == readingDesk.marks && (viewItem == readingDesk.open || viewItem == readingDesk.highlight)", "group": "inline@2" },
+        { "command": "readingDesk.reopen", "when": "view == readingDesk.marks && viewItem == readingDesk.resolved", "group": "inline@2" },
+        { "command": "readingDesk.resolveWithComment", "when": "view == readingDesk.marks && (viewItem == readingDesk.open || viewItem == readingDesk.highlight)", "group": "2_review@1" },
+        { "command": "readingDesk.delete", "when": "view == readingDesk.marks", "group": "2_review@2" }
+      ]
+    }
+  },
+  "scripts": { "test": "node --test test/*.test.js", "package": "python3 package.py" }
+}

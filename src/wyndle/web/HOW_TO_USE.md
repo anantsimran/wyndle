@@ -63,6 +63,48 @@ Installing or updating Wyndle does not install or update Full Focus Timers.
 An existing Full Focus Timers installation keeps its identity and saved state
 when updated from this repository; reopen the same workspace to use that state.
 
+## Standalone VS Code Reading Desk
+
+**Reading Desk** adds review marks to Markdown and Python files without changing
+their source. Build and install it separately from Wyndle:
+
+```bash
+python3 vscode-reader/package.py
+code --install-extension vscode-reader/dist/reading-desk-0.1.2.vsix --force
+```
+
+Open an `.md` or `.py` file and run **Reading Desk: Open Reading Desk**. Markdown
+opens in a dedicated reading pane that uses VS Code's renderer, Mermaid support,
+your custom `markdown.styles`, and a searchable Contents sidebar. **Saved
+comments** appears below the index in that sidebar, with its own search and
+type filter. Saving a mark updates this list without opening a window over the
+document. VS Code's
+normal Markdown preview remains available and untouched. Python stays in its
+syntax-highlighted editor. In the reading pane, select text and use the small
+Reading Desk toolbar. In a Python editor, select code and use the editor context
+menu or Command Palette.
+
+- **Later** is selected initially. Switch to **Review** or **Highlight**, choose
+  green (the default), yellow, or red, and use **+ Add mark**. Toggle
+  **Important** for a key highlight. The comment form appears beside the text.
+  Click a colored passage to reveal its comment inline; click or hover over
+  source marks to read their comments.
+  To mark a whole file, run either command in the source editor with no selection
+  and explicitly choose **Mark whole file**.
+- Use **Comments** in the reading-pane toolbar to focus the Saved comments
+  search. Use the Reading Desk activity-bar icon to scan comments across files.
+  Search comments and passages, filter by type, edit comments, resolve a mark,
+  resolve it with a closing comment, reopen it, or delete it. The lists are
+  newest first.
+- Changes save immediately to `.reading-desk/reviews.json` in the workspace
+  folder, separate from the Markdown and Python files. The file is readable JSON
+  and can be committed to Git if you want to share reviews. Reading pane saves
+  stay in place without opening another window.
+
+For Remote SSH, install the VSIX on the SSH host. Reading Desk runs with the
+remote workspace and writes its review file there. It needs no Wyndle server,
+runtime Python, or npm dependencies.
+
 ## Standalone Chrome and Vivaldi timers
 
 To use the same two countdowns in Chrome, open `chrome://extensions`, turn on

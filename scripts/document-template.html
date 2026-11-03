@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Wyndle installation, use, and product requirements.">
+  <title>{{PAGE_TITLE}} · Wyndle</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#document">Skip to the document</a>
+  <div class="site-shell">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Wyndle guide home"><span class="brand-mark" aria-hidden="true">w</span><span>wyndle<span class="brand-dot">.</span></span></a>
+      <nav class="header-links" aria-label="Main links">
+        <a href="get-started.html">Get started</a>
+        <a href="index.html">How to use</a>
+        <a href="requirements.html">Requirements</a>
+        <a href="https://github.com/anantsimran/wyndle">GitHub <span aria-hidden="true">↗</span></a>
+      </nav>
+    </header>
+    <main id="document" class="document-main">
+      <section class="document-hero">
+        <span class="eyebrow">WYNDLE DOCUMENTATION</span>
+        <h1>{{PAGE_TITLE}}</h1>
+        <div class="document-intro">{{INTRO}}</div>
+      </section>
+      <div class="guide-layout">
+        <aside class="contents" aria-label="Document navigation">
+          <div class="contents-inner">
+            <p class="eyebrow">ON THIS PAGE</p>
+            <nav aria-label="Sections"><ol>{{CONTENTS}}</ol></nav>
+            <p class="eyebrow">OTHER DOCUMENTS</p>
+            <nav class="document-links" aria-label="Other documents">
+              <a href="get-started.html">Install and use</a>
+              <a href="index.html">Full how-to guide</a>
+              <a href="requirements.html">Wyndle requirements</a>
+              <a href="timers-requirements.html">VS Code timer requirements</a>
+              <a href="reading-desk-requirements.html">Reading Desk draft</a>
+            </nav>
+          </div>
+        </aside>
+        <article class="guide-content" aria-label="Document content">{{GUIDE_CONTENT}}</article>
+      </div>
+    </main>
+    <footer class="site-footer"><span>One small task. One focus block. Then the next step.</span><a href="index.html">Back to guide ↑</a></footer>
+  </div>
+</body>
+</html>

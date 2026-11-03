@@ -1,0 +1,83 @@
+/* Reading Desk layout and the supplied minimal reading style. */
+body {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  background: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+}
+.reading-desk-layout { display: grid; grid-template-columns: clamp(260px, 29vw, 340px) minmax(0, 1fr); min-height: 100vh; }
+.reading-desk-sidebar {
+  position: sticky; top: 0; height: 100vh; min-height: 0; display: flex; flex-direction: column; overflow: hidden;
+  border-right: 1px solid var(--vscode-panel-border, #8884);
+  background: var(--vscode-sideBar-background, var(--vscode-editor-background));
+  font: 12px/1.5 var(--vscode-font-family, sans-serif);
+}
+.reading-desk-toc { flex: 0 1 auto; min-height: 100px; max-height: 45%; overflow: auto; padding: 20px 12px 12px; }
+.reading-desk-toc-head { display: flex; align-items: center; justify-content: space-between; padding: 0 7px 12px; }
+.reading-desk-toc-head strong { font-size: 13px; }
+.reading-desk-toc-search {
+  width: 100%; height: 30px; margin-bottom: 10px; padding: 5px 8px;
+  border: 1px solid var(--vscode-input-border, #8886); border-radius: 6px;
+  color: var(--vscode-input-foreground); background: var(--vscode-input-background);
+  font: inherit;
+}
+.reading-desk-toc-list { display: grid; gap: 2px; }
+.reading-desk-toc-list button {
+  display: block; width: 100%; padding: 5px 7px; border: 0; border-radius: 5px;
+  background: transparent; color: var(--vscode-foreground); text-align: left;
+  font: inherit; cursor: pointer; white-space: normal;
+}
+.reading-desk-toc-list button:hover { background: var(--vscode-list-hoverBackground, #8882); }
+.reading-desk-toc-list button[aria-current="location"] {
+  background: var(--vscode-list-activeSelectionBackground, #8883);
+  color: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground));
+}
+.reading-desk-toc-list .level-2 { padding-left: 17px; }
+.reading-desk-toc-list .level-3 { padding-left: 27px; }
+.reading-desk-toc-list .level-4,.reading-desk-toc-list .level-5,.reading-desk-toc-list .level-6 { padding-left: 37px; }
+.reading-desk-toc-empty { padding: 8px; color: var(--vscode-descriptionForeground); }
+.reading-desk-content.markdown-body {
+  box-sizing: border-box; width: min(100%, 46rem); max-width: 46rem; min-width: 0;
+  margin: 0 auto; padding: 2rem 1.5rem 7rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+  font-size: 15px; line-height: 1.65;
+}
+.reading-desk-content h1,.reading-desk-content h2,.reading-desk-content h3 {
+  line-height: 1.25; font-weight: 600; margin: 2em 0 0.6em;
+}
+.reading-desk-content h1 { font-size: 1.9em; margin-top: 0; }
+.reading-desk-content h2 { font-size: 1.4em; padding-bottom: 0.3em; border-bottom: 1px solid var(--vscode-textSeparator-foreground, #8884); }
+.reading-desk-content h3 { font-size: 1.15em; }
+.reading-desk-content p,.reading-desk-content ul,.reading-desk-content ol,.reading-desk-content table,.reading-desk-content pre,.reading-desk-content blockquote { margin: 0 0 1em; }
+.reading-desk-content li + li { margin-top: 0.25em; }
+.reading-desk-content a { text-decoration: none; }
+.reading-desk-content a:hover { text-decoration: underline; }
+.reading-desk-content code {
+  font-size: 0.88em; padding: 0.12em 0.35em; border-radius: 4px;
+  background: var(--vscode-textCodeBlock-background, #8882);
+}
+.reading-desk-content pre { padding: 0.9em 1.1em; border-radius: 6px; overflow-x: auto; line-height: 1.45; }
+.reading-desk-content pre code { padding: 0; background: none; }
+.reading-desk-content table { border-collapse: collapse; width: 100%; font-size: 0.94em; }
+.reading-desk-content th,.reading-desk-content td {
+  padding: 0.45em 0.8em; border-bottom: 1px solid var(--vscode-textSeparator-foreground, #8884);
+  border-left: none; border-right: none; border-top: none; text-align: left;
+}
+.reading-desk-content th { font-weight: 600; }
+.reading-desk-content blockquote {
+  margin-left: 0; padding: 0.2em 1em; border-left: 3px solid var(--vscode-textLink-foreground, #888);
+  opacity: 0.85;
+}
+.reading-desk-content hr { border: none; border-top: 1px solid var(--vscode-textSeparator-foreground, #8884); margin: 2em 0; }
+.reading-desk-content details { margin: 0 0 1em; }
+.reading-desk-content summary { cursor: pointer; font-weight: 600; }
+@media (max-width: 600px) {
+  .reading-desk-layout { grid-template-columns: minmax(0, 1fr); }
+  .reading-desk-sidebar { position: relative; height: auto; border-right: 0; border-bottom: 1px solid var(--vscode-panel-border, #8884); }
+  .reading-desk-toc { flex: none; min-height: 0; max-height: 180px; }
+  .reading-desk-comments { flex: none; height: 300px; }
+}

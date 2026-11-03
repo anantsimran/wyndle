@@ -1,0 +1,6 @@
+test/**
+package.py
+dist/**
+*.vsix
+**/__pycache__/**
+**/.DS_Store
