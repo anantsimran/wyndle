@@ -57,6 +57,8 @@ source file when an annotation is made.
    identifies a key passage. **Return later** is a personal place to resume;
    **For review** is an item to revisit deliberately. Every annotation can have
    an editable comment, including a comment added after the mark is created.
+   A single mark covers up to 12,000 characters of selected source text, or
+   6,000 characters of selected rendered text in the reading pane.
 2. Comments and marks are saved locally in a separate, readable JSON file at
    `.reading-desk/reviews.json` in each workspace folder. For a file opened
    outside a workspace, use that file's parent folder. The array is written in
