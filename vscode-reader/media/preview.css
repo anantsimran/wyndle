@@ -25,6 +25,7 @@
 .reading-desk-toolbar .reading-desk-brand { font-weight: 700; padding: 0 6px; white-space: nowrap; }
 .reading-desk-toolbar .reading-desk-color { padding: 4px; width: 28px; }
 .reading-desk-toolbar .reading-desk-mode[aria-pressed="true"],.reading-desk-toolbar .reading-desk-color[aria-pressed="true"] { background: var(--vscode-list-activeSelectionBackground, #8884); border-color: var(--vscode-focusBorder, #6aa6df); }
+.reading-desk-toolbar .reading-desk-sidebar-toggle[aria-pressed="true"] { background: var(--vscode-list-activeSelectionBackground, #8884); }
 .reading-desk-toolbar .reading-desk-add { background: var(--vscode-button-background); color: var(--vscode-button-foreground); font-weight: 650; }
 .reading-desk-dot { width: 15px; height: 15px; border-radius: 50%; display: inline-block; border: 1px solid #0003; }
 .reading-desk-dot.yellow { background: #e9c34c; }.reading-desk-dot.green { background: #62b885; }.reading-desk-dot.red { background: #e87768; }
@@ -34,6 +35,10 @@
   min-height: 0; flex: 1; display: flex; flex-direction: column; overflow: hidden;
   border-top: 1px solid var(--vscode-panel-border, #7775);
   background: var(--vscode-sideBar-background, var(--vscode-editor-background));
+}
+.reading-desk-content .reading-desk-inline {
+  position: static !important; inset: auto !important; float: none !important; transform: none !important;
+  width: auto !important; max-width: 100% !important; margin-left: 0 !important; margin-right: 0 !important;
 }
 .reading-desk-dialog[hidden],.reading-desk-popover[hidden] { display: none !important; }
 .reading-desk-comments-head { padding: 10px 12px 8px; border-bottom: 1px solid var(--vscode-panel-border, #7774); }

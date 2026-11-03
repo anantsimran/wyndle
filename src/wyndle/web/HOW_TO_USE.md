@@ -92,7 +92,9 @@ menu or Command Palette.
   To mark a whole file, run either command in the source editor with no selection
   and explicitly choose **Mark whole file**.
 - Use **Comments** in the reading-pane toolbar to focus the Saved comments
-  search. Use the Reading Desk activity-bar icon to scan comments across files.
+  search. **Sidebar** hides or shows the Contents and comments sidebar; the
+  choice is kept for that pane. Indexes that `markdown.styles` pins in place
+  stay in the document column instead of covering the sidebar. Use the Reading Desk activity-bar icon to scan comments across files.
   Search comments and passages, filter by type, edit comments, resolve a mark,
   resolve it with a closing comment, reopen it, or delete it. The lists are
   newest first.

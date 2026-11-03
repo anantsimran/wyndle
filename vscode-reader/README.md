@@ -6,8 +6,10 @@ list. The [requirements](REQUIREMENTS.md) describe the intended behavior.
 
 Reading Desk opens Markdown in its own reading pane. It uses VS Code's Markdown
 renderer, built-in Mermaid support, built-in Markdown CSS, and your
-`markdown.styles`. A Contents sidebar indexes rendered headings and keeps the
-saved comments list below the index. VS Code's
+`markdown.styles`. A collapsible Contents sidebar indexes rendered headings and
+keeps the saved comments list below the index. Document elements that a style
+pins with fixed positioning stay in the text column, so they never cover the
+sidebar. VS Code's
 native Markdown preview remains untouched and available. Python stays in its
 normal syntax-highlighted editor.
 
@@ -30,6 +32,8 @@ normal syntax-highlighted editor.
    in the source editor to read its comment. **Saved comments** stays below
    **Contents** in the reading pane, and saving a mark updates the list without
    opening an overlay. Use **Comments** on the toolbar to focus its search.
+   **Sidebar** on the toolbar hides or shows the whole sidebar, and the pane
+   remembers the choice.
    The **Reading Desk** activity-bar icon scans entries across files. Both lists
    support searching, type filters, editing, resolution, reopening, and deletion;
    the reading-pane list shows the current file, newest first.
