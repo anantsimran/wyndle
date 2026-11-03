@@ -66,11 +66,13 @@ A <strong>Sidebar</strong> toolbar button collapses or expands the whole sidebar
 pane remembers the choice. Document elements that <code>markdown.styles</code> makes
 fixed, or sticky outside the text column, stay in the text column so they
 never cover the sidebar at any width.</li>
-<li>Selecting rendered Markdown or source text offers <strong>Highlight</strong>, <strong>Return
+<li>Selecting rendered Markdown or source text offers <strong>Highlight</strong>, <strong>Done</strong>, <strong>Return
 later</strong>, and <strong>For review</strong> as modes for one <strong>Add mark</strong> action. <strong>Return
 later</strong> is selected initially. The selected color is green initially, remains
 visibly pressed, and can be changed to yellow or red. <strong>Important</strong> is a
-separate toggle for highlights. Return later and For review are comment
+separate toggle for highlights. <strong>Done</strong> marks selected text as finished and
+shows it greyed out with a strikethrough; it needs selected text and takes no
+required comment, and resolving or deleting it restores the text. Return later and For review are comment
 types; a whole-file comment requires an explicit choice from the source
 editor, never an accidental empty reading-pane selection.</li>
 <li>Saved passages are colored inline in the reading pane or Python editor,
@@ -82,7 +84,7 @@ or the user's CSS. Comments live in Reading Desk's own list; they do not open
 VS Code's global Comments view.</li>
 <li>A compact review panel lists comments across files with the newest first.
 Search matches text, file, and comment content; a type filter shows Return
-later, For review, or highlights. It supports navigation to a passage,
+later, For review, Done, or highlights. It supports navigation to a passage,
 comment editing, resolution, reopening, and deletion. Editor context menus
 and the Command Palette expose the same creation actions for keyboard use.</li>
 <li>Creating or editing a mark must not open or briefly flash another window,

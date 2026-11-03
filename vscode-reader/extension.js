@@ -6,10 +6,10 @@ const crypto = require("node:crypto");
 const { bestMatch, makeAnchor } = require("./anchors");
 const { ReviewStore } = require("./store");
 
-const KINDS = new Set(["highlight", "later", "review"]);
+const KINDS = new Set(["highlight", "later", "review", "done"]);
 const COLORS = new Set(["red", "green", "yellow"]);
-const LABELS = { highlight: "Highlight", later: "Return later", review: "For review" };
-const ICONS = { highlight: "symbol-color", later: "bookmark", review: "checklist" };
+const LABELS = { highlight: "Highlight", later: "Return later", review: "For review", done: "Done" };
+const ICONS = { highlight: "symbol-color", later: "bookmark", review: "checklist", done: "pass" };
 let context;
 let tree;
 let store;
@@ -62,7 +62,7 @@ function validatedAnchor(raw) {
 async function createMark(uri, kind, anchor, surface, note = "", id, color = "green", important = false) {
   if (!supported(uri) || !KINDS.has(kind)) return;
   anchor = validatedAnchor(anchor);
-  if (!anchor || (!anchor.quote && (kind === "highlight" || surface === "preview"))) return;
+  if (!anchor || (!anchor.quote && (kind === "highlight" || kind === "done" || surface === "preview"))) return;
   return saveChange(uri, (marks, file) => {
     if (id && marks.some(mark => mark.id === id)) return false;
     marks.unshift({ id: typeof id === "string" && /^[0-9a-f-]{36}$/i.test(id) ? id : crypto.randomUUID(), file, kind,
@@ -126,11 +126,12 @@ async function markSelection(kind, preset) {
     vscode.window.showInformationMessage("Select at most 4,000 characters for a mark.");
     return;
   }
-  if (kind === "highlight" && !anchor.quote) {
-    vscode.window.showInformationMessage("Select text to highlight.");
+  const textOnly = kind === "highlight" || kind === "done";
+  if (textOnly && !anchor.quote) {
+    vscode.window.showInformationMessage(`Select text to ${kind === "done" ? "mark as done" : "highlight"}.`);
     return;
   }
-  if (kind !== "highlight" && !anchor.quote) {
+  if (!textOnly && !anchor.quote) {
     const choice = await vscode.window.showQuickPick(["Mark whole file", "Cancel"],
       { placeHolder: "Select a passage first, or explicitly mark the whole file" });
     if (choice !== "Mark whole file") return;
@@ -146,10 +147,10 @@ async function markSelection(kind, preset) {
     if (!choice) return;
     color = choice.color; important = !!choice.important;
   }
-  const note = kind === "highlight" ? "" : await vscode.window.showInputBox({
+  const note = textOnly ? "" : await vscode.window.showInputBox({
     prompt: `${LABELS[kind]} comment`, placeHolder: "Add a comment (optional)",
   });
-  if (note === undefined && kind !== "highlight") return;
+  if (note === undefined && !textOnly) return;
   await createMark(editor.document.uri, kind, anchor, "source", note || "", undefined, color, important);
 }
 
@@ -314,10 +315,12 @@ function refreshEditors(uri) {
 }
 
 function decorationKey(mark) {
+  if (mark.kind === "done") return "done";
   return `highlight.${mark.color || "green"}.${mark.important ? "important" : "regular"}`;
 }
 
 function decorationFor(key) {
+  if (key === "done") return vscode.window.createTextEditorDecorationType({ opacity: "0.4" });
   const colors = {
     "highlight.yellow": ["#e5bb463b", "#e5bb46"], "highlight.green": ["#64b78540", "#64b785"],
     "highlight.red": ["#eb766044", "#eb7660"],
@@ -401,7 +404,7 @@ async function activate(extensionContext) {
   context = extensionContext;
   store = new ReviewStore(vscode);
   tree = new MarksTree();
-  for (const key of ["red", "green", "yellow"].flatMap(color => [`highlight.${color}.regular`, `highlight.${color}.important`])) {
+  for (const key of ["done", ...["red", "green", "yellow"].flatMap(color => [`highlight.${color}.regular`, `highlight.${color}.important`])]) {
     decorations.set(key, decorationFor(key));
   }
   extensionContext.subscriptions.push(...decorations.values());
@@ -415,7 +418,7 @@ async function activate(extensionContext) {
   extensionContext.subscriptions.push(vscode.commands.registerCommand("readingDesk.filter", async () => {
     const choice = await vscode.window.showQuickPick([
       { label: "All comments", kind: "all" }, { label: "Return later", kind: "later" },
-      { label: "For review", kind: "review" }, { label: "Highlights", kind: "highlight" },
+      { label: "For review", kind: "review" }, { label: "Highlights", kind: "highlight" }, { label: "Done", kind: "done" },
     ], { placeHolder: "Show comment type" });
     if (choice) tree.setKind(choice.kind);
   }));

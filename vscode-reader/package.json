@@ -17,6 +17,7 @@
       { "command": "readingDesk.open", "title": "Open Reading Desk", "category": "Reading Desk", "icon": "$(book)" },
       { "command": "readingDesk.highlight", "title": "Highlight Selection", "category": "Reading Desk" },
       { "command": "readingDesk.importantHighlight", "title": "Important Highlight", "category": "Reading Desk" },
+      { "command": "readingDesk.done", "title": "Mark as Done", "category": "Reading Desk" },
       { "command": "readingDesk.later", "title": "Return Later", "category": "Reading Desk" },
       { "command": "readingDesk.review", "title": "Mark for Review", "category": "Reading Desk" },
       { "command": "readingDesk.showMarks", "title": "Show Review Marks", "category": "Reading Desk", "icon": "$(comment-discussion)" },
@@ -38,6 +39,7 @@
       "editor/context": [
         { "command": "readingDesk.highlight", "when": "resourceExtname == .md || resourceExtname == .py", "group": "readingDesk@1" },
         { "command": "readingDesk.importantHighlight", "when": "resourceExtname == .md || resourceExtname == .py", "group": "readingDesk@2" },
+        { "command": "readingDesk.done", "when": "resourceExtname == .md || resourceExtname == .py", "group": "readingDesk@6" },
         { "command": "readingDesk.later", "when": "resourceExtname == .md || resourceExtname == .py", "group": "readingDesk@3" },
         { "command": "readingDesk.review", "when": "resourceExtname == .md || resourceExtname == .py", "group": "readingDesk@4" },
         { "command": "readingDesk.showMarks", "when": "resourceExtname == .md || resourceExtname == .py", "group": "readingDesk@5" }

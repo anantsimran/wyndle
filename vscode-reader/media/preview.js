@@ -4,7 +4,7 @@
 // extension renders diagrams; this script handles marks, comments, and contents.
 (() => {
   const host = acquireVsCodeApi();
-  const names = ["yellow", "green", "red", "important-yellow", "important-green", "important-red"];
+  const names = ["yellow", "green", "red", "important-yellow", "important-green", "important-red", "done"];
   let state = null;
   let article = null;
   let selected = null;
@@ -117,7 +117,7 @@
       event.preventDefault();
     });
     toolbar.append(make("span", "reading-desk-brand", "Reading Desk"));
-    toolbar.append(modeButton("later", "↩ Later"), modeButton("review", "✓ Review"), modeButton("highlight", "Highlight"), make("span", "reading-desk-divider"));
+    toolbar.append(modeButton("later", "↩ Later"), modeButton("review", "✓ Review"), modeButton("highlight", "Highlight"), modeButton("done", "Done"), make("span", "reading-desk-divider"));
     for (const choice of ["yellow", "green", "red"]) {
       const button = make("button", "reading-desk-color");
       button.type = "button"; button.title = `${choice} mark`;
@@ -172,7 +172,7 @@
     search.setAttribute("aria-label", "Search comments and passages");
     search.addEventListener("input", renderMarks);
     kindFilter = make("select"); kindFilter.setAttribute("aria-label", "Filter comment type");
-    for (const [value, label] of [["all", "All types"], ["later", "Return later"], ["review", "For review"], ["highlight", "Highlights"]]) {
+    for (const [value, label] of [["all", "All types"], ["later", "Return later"], ["review", "For review"], ["highlight", "Highlights"], ["done", "Done"]]) {
       const option = make("option", "", label); option.value = value; kindFilter.append(option);
     }
     kindFilter.addEventListener("change", renderMarks);
@@ -308,7 +308,7 @@
     for (const mark of marks) {
       const card = make("section", "reading-desk-inline-card");
       card.style.borderLeft = `3px solid ${({ green: "#62b885", red: "#e87768", yellow: "#e9c34c" })[mark.color || "green"]}`;
-      card.append(make("strong", "", mark.kind === "highlight" ? `${mark.important ? "Important " : ""}highlight` : mark.kind === "later" ? "Return later" : "For review"));
+      card.append(make("strong", "", mark.kind === "highlight" ? `${mark.important ? "Important " : ""}highlight` : mark.kind === "later" ? "Return later" : mark.kind === "done" ? "Done" : "For review"));
       if (mark.note) card.append(make("p", "", mark.note));
       if (mark.resolutionComment) card.append(make("p", "reading-desk-resolution", `Previous resolution: ${mark.resolutionComment}`));
       const actions = make("div", "reading-desk-card-actions");
@@ -330,7 +330,7 @@
 
   function editDialog(mark, mode, bounds) {
     pendingDialog = { id: mark.id, mark, mode };
-    dialogTitle.textContent = mode === "create" ? `${mark.kind === "later" ? "Return later" : mark.kind === "review" ? "For review" : "Highlight"} comment` : mode === "comment" ? "Comment" : "Resolve with comment";
+    dialogTitle.textContent = mode === "create" ? `${mark.kind === "later" ? "Return later" : mark.kind === "review" ? "For review" : mark.kind === "done" ? "Done" : "Highlight"} comment` : mode === "comment" ? "Comment" : "Resolve with comment";
     dialogText.value = mode === "comment" ? mark.note || "" : "";
     dialogSave.textContent = mode === "create" ? "Save comment" : mode === "comment" ? "Save comment" : "Resolve";
     dialog.hidden = false; popover.hidden = true;
@@ -374,7 +374,7 @@
     const marks = [...state.marks].filter(mark =>
       (kindFilter.value === "all" || mark.kind === kindFilter.value) &&
       (!query || [mark.anchor.quote, mark.note, mark.resolutionComment,
-        mark.kind === "later" ? "Return later" : mark.kind === "review" ? "For review" : "Highlight"]
+        mark.kind === "later" ? "Return later" : mark.kind === "review" ? "For review" : mark.kind === "done" ? "Done" : "Highlight"]
         .some(value => String(value || "").toLocaleLowerCase().includes(query))))
       .sort((a, b) => String(b.created || "").localeCompare(String(a.created || "")));
     count.textContent = `Saved comments · ${marks.length}${marks.length === state.marks.length ? "" : ` of ${state.marks.length}`}`;
@@ -383,7 +383,7 @@
       const card = make("section", "reading-desk-card");
       card.style.borderLeft = `3px solid ${({ green: "#62b885", red: "#e87768", yellow: "#e9c34c" })[mark.color || "green"]}`;
       const head = make("div", "reading-desk-card-head");
-      head.append(make("span", "", mark.kind === "highlight" ? `${mark.important ? "★ Important " : ""}${mark.color || "green"} highlight` : mark.kind === "later" ? "↩ Return later" : "✓ For review"),
+      head.append(make("span", "", mark.kind === "highlight" ? `${mark.important ? "★ Important " : ""}${mark.color || "green"} highlight` : mark.kind === "later" ? "↩ Return later" : mark.kind === "done" ? "Done" : "✓ For review"),
         make("small", "", mark.resolved ? "Resolved" : "Open"));
       card.append(head);
       const quote = make("blockquote", "", mark.anchor.quote?.trim() || "Whole file"); card.append(quote);
@@ -471,7 +471,7 @@
         continue;
       }
       if (!range) continue;
-      const key = `${mark.important ? "important-" : ""}${mark.color || "green"}`;
+      const key = mark.kind === "done" ? "done" : `${mark.important ? "important-" : ""}${mark.color || "green"}`;
       groups.get(key)?.push(range);
     }
     if (typeof Highlight !== "undefined" && CSS.highlights) for (const [name, ranges] of groups) {

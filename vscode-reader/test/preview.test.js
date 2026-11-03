@@ -151,4 +151,9 @@ test("preview defaults to Later and green, and keeps the selected passage for in
   assert.equal(payload.kind, "highlight");
   assert.equal(payload.color, "red");
   assert.equal(payload.anchor.quote, "key");
+
+  toolbar.find(element => element.textContent === "Done").fire("click");
+  add.fire("pointerdown"); add.fire("click");
+  save.fire("click");
+  assert.equal(sent.filter(message => message.type === "create")[2].kind, "done");
 });

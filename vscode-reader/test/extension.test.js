@@ -162,6 +162,15 @@ test("reading pane messages save typed comments without navigation or another wi
     kind: "later", anchor: { quote: "key sentence", line: 0 }, note: "Return next week" });
   await app.panel.message({ type: "create", id: "c6ef80c3-9409-49b0-840d-b71558a317dd",
     kind: "review", anchor: { quote: "matters", line: 0 }, note: "Check claim" });
+  await app.panel.message({ type: "create", id: "d6ef80c3-9409-49b0-840d-b71558a317dd",
+    kind: "done", anchor: { quote: "", line: 0 } });
+  assert.equal(app.tree.getChildren().length, 3, "Done needs selected text");
+  await app.panel.message({ type: "create", id: "d6ef80c3-9409-49b0-840d-b71558a317dd",
+    kind: "done", anchor: { quote: "The key", line: 0 } });
+  assert.equal(app.tree.getChildren()[0].mark.kind, "done");
+  await app.panel.message({ type: "update", id: "d6ef80c3-9409-49b0-840d-b71558a317dd", resolved: true });
+  await app.panel.message({ type: "update", id: "d6ef80c3-9409-49b0-840d-b71558a317dd", resolved: false });
+  await app.panel.message({ type: "delete", id: "d6ef80c3-9409-49b0-840d-b71558a317dd" });
   const newest = app.tree.getChildren();
   assert.deepEqual(newest.map(node => node.mark.kind), ["review", "later", "highlight"]);
   app.window.showQuickPick = async choices => choices.find(choice => choice.kind === "review");

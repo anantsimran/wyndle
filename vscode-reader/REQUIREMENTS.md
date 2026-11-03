@@ -23,11 +23,13 @@ source file when an annotation is made.
    pane remembers the choice. Document elements that `markdown.styles` makes
    fixed, or sticky outside the text column, stay in the text column so they
    never cover the sidebar at any width.
-2. Selecting rendered Markdown or source text offers **Highlight**, **Return
+2. Selecting rendered Markdown or source text offers **Highlight**, **Done**, **Return
    later**, and **For review** as modes for one **Add mark** action. **Return
    later** is selected initially. The selected color is green initially, remains
    visibly pressed, and can be changed to yellow or red. **Important** is a
-   separate toggle for highlights. Return later and For review are comment
+   separate toggle for highlights. **Done** marks selected text as finished and
+   shows it greyed out with a strikethrough; it needs selected text and takes no
+   required comment, and resolving or deleting it restores the text. Return later and For review are comment
    types; a whole-file comment requires an explicit choice from the source
    editor, never an accidental empty reading-pane selection.
 3. Saved passages are colored inline in the reading pane or Python editor,
@@ -39,7 +41,7 @@ source file when an annotation is made.
    VS Code's global Comments view.
 4. A compact review panel lists comments across files with the newest first.
    Search matches text, file, and comment content; a type filter shows Return
-   later, For review, or highlights. It supports navigation to a passage,
+   later, For review, Done, or highlights. It supports navigation to a passage,
    comment editing, resolution, reopening, and deletion. Editor context menus
    and the Command Palette expose the same creation actions for keyboard use.
 5. Creating or editing a mark must not open or briefly flash another window,

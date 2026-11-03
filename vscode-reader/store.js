@@ -32,7 +32,7 @@ class ReviewStore {
       if (parsed.marks.some(mark => !mark || typeof mark.file !== "string" || typeof mark.id !== "string" ||
         !mark.file || mark.file.startsWith("/") || path.posix.normalize(mark.file).startsWith("../") ||
         !/\.(md|py)$/i.test(mark.file) || !mark.anchor || typeof mark.anchor.quote !== "string" ||
-        !["highlight", "later", "review"].includes(mark.kind))) throw new Error("Invalid review file entry");
+        !["highlight", "later", "review", "done"].includes(mark.kind))) throw new Error("Invalid review file entry");
       marks = parsed.marks;
     } catch (error) {
       if (error.code !== "FileNotFound" && error.code !== "ENOENT") throw error;
