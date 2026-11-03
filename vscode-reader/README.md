@@ -59,7 +59,7 @@ From the repository root:
 
 ```sh
 python3 vscode-reader/package.py
-code --install-extension vscode-reader/dist/reading-desk-0.1.2.vsix --force
+code --install-extension vscode-reader/dist/reading-desk-0.1.3.vsix --force
 ```
 
 If `code` is unavailable, run **Extensions: Install from VSIX…** and select the

@@ -70,7 +70,7 @@ their source. Build and install it separately from Wyndle:
 
 ```bash
 python3 vscode-reader/package.py
-code --install-extension vscode-reader/dist/reading-desk-0.1.2.vsix --force
+code --install-extension vscode-reader/dist/reading-desk-0.1.3.vsix --force
 ```
 
 Open an `.md` or `.py` file and run **Reading Desk: Open Reading Desk**. Markdown
@@ -84,7 +84,7 @@ syntax-highlighted editor. In the reading pane, select text and use the small
 Reading Desk toolbar. In a Python editor, select code and use the editor context
 menu or Command Palette.
 
-- **Later** is selected initially. Switch to **Review** or **Highlight**, choose
+- **Later** is selected initially. Switch to **Review**, **Highlight**, or **Done** (greys out and strikes through the text; resolve or delete the mark to restore it), choose
   green (the default), yellow, or red, and use **+ Add mark**. Toggle
   **Important** for a key highlight. The comment form appears beside the text.
   Click a colored passage to reveal its comment inline; click or hover over

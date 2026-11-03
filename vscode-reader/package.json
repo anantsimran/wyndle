@@ -2,7 +2,7 @@
   "name": "reading-desk",
   "displayName": "Reading Desk",
   "description": "Rich Markdown and Python review with highlights, comments, and revisit queues.",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "publisher": "anantsimran",
   "private": true,
   "license": "MIT",
