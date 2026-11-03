@@ -1,6 +1,6 @@
 # Modifying Wyndle
 
-Start with [How to run](README.md#how-to-run) for installation, the web dashboard,
+Start with [Install and run](README.md#install-and-run) for installation, the web dashboard,
 and VS Code. This guide explains where changes belong. [ARCHITECTURE.md](ARCHITECTURE.md)
 has deeper details about the Markdown model and persistent note format.
 
@@ -41,7 +41,7 @@ the library, while `commands/ui.py` only maps HTTP requests to library calls.
 | `.vscode/launch.json` | F5 extension development host configuration |
 | `tests/` | Isolated Python regression tests and optional browser smoke script |
 | `.pre-commit-config.yaml` | Formatting hygiene, Ruff, and pytest hooks |
-| `README.md` | User instructions and command reference |
+| `README.md` | Installation, first use, and links to detailed guides |
 | `ARCHITECTURE.md` | Detailed file-format and library architecture reference |
 
 ## Commands
@@ -172,15 +172,18 @@ progressive disclosure. Quick-add submits on Enter and `N` focuses it.
 5. Add behavior tests for persistence, invalid inputs, and repeated requests.
    Test a full lifecycle when the feature affects timers or day boundaries.
 6. Update `src/wyndle/web/HOW_TO_USE.md` for every user-facing feature or
-   behavior change, regenerate `docs/index.html` with
+   behavior change, regenerate the Pages HTML with
    `uv run python scripts/build_guide.py`, and run the checks below. The same
    Markdown appears in the dashboard and `wyndle help --guide`; the generated
    page is published through GitHub Pages.
 
-The static guide's layout lives in `scripts/guide-template.html` and `docs/style.css`.
+The Pages builder also renders the root README, Wyndle requirements, timer
+requirements, and Reading Desk requirements. Its layouts live in
+`scripts/guide-template.html` and `scripts/document-template.html`, with shared
+styles in `docs/style.css`.
 Run `uv run python scripts/build_guide.py --check` to detect an out-of-date
 generated page. After a push to `main`, the Pages workflow checks and deploys
-the committed page. In GitHub repository settings, select **GitHub Actions** as
+the committed pages. In GitHub repository settings, select **GitHub Actions** as
 the Pages build and deployment source before the first deployment.
 
 The day workflow uses `GET /api/status` and `POST /api/action` with

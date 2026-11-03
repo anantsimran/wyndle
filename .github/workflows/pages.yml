@@ -1,4 +1,4 @@
-name: Publish how-to guide
+name: Publish Wyndle documentation
 
 on:
   push:
@@ -8,6 +8,11 @@ on:
       - docs/**
       - scripts/build_guide.py
       - scripts/guide-template.html
+      - scripts/document-template.html
+      - README.md
+      - REQUIREMENTS.md
+      - vscode-timers/REQUIREMENTS.md
+      - vscode-reader/REQUIREMENTS.md
       - src/wyndle/web/HOW_TO_USE.md
   workflow_dispatch:
 

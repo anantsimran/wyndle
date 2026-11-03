@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Wyndle installation, use, and product requirements.">
+  <title>Full Focus Timers requirements · Wyndle</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#document">Skip to the document</a>
+  <div class="site-shell">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Wyndle guide home"><span class="brand-mark" aria-hidden="true">w</span><span>wyndle<span class="brand-dot">.</span></span></a>
+      <nav class="header-links" aria-label="Main links">
+        <a href="get-started.html">Get started</a>
+        <a href="index.html">How to use</a>
+        <a href="requirements.html">Requirements</a>
+        <a href="https://github.com/anantsimran/wyndle">GitHub <span aria-hidden="true">↗</span></a>
+      </nav>
+    </header>
+    <main id="document" class="document-main">
+      <section class="document-hero">
+        <span class="eyebrow">WYNDLE DOCUMENTATION</span>
+        <h1>Full Focus Timers requirements</h1>
+        <div class="document-intro"></div>
+      </section>
+      <div class="guide-layout">
+        <aside class="contents" aria-label="Document navigation">
+          <div class="contents-inner">
+            <p class="eyebrow">ON THIS PAGE</p>
+            <nav aria-label="Sections"><ol><li><a href="#purpose-and-scope">Purpose and scope</a></li>
+<li><a href="#countdown-behavior">Countdown behavior</a></li>
+<li><a href="#controls-and-state">Controls and state</a></li>
+<li><a href="#packaging-and-compatibility">Packaging and compatibility</a></li>
+<li><a href="#acceptance-checks">Acceptance checks</a></li></ol></nav>
+            <p class="eyebrow">OTHER DOCUMENTS</p>
+            <nav class="document-links" aria-label="Other documents">
+              <a href="get-started.html">Install and use</a>
+              <a href="index.html">Full how-to guide</a>
+              <a href="requirements.html">Wyndle requirements</a>
+              <a href="timers-requirements.html">VS Code timer requirements</a>
+              <a href="reading-desk-requirements.html">Reading Desk draft</a>
+            </nav>
+          </div>
+        </aside>
+        <article class="guide-content" aria-label="Document content"><h2 id="purpose-and-scope">Purpose and scope</h2>
+<p>Full Focus Timers is a standalone VS Code extension for two independent countdowns. It is installed separately from the Wyndle dashboard and does not record time against Wyndle tasks. Its existing extension identity and saved workspace state must survive updates from this repository.</p>
+<h2 id="countdown-behavior">Countdown behavior</h2>
+<ul>
+<li><strong>T-01</strong> Timer shall offer 5, 15, 25, 45, and 60 minute presets and a custom whole number of minutes from 1 to 1440. Full focus shall start at five minutes.</li>
+<li><strong>T-02</strong> Each countdown shall independently support start, pause, resume, reset, and restart after completion. Reset shall restore the full selected duration and leave the countdown ready to start.</li>
+<li><strong>T-03</strong> A running countdown shall use a saved absolute deadline so elapsed time includes VS Code being closed, a window reload, and computer sleep. A paused countdown shall hold its remaining time.</li>
+<li><strong>T-04</strong> Reaching zero shall mark only that countdown finished and offer a Restart notification. A completion shall not interrupt the other timer.</li>
+</ul>
+<h2 id="controls-and-state">Controls and state</h2>
+<ul>
+<li><strong>T-05</strong> Both live countdowns shall remain visible in the left status bar while editing or scrolling. Clicking one shall start, pause, or resume it. The final minute and finished state shall have a visible warning treatment.</li>
+<li><strong>T-06</strong> With Editor: Code Lens enabled, both countdowns and their Reset controls shall appear above the first line of text files. Editor toolbar controls and Command Palette commands shall remain available when the top controls are out of view.</li>
+<li><strong>T-07</strong> Timer state shall persist in VS Code workspace state and survive reloads when the same workspace is reopened. The two timers shall work across file changes without creating task or Markdown records.</li>
+<li><strong>T-08</strong> The extension ID <code>anantsimran.full-focus-timers</code>, command IDs, and workspace-state key shall remain compatible with existing installations.</li>
+</ul>
+<h2 id="packaging-and-compatibility">Packaging and compatibility</h2>
+<ul>
+<li><strong>T-09</strong> The installed extension shall run on VS Code 1.85 or newer without Wyndle, Python, a web server, or runtime npm packages. Its VSIX shall be buildable with Python 3 and the standard library from <code>vscode-timers/</code>.</li>
+<li><strong>T-10</strong> Installing or updating the Wyndle Python package or dashboard extension shall not install, replace, or reset Full Focus Timers.</li>
+</ul>
+<h2 id="acceptance-checks">Acceptance checks</h2>
+<ol>
+<li>Start both countdowns, pause one, change files, and confirm only the other continues to decrease while both remain visible in the status bar.</li>
+<li>Reload VS Code and reopen the same workspace; confirm a running deadline includes time away and a paused countdown retains its remaining time.</li>
+<li>Let a countdown finish, use Restart, and confirm the other countdown's state is unchanged.</li>
+<li>Build the VSIX and confirm its manifest keeps the extension identity and includes the countdown implementation, README, and license.</li>
+</ol>
+</article>
+      </div>
+    </main>
+    <footer class="site-footer"><span>One small task. One focus block. Then the next step.</span><a href="index.html">Back to guide ↑</a></footer>
+  </div>
+</body>
+</html>

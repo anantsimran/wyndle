@@ -1,0 +1,76 @@
+/* Only Reading Desk elements are styled. Native Markdown and Mermaid retain their CSS. */
+#reading-desk-data { display: none !important; }
+.reading-desk-toolbar, .reading-desk-comments, .reading-desk-dialog, .reading-desk-popover {
+  box-sizing: border-box; color: var(--vscode-foreground); font: 12px/1.45 var(--vscode-font-family, sans-serif);
+}
+.reading-desk-toolbar *,.reading-desk-comments *,.reading-desk-dialog *,.reading-desk-popover * { box-sizing: border-box; }
+.reading-desk-toolbar {
+  position: fixed; z-index: 1000; bottom: 18px; right: 18px; display: flex; flex-wrap: wrap;
+  align-items: center; gap: 5px; max-width: min(94vw, 640px); padding: 7px;
+  border: 1px solid var(--vscode-panel-border, #7775); border-radius: 12px;
+  background: var(--vscode-sideBar-background, var(--vscode-editor-background));
+  box-shadow: 0 8px 28px #0003;
+}
+.reading-desk-toolbar a,.reading-desk-toolbar button,.reading-desk-comments button,.reading-desk-comments a,.reading-desk-dialog a,.reading-desk-dialog button,.reading-desk-popover button,.reading-desk-popover a {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  min-height: 28px; padding: 4px 9px; border: 1px solid transparent; border-radius: 7px;
+  color: inherit; background: transparent; text-decoration: none; cursor: pointer;
+  font: inherit;
+}
+.reading-desk-toolbar a:hover,.reading-desk-toolbar button:hover,.reading-desk-comments button:hover,.reading-desk-comments a:hover,.reading-desk-dialog a:hover,.reading-desk-dialog button:hover,.reading-desk-popover button:hover,.reading-desk-popover a:hover {
+  background: var(--vscode-list-hoverBackground, #8882); text-decoration: none;
+}
+.reading-desk-toolbar [aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
+.reading-desk-toolbar button:disabled { opacity: .45; cursor: not-allowed; }
+.reading-desk-toolbar .reading-desk-brand { font-weight: 700; padding: 0 6px; white-space: nowrap; }
+.reading-desk-toolbar .reading-desk-color { padding: 4px; width: 28px; }
+.reading-desk-toolbar .reading-desk-mode[aria-pressed="true"],.reading-desk-toolbar .reading-desk-color[aria-pressed="true"] { background: var(--vscode-list-activeSelectionBackground, #8884); border-color: var(--vscode-focusBorder, #6aa6df); }
+.reading-desk-toolbar .reading-desk-add { background: var(--vscode-button-background); color: var(--vscode-button-foreground); font-weight: 650; }
+.reading-desk-dot { width: 15px; height: 15px; border-radius: 50%; display: inline-block; border: 1px solid #0003; }
+.reading-desk-dot.yellow { background: #e9c34c; }.reading-desk-dot.green { background: #62b885; }.reading-desk-dot.red { background: #e87768; }
+.reading-desk-toolbar .reading-desk-important[aria-pressed="true"] { color: #e9a641; background: #e9a64124; }
+.reading-desk-divider { height: 18px; width: 1px; background: var(--vscode-panel-border, #7775); margin: 0 3px; }
+.reading-desk-comments {
+  min-height: 0; flex: 1; display: flex; flex-direction: column; overflow: hidden;
+  border-top: 1px solid var(--vscode-panel-border, #7775);
+  background: var(--vscode-sideBar-background, var(--vscode-editor-background));
+}
+.reading-desk-dialog[hidden],.reading-desk-popover[hidden] { display: none !important; }
+.reading-desk-comments-head { padding: 10px 12px 8px; border-bottom: 1px solid var(--vscode-panel-border, #7774); }
+.reading-desk-comments-head strong { font-size: 13px; }
+.reading-desk-filters { display: grid; grid-template-columns: minmax(0, 1fr) 104px; gap: 6px; padding: 8px; border-bottom: 1px solid var(--vscode-panel-border, #7774); }
+.reading-desk-filters input,.reading-desk-filters select { min-width: 0; height: 30px; border: 1px solid var(--vscode-input-border, #8886); border-radius: 6px; padding: 4px 6px; color: var(--vscode-input-foreground, inherit); background: var(--vscode-input-background, var(--vscode-editor-background)); font: inherit; }
+.reading-desk-list { min-height: 0; flex: 1; overflow: auto; padding: 8px; }
+.reading-desk-empty { padding: 20px 12px; color: var(--vscode-descriptionForeground, #888); text-align: center; }
+.reading-desk-card { border: 1px solid var(--vscode-panel-border, #7774); border-radius: 9px; padding: 10px; margin-bottom: 8px; background: var(--vscode-editor-background); }
+.reading-desk-card-head { display: flex; justify-content: space-between; gap: 8px; align-items: center; margin-bottom: 6px; }
+.reading-desk-card-head span:first-child { font-weight: 650; }
+.reading-desk-card small { color: var(--vscode-descriptionForeground, #888); }
+.reading-desk-card blockquote { margin: 5px 0 8px; padding: 3px 0 3px 8px; border-left: 2px solid var(--vscode-panel-border, #888); color: inherit; font: inherit; max-height: 75px; overflow: hidden; }
+.reading-desk-card p { margin: 6px 0; white-space: pre-wrap; word-break: break-word; }
+.reading-desk-card .reading-desk-resolution { color: var(--vscode-descriptionForeground, #888); }
+.reading-desk-card .reading-desk-history { color: var(--vscode-descriptionForeground, #888); font-size: 11px; }
+.reading-desk-card .reading-desk-history summary { cursor: pointer; }
+.reading-desk-card .reading-desk-history p { margin-left: 10px; }
+.reading-desk-card-actions { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 7px; border-top: 1px solid var(--vscode-panel-border, #7774); padding-top: 6px; }
+.reading-desk-card-actions a,.reading-desk-card-actions button { font-size: 11px; min-height: 24px; padding: 2px 6px; }
+.reading-desk-dialog {
+  position: fixed; z-index: 1002; width: min(360px, calc(100vw - 24px));
+}
+.reading-desk-dialog-box { width: 100%; background: var(--vscode-editor-background); border: 1px solid var(--vscode-panel-border, #7775); border-radius: 12px; padding: 14px; box-shadow: 0 12px 40px #0005; }
+.reading-desk-dialog-box label { display: block; font-weight: 650; margin-bottom: 9px; }
+.reading-desk-dialog-box textarea { width: 100%; min-height: 105px; resize: vertical; border: 1px solid var(--vscode-input-border, #888); border-radius: 6px; background: var(--vscode-input-background); color: var(--vscode-input-foreground); padding: 8px; font: inherit; }
+.reading-desk-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+.reading-desk-dialog-actions .reading-desk-save { background: var(--vscode-button-background); color: var(--vscode-button-foreground); }
+.reading-desk-popover { position: fixed; z-index: 1001; width: min(340px, calc(100vw - 24px)); max-height: min(300px, 55vh); overflow: auto; padding: 11px; border: 1px solid var(--vscode-panel-border, #7775); border-radius: 10px; background: var(--vscode-editor-background); box-shadow: 0 8px 26px #0004; }
+.reading-desk-inline-card + .reading-desk-inline-card { border-top: 1px solid var(--vscode-panel-border, #7775); margin-top: 8px; padding-top: 8px; }
+.reading-desk-inline-card p { margin: 6px 0; white-space: pre-wrap; word-break: break-word; }
+.reading-desk-toast { position: fixed; z-index: 1003; bottom: 68px; right: 18px; padding: 8px 12px; border-radius: 7px; background: var(--vscode-notifications-background, var(--vscode-editor-background)); box-shadow: 0 4px 20px #0003; }
+.reading-desk-toast[hidden] { display: none; }
+.reading-desk-source-line { background: var(--reading-desk-line-color, #62b88555); border-radius: 3px; }
+::highlight(reading-desk-yellow) { background: #e9c34c66; }
+::highlight(reading-desk-green) { background: #62b88566; }
+::highlight(reading-desk-red) { background: #e8776866; }
+::highlight(reading-desk-important-yellow) { background: #e9c34c99; text-decoration: underline #b68819 2px; }
+::highlight(reading-desk-important-green) { background: #62b88599; text-decoration: underline #298957 2px; }
+::highlight(reading-desk-important-red) { background: #e8776899; text-decoration: underline #c54334 2px; }

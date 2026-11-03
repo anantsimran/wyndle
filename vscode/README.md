@@ -14,7 +14,8 @@ closes; manually started servers keep running.
 
 For development, open the repository root, press F5, and choose **Run Wyndle Extension**.
 For local installation, run `npm run package`, then install the resulting VSIX.
-See the root README’s **How to run** section for full instructions.
+See the root README’s **Install and run** and **Use Wyndle in VS Code** sections
+for full instructions.
 
 Local desktop VS Code only. Unofficial literary inspiration; no affiliation with
 Brandon Sanderson. No telemetry or runtime npm dependencies.

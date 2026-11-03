@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Wyndle installation, use, and product requirements.">
+  <title>Wyndle · Wyndle</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#document">Skip to the document</a>
+  <div class="site-shell">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Wyndle guide home"><span class="brand-mark" aria-hidden="true">w</span><span>wyndle<span class="brand-dot">.</span></span></a>
+      <nav class="header-links" aria-label="Main links">
+        <a href="get-started.html">Get started</a>
+        <a href="index.html">How to use</a>
+        <a href="requirements.html">Requirements</a>
+        <a href="https://github.com/anantsimran/wyndle">GitHub <span aria-hidden="true">↗</span></a>
+      </nav>
+    </header>
+    <main id="document" class="document-main">
+      <section class="document-hero">
+        <span class="eyebrow">WYNDLE DOCUMENTATION</span>
+        <h1>Wyndle</h1>
+        <div class="document-intro"><p>Wyndle helps you choose one small task, focus on it, take a break, and leave tomorrow an easy start. The dashboard, terminal commands, and VS Code companion share local Markdown notes and timer state. No account or cloud service is needed.</p>
+<p>For a full walkthrough, see the <a href="index.html">how-to guide</a>.</p>
+</div>
+      </section>
+      <div class="guide-layout">
+        <aside class="contents" aria-label="Document navigation">
+          <div class="contents-inner">
+            <p class="eyebrow">ON THIS PAGE</p>
+            <nav aria-label="Sections"><ol><li><a href="#install-and-run">Install and run</a></li>
+<li><a href="#use-the-dashboard">Use the dashboard</a></li>
+<li><a href="#use-the-terminal">Use the terminal</a></li>
+<li><a href="#use-wyndle-in-vs-code">Use Wyndle in VS Code</a></li>
+<li><a href="#install-the-standalone-timers">Install the standalone timers</a></li>
+<li><a href="#try-reading-desk-in-progress">Try Reading Desk (in progress)</a></li>
+<li><a href="#more-information">More information</a></li></ol></nav>
+            <p class="eyebrow">OTHER DOCUMENTS</p>
+            <nav class="document-links" aria-label="Other documents">
+              <a href="get-started.html">Install and use</a>
+              <a href="index.html">Full how-to guide</a>
+              <a href="requirements.html">Wyndle requirements</a>
+              <a href="timers-requirements.html">VS Code timer requirements</a>
+              <a href="reading-desk-requirements.html">Reading Desk draft</a>
+            </nav>
+          </div>
+        </aside>
+        <article class="guide-content" aria-label="Document content"><h2 id="install-and-run">Install and run</h2>
+<p>You need Python 3.10 or newer and <a href="https://docs.astral.sh/uv/">uv</a>. Wyndle is not published on PyPI. Install the command from GitHub:</p>
+<pre><code class="language-sh">uv tool install git+https://github.com/anantsimran/wyndle.git
+wyndle ui
+</code></pre>
+<p>To run from a checkout instead:</p>
+<pre><code class="language-sh">git clone https://github.com/anantsimran/wyndle.git
+cd wyndle
+uv sync
+uv run wyndle ui
+</code></pre>
+<p>The dashboard opens at <code>http://127.0.0.1:8765</code>. If it does not open automatically, visit that address. Use <code>wyndle ui --no-browser</code> to serve without opening a tab or <code>wyndle ui --port 8766</code> to change ports. Prefix commands with <code>uv run</code> when working from a checkout. Stop the server with Ctrl+C.</p>
+<p>On first use, Wyndle creates <code>~/.wyndle/config.yaml</code>. Its <code>notes_dir</code> defaults to <code>~/Documents/Wyndle</code>; change that key if you keep notes elsewhere. Daily, project, and review notes are plain Markdown in <code>daily/</code>, <code>tasks/</code>, and <code>weekly/</code> under that folder. Active timer state lives in <code>~/.wyndle/state/</code>.</p>
+<h2 id="use-the-dashboard">Use the dashboard</h2>
+<ol>
+<li>Choose any unfinished high-level tasks to carry forward, then click <strong>Start my day</strong>. Your configured daily chores are added automatically.</li>
+<li>Add a concrete next step, optionally choosing a high-level task, estimate, and priority. Use a distinct task name within the day.</li>
+<li>Choose a focus duration and click <strong>▶</strong> on a task. Pause, switch tasks, or take a break as needed. Focus time survives a page refresh or server restart; pause it when you stop working.</li>
+<li>Use <strong>Daily alarm</strong> to arrange work, buffer, and break blocks. Its schedule reminds you when blocks change; it does not start or pause tracking for you.</li>
+<li>Click <strong>Wrap up</strong> to save today's summary and tomorrow's first step. Use <strong>Notes</strong> and <strong>Stats</strong> to review saved work, including before starting a day.</li>
+</ol>
+<p>The dashboard can show Markdown notes; edit the files in your preferred Markdown editor. Use <strong>How to use</strong> in the top bar for the complete guide, including task notes, browser alerts, phone access, and shortcuts.</p>
+<h2 id="use-the-terminal">Use the terminal</h2>
+<p>The CLI works with the same notes and state:</p>
+<pre><code class="language-sh">wyndle morning          # start a day and carry work forward
+wyndle start            # choose a task and start a focus block
+wyndle status           # see progress and remaining work
+wyndle break            # pause focus and take a break
+wyndle wrap             # finish the day and sync task notes
+</code></pre>
+<p>Run <code>wyndle --help</code> for every command, or <code>wyndle help --guide</code> for the shared how-to guide. On macOS, <code>wyndle daemon install</code> enables native background reminders; check delivery with <code>wyndle daemon test</code>.</p>
+<h2 id="use-wyndle-in-vs-code">Use Wyndle in VS Code</h2>
+<p>The Wyndle sidebar uses the same local dashboard and requires the Python package above. With Node.js 20 or newer and npm, build its VSIX from a checkout:</p>
+<pre><code class="language-sh">cd vscode
+npm run package
+code --install-extension wyndle-0.1.0.vsix --force
+</code></pre>
+<p>If <code>code</code> is unavailable, choose <strong>Extensions: Install from VSIX…</strong> in VS Code. Set <strong>Wyndle: Executable</strong> to the installed <code>wyndle</code> command (for a checkout, the full path to <code>.venv/bin/wyndle</code>, or <code>.venv\Scripts\wyndle.exe</code> on Windows). Open the <strong>Wyndle</strong> activity-bar view. It starts or reuses the local server; <strong>Wyndle: Open in Browser</strong> opens the full dashboard. If the view cannot connect, check the executable and port settings, then use <strong>Reconnect Dashboard</strong>. This extension targets local desktop VS Code.</p>
+<h2 id="install-the-standalone-timers">Install the standalone timers</h2>
+<p><strong>Full Focus Timers</strong> is a separate VS Code extension. It does not need Wyndle or its server. Build and install it from the repository root:</p>
+<pre><code class="language-sh">python3 vscode-timers/package.py
+code --install-extension vscode-timers/dist/full-focus-timers-0.1.2.vsix --force
+</code></pre>
+<p>In VS Code, click <strong>Timer</strong> or <strong>Full focus</strong> in the status bar. Timer offers 5, 15, 25, 45, and 60 minute presets and a custom duration. Full focus starts at five minutes. Both have controls above the first line of a text editor when <strong>Editor: Code Lens</strong> is enabled. The timers save state per workspace and continue across window reloads. See the <a href="https://github.com/anantsimran/wyndle/blob/main/vscode-timers/README.md">timer instructions</a> for all controls. Building needs Python 3; running the VSIX needs VS Code 1.85+.</p>
+<p>There is also a separate <a href="https://github.com/anantsimran/wyndle/blob/main/vivaldi-timers/README.md">Chrome and Vivaldi toolbar timer</a>. Load <code>vivaldi-timers/</code> as an unpacked extension in either browser. Its saved countdowns are independent of VS Code and Wyndle.</p>
+<h2 id="try-reading-desk-in-progress">Try Reading Desk (in progress)</h2>
+<p>Reading Desk is another separate VS Code extension under development. It adds
+highlights, comments, and revisit marks to Markdown and Python files without
+editing those files. Build its VSIX from the repository root:</p>
+<pre><code class="language-sh">python3 vscode-reader/package.py
+code --install-extension vscode-reader/dist/reading-desk-0.1.2.vsix --force
+</code></pre>
+<p>Open an <code>.md</code> or <code>.py</code> file and run <strong>Reading Desk: Open Reading Desk</strong>. Use
+the reading-pane toolbar or editor context menu to mark a passage; the Reading Desk
+sidebar lists and saves marks in <code>.reading-desk/reviews.json</code>. See the
+<a href="https://github.com/anantsimran/wyndle/blob/main/vscode-reader/README.md">Reading Desk instructions</a> and its
+<a href="reading-desk-requirements.html">draft requirements</a>. It is not needed to use
+Wyndle or the timers.</p>
+<h2 id="more-information">More information</h2>
+<ul>
+<li><a href="index.html">How-to guide</a>: complete dashboard, CLI, and extension walkthrough.</li>
+<li><a href="requirements.html">Wyndle requirements</a>, <a href="timers-requirements.html">VS Code timer requirements</a>, and <a href="reading-desk-requirements.html">Reading Desk draft requirements</a>.</li>
+<li><a href="https://github.com/anantsimran/wyndle/blob/main/DEVELOPING.md">Development guide</a> and <a href="https://github.com/anantsimran/wyndle/blob/main/ARCHITECTURE.md">architecture reference</a>.</li>
+</ul>
+<p>Wyndle's Stormlight inspiration is unofficial; it is not affiliated with Brandon Sanderson.</p>
+</article>
+      </div>
+    </main>
+    <footer class="site-footer"><span>One small task. One focus block. Then the next step.</span><a href="index.html">Back to guide ↑</a></footer>
+  </div>
+</body>
+</html>

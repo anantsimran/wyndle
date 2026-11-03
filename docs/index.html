@@ -16,7 +16,9 @@
     <header class="site-header">
       <a class="brand" href="#top" aria-label="Wyndle guide home"><span class="brand-mark" aria-hidden="true">w</span><span>wyndle<span class="brand-dot">.</span></span></a>
       <nav class="header-links" aria-label="Main links">
-        <a href="#guide">The guide</a>
+        <a href="get-started.html">Get started</a>
+        <a href="#guide">How to use</a>
+        <a href="requirements.html">Requirements</a>
         <a href="https://github.com/anantsimran/wyndle">GitHub <span aria-hidden="true">↗</span></a>
       </nav>
     </header>
@@ -30,7 +32,7 @@
 </div>
           <p class="hero-detail">A calmer way to plan your day, give one thing your attention, and leave yourself an easy start tomorrow.</p>
           <div class="hero-actions">
-            <a class="button button-primary" href="#install-wyndle">Start with Wyndle <span aria-hidden="true">↗</span></a>
+            <a class="button button-primary" href="get-started.html">Install and run <span aria-hidden="true">↗</span></a>
             <a class="button button-quiet" href="#guide">Browse the guide <span aria-hidden="true">↓</span></a>
           </div>
         </div>
@@ -67,6 +69,7 @@
             <nav aria-label="Guide sections"><ol><li><a href="#install-wyndle">Install Wyndle</a></li>
 <li><a href="#open-your-space">Open your space</a></li>
 <li><a href="#standalone-vs-code-timers">Standalone VS Code timers</a></li>
+<li><a href="#standalone-vs-code-reading-desk">Standalone VS Code Reading Desk</a></li>
 <li><a href="#standalone-chrome-and-vivaldi-timers">Standalone Chrome and Vivaldi timers</a></li>
 <li><a href="#start-your-day">Start your day</a></li>
 <li><a href="#add-one-small-task">Add one small task</a></li>
@@ -83,6 +86,13 @@
 <li><a href="#your-files-and-privacy">Your files and privacy</a></li>
 <li><a href="#if-something-feels-stuck">If something feels stuck</a></li>
 <li><a href="#terminal-companion">Terminal companion</a></li></ol></nav>
+            <p class="eyebrow">MORE DOCUMENTS</p>
+            <nav class="document-links" aria-label="Other documents">
+              <a href="get-started.html">Install and use</a>
+              <a href="requirements.html">Wyndle requirements</a>
+              <a href="timers-requirements.html">VS Code timer requirements</a>
+              <a href="reading-desk-requirements.html">Reading Desk draft</a>
+            </nav>
             <a class="contents-github" href="https://github.com/anantsimran/wyndle">View the project on GitHub <span aria-hidden="true">↗</span></a>
           </div>
         </aside>
@@ -133,6 +143,43 @@ countdowns have their own state and do not record time against Wyndle tasks.
 Installing or updating Wyndle does not install or update Full Focus Timers.
 An existing Full Focus Timers installation keeps its identity and saved state
 when updated from this repository; reopen the same workspace to use that state.</p>
+<h2 id="standalone-vs-code-reading-desk">Standalone VS Code Reading Desk</h2>
+<p><strong>Reading Desk</strong> adds review marks to Markdown and Python files without changing
+their source. Build and install it separately from Wyndle:</p>
+<pre><code class="language-bash">python3 vscode-reader/package.py
+code --install-extension vscode-reader/dist/reading-desk-0.1.2.vsix --force
+</code></pre>
+<p>Open an <code>.md</code> or <code>.py</code> file and run <strong>Reading Desk: Open Reading Desk</strong>. Markdown
+opens in a dedicated reading pane that uses VS Code's renderer, Mermaid support,
+your custom <code>markdown.styles</code>, and a searchable Contents sidebar. <strong>Saved
+comments</strong> appears below the index in that sidebar, with its own search and
+type filter. Saving a mark updates this list without opening a window over the
+document. VS Code's
+normal Markdown preview remains available and untouched. Python stays in its
+syntax-highlighted editor. In the reading pane, select text and use the small
+Reading Desk toolbar. In a Python editor, select code and use the editor context
+menu or Command Palette.</p>
+<ul>
+<li><strong>Later</strong> is selected initially. Switch to <strong>Review</strong> or <strong>Highlight</strong>, choose
+green (the default), yellow, or red, and use <strong>+ Add mark</strong>. Toggle
+<strong>Important</strong> for a key highlight. The comment form appears beside the text.
+Click a colored passage to reveal its comment inline; click or hover over
+source marks to read their comments.
+To mark a whole file, run either command in the source editor with no selection
+and explicitly choose <strong>Mark whole file</strong>.</li>
+<li>Use <strong>Comments</strong> in the reading-pane toolbar to focus the Saved comments
+search. Use the Reading Desk activity-bar icon to scan comments across files.
+Search comments and passages, filter by type, edit comments, resolve a mark,
+resolve it with a closing comment, reopen it, or delete it. The lists are
+newest first.</li>
+<li>Changes save immediately to <code>.reading-desk/reviews.json</code> in the workspace
+folder, separate from the Markdown and Python files. The file is readable JSON
+and can be committed to Git if you want to share reviews. Reading pane saves
+stay in place without opening another window.</li>
+</ul>
+<p>For Remote SSH, install the VSIX on the SSH host. Reading Desk runs with the
+remote workspace and writes its review file there. It needs no Wyndle server,
+runtime Python, or npm dependencies.</p>
 <h2 id="standalone-chrome-and-vivaldi-timers">Standalone Chrome and Vivaldi timers</h2>
 <p>To use the same two countdowns in Chrome, open <code>chrome://extensions</code>, turn on
 <strong>Developer mode</strong>, click <strong>Load unpacked</strong>, and select the repository's
