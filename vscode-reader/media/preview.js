@@ -12,7 +12,7 @@
   let important = false;
   let mode = "later";
   let color = "green";
-  let toolbar, commentsPanel, list, count, search, kindFilter, dialog, dialogTitle, dialogText, dialogSave, toast, popover, addButton, importantButton;
+  let toolbar, commentsPanel, list, count, search, kindFilter, dialog, dialogTitle, dialogText, dialogSave, toast, popover, addButton, importantButton, sidebarButton;
   let contentsSearch, contentsList, contents = [];
   const modeButtons = new Map();
   const colorButtons = new Map();
@@ -88,6 +88,16 @@
     for (const [choice, button] of colorButtons) button.setAttribute("aria-pressed", String(color === choice));
   }
 
+  /** Collapse or expand the sidebar and remember the choice for this reading pane. */
+  function setSidebar(collapsed) {
+    const layout = document.querySelector(".reading-desk-layout");
+    if (collapsed) layout?.classList.add("reading-desk-collapsed");
+    else layout?.classList.remove("reading-desk-collapsed");
+    sidebarButton?.setAttribute("aria-pressed", String(!collapsed));
+    host.setState?.({ ...(host.getState?.() || {}), sidebarCollapsed: collapsed });
+    keepContentInline();
+  }
+
   function modeButton(kind, label) {
     const button = make("button", "reading-desk-mode", label);
     button.type = "button";
@@ -143,8 +153,14 @@
     const marksButton = make("button", "", "☰ Comments");
     marksButton.type = "button";
     marksButton.title = "Find saved comments in the sidebar";
-    marksButton.addEventListener("click", () => { commentsPanel.scrollIntoView({ block: "nearest" }); search.focus(); });
-    toolbar.append(marksButton);
+    marksButton.addEventListener("click", () => {
+      setSidebar(false); commentsPanel.scrollIntoView({ block: "nearest" }); search.focus();
+    });
+    sidebarButton = make("button", "reading-desk-sidebar-toggle", "Sidebar");
+    sidebarButton.type = "button"; sidebarButton.title = "Show or hide the Contents and comments sidebar";
+    sidebarButton.addEventListener("click", () => setSidebar(!document.querySelector(".reading-desk-layout")?.classList.contains("reading-desk-collapsed")));
+    toolbar.append(marksButton, sidebarButton);
+    setSidebar(Boolean(host.getState?.()?.sidebarCollapsed));
     updateControls();
 
     commentsPanel = document.querySelector(".reading-desk-comments");
@@ -212,6 +228,7 @@
     contentsList = document.querySelector(".reading-desk-toc-list");
     contentsSearch?.addEventListener("input", buildContents);
     window.addEventListener("scroll", updateCurrentHeading, { passive: true });
+    window.addEventListener("resize", keepContentInline);
   }
 
   function buildContents() {
@@ -231,6 +248,19 @@
     }
     if (!contentsList.children.length) contentsList.append(make("div", "reading-desk-toc-empty", query ? "No matching headings" : "No headings"));
     updateCurrentHeading();
+  }
+
+  /** Keep document styles from floating headings or indexes over the sidebar: flow fixed elements, and sticky ones outside the article, inline. */
+  function keepContentInline() {
+    if (!article || typeof getComputedStyle !== "function") return;
+    article.querySelectorAll(".reading-desk-inline").forEach(element => element.classList.remove("reading-desk-inline"));
+    const bounds = article.getBoundingClientRect();
+    for (const element of article.querySelectorAll("*")) {
+      const { position } = getComputedStyle(element);
+      if (position !== "fixed" && position !== "sticky") continue;
+      const rect = element.getBoundingClientRect();
+      if (position === "fixed" || rect.left < bounds.left - 1 || rect.right > bounds.right + 1) element.classList.add("reading-desk-inline");
+    }
   }
 
   function updateCurrentHeading() {
@@ -455,7 +485,7 @@
     if (!data || !body) return;
     try { state = JSON.parse(data.getAttribute("data-state") || ""); } catch { return; }
     article = body;
-    mount(); buildContents(); renderMarks(); paint(); updateControls();
+    mount(); keepContentInline(); buildContents(); renderMarks(); paint(); updateControls();
     if (state.reveal) setTimeout(() => revealMark(state.reveal), 100);
     if (state.fragment) setTimeout(() => scrollToFragment(state.fragment), 100);
   }
@@ -499,7 +529,7 @@
       notify("Could not save comment. Check the Reading Desk sidebar.");
     } else if (message?.type === "render" && article) {
       article.innerHTML = message.html;
-      buildContents();
+      keepContentInline(); buildContents();
       acceptMarks(message.marks);
       window.dispatchEvent(new Event("vscode.markdown.updateContent"));
     } else if (message?.type === "reveal") revealMark(message.id);

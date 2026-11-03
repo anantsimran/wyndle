@@ -61,7 +61,11 @@ The reading pane uses a 46rem text column with the supplied minimal theme
 styling and a searchable Contents sidebar built from rendered headings.
 Saved comments sit directly below the Contents index in the same sidebar,
 with their own search, type filter, and scrollable list. The comments list
-remains available while reading and never covers the Markdown page.</li>
+remains available while reading and never covers the Markdown page.
+A <strong>Sidebar</strong> toolbar button collapses or expands the whole sidebar, and the
+pane remembers the choice. Document elements that <code>markdown.styles</code> makes
+fixed, or sticky outside the text column, stay in the text column so they
+never cover the sidebar at any width.</li>
 <li>Selecting rendered Markdown or source text offers <strong>Highlight</strong>, <strong>Return
 later</strong>, and <strong>For review</strong> as modes for one <strong>Add mark</strong> action. <strong>Return
 later</strong> is selected initially. The selected color is green initially, remains

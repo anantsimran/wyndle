@@ -19,6 +19,10 @@ source file when an annotation is made.
    Saved comments sit directly below the Contents index in the same sidebar,
    with their own search, type filter, and scrollable list. The comments list
    remains available while reading and never covers the Markdown page.
+   A **Sidebar** toolbar button collapses or expands the whole sidebar, and the
+   pane remembers the choice. Document elements that `markdown.styles` makes
+   fixed, or sticky outside the text column, stay in the text column so they
+   never cover the sidebar at any width.
 2. Selecting rendered Markdown or source text offers **Highlight**, **Return
    later**, and **For review** as modes for one **Add mark** action. **Return
    later** is selected initially. The selected color is green initially, remains

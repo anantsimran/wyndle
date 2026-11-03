@@ -16,6 +16,8 @@ body {
   background: var(--vscode-sideBar-background, var(--vscode-editor-background));
   font: 12px/1.5 var(--vscode-font-family, sans-serif);
 }
+.reading-desk-layout.reading-desk-collapsed { grid-template-columns: minmax(0, 1fr); }
+.reading-desk-collapsed .reading-desk-sidebar { display: none; }
 .reading-desk-toc { flex: 0 1 auto; min-height: 100px; max-height: 45%; overflow: auto; padding: 20px 12px 12px; }
 .reading-desk-toc-head { display: flex; align-items: center; justify-content: space-between; padding: 0 7px 12px; }
 .reading-desk-toc-head strong { font-size: 13px; }
