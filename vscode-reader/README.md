@@ -1,7 +1,7 @@
 # Reading Desk
 
 A standalone VS Code extension for reviewing Markdown and Python. It adds
-highlights, return-later comments, review comments, and a recent-first review
+highlights, done (greyed-out) text, return-later comments, review comments, and a recent-first review
 list. The [requirements](REQUIREMENTS.md) describe the intended behavior.
 
 Reading Desk opens Markdown in its own reading pane. It uses VS Code's Markdown
@@ -20,11 +20,14 @@ normal syntax-highlighted editor.
    the bottom. In Python, select code and use the editor context menu or Command
    Palette.
 2. Select a passage. In the Markdown reading pane, **Later** is selected initially.
-   Choose **Review** or **Highlight** to change the mark type. Green is the
+   Choose **Review**, **Highlight**, or **Done** to change the mark type.
+   **Done** greys out and strikes through the passage; resolve or delete the
+   mark to restore it. Green is the
    initial color; yellow and red are available, and **★ Important** applies to
    highlights. Choose **+ Add mark** and enter an optional comment in the
    small inline form. For Python, **Highlight Selection** lets you choose a
-   color and importance; Later and Review prompt for a comment.
+   color and importance; **Mark as Done** greys out the selection without a prompt;
+   Later and Review prompt for a comment.
    To mark a whole file, run Later or Review in the source editor with no
    selection and explicitly choose **Mark whole file**.
 3. Saved passages are colored in the reading pane and source editor. Click a

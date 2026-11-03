@@ -75,6 +75,7 @@
 .reading-desk-source-line { background: var(--reading-desk-line-color, #62b88555); border-radius: 3px; }
 ::highlight(reading-desk-yellow) { background: #e9c34c66; }
 ::highlight(reading-desk-green) { background: #62b88566; }
+::highlight(reading-desk-done) { color: #8a8a8a; text-decoration: line-through; }
 ::highlight(reading-desk-red) { background: #e8776866; }
 ::highlight(reading-desk-important-yellow) { background: #e9c34c99; text-decoration: underline #b68819 2px; }
 ::highlight(reading-desk-important-green) { background: #62b88599; text-decoration: underline #298957 2px; }
